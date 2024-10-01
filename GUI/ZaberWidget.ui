@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>607</width>
+    <height>197</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>20</y>
+     <width>521</width>
+     <height>411</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>Start Position</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+    </item>
+    <item row="3" column="1">
+     <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Travel Distance</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+    </item>
+    <item row="1" column="1">
+     <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Speed (0-3.5 mm/s)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_3">
+      <property name="text">
+       <string>End Position</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="label_5">
+      <property name="text">
+       <string>Time to Move</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QProgressBar" name="ZaberMovement">
+      <property name="value">
+       <number>24</number>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

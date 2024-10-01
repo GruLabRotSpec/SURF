@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>642</width>
+    <height>504</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>40</y>
+     <width>401</width>
+     <height>281</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QLabel" name="StepSizeLabel">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string>Step Size</string>
+      </property>
+      <property name="buddy">
+       <cstring>StepSizeInput</cstring>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QComboBox" name="SynthPowerInput">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="inputMethodHints">
+       <set>Qt::ImhNone</set>
+      </property>
+      <property name="editable">
+       <bool>true</bool>
+      </property>
+      <property name="currentText">
+       <string>---</string>
+      </property>
+      <item>
+       <property name="text">
+        <string>---</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Internal</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>External</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="3" column="2">
+     <widget class="QLabel" name="RFLabelInputC">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="StopFrequencyLabel">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string>Stop Frequency</string>
+      </property>
+      <property name="buddy">
+       <cstring>StopFrequencyInput</cstring>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2">
+     <widget class="QLabel" name="StopFrequencyInputC">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="2">
+     <widget class="QLabel" name="SynthPowerInputC">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QDoubleSpinBox" name="StepSizeInput">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QDoubleSpinBox" name="RFLabelInput">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QDoubleSpinBox" name="StopFrequencyInput">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="RFLevelLabel">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string>RF Level</string>
+      </property>
+      <property name="buddy">
+       <cstring>RFLabelInput</cstring>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="SynthPowerLabel">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string>Synth Power</string>
+      </property>
+      <property name="buddy">
+       <cstring>SynthPowerInput</cstring>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="StepSizeInputC">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="ValonFrequencyLabel">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string>Valon Frequency</string>
+      </property>
+      <property name="buddy">
+       <cstring>ValonFrequencyInput</cstring>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1">
+     <widget class="QDoubleSpinBox" name="ValonFrequencyInput">
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="ValonFrequencyInputC">
+      <property name="whatsThis">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">font: 10pt &quot;MS Shell Dlg 2&quot;;</string>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <action name="actionSynth_ToolBar">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Synth ToolBar</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>ValonFrequencyInput</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>ValonFrequencyInputC</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>78</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>77</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>StepSizeInput</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>StepSizeInputC</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>136</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>StopFrequencyInput</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>StopFrequencyInputC</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>187</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>187</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>RFLabelInput</sender>
+   <signal>valueChanged(QString)</signal>
+   <receiver>RFLabelInputC</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>238</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>238</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>SynthPowerInput</sender>
+   <signal>currentTextChanged(QString)</signal>
+   <receiver>SynthPowerInputC</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>364</x>
+     <y>291</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>291</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
