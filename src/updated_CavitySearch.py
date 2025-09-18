@@ -17,15 +17,16 @@ StepSize = 0
 StopFreqinput = 0
 
 
+filename = "OCS_11865.662_CW_50mm"
 
-filename = 'OCS_11865.662_CW_50mm'
+
 def initializeInstruments():
     global valonConnect
     try:
         oscilloscopeController.initializeScope()
         SRScontroller.initializeSRS()
         zaberController.initializeZaber()
-        valonConnect = valonController.initializeValon('COM3')
+        valonConnect = valonController.initializeValon("COM3")
         valonController.valonSettings(RFLevel=10)
     except PermissionError:
         print("ATTN: Permission Error. Make sure Zaber window is closed.")
@@ -39,39 +40,38 @@ def DefineParameters():
     # oscilloscopeController.recallsetup('cavity_ch2000001.set')
 
     k = 0
-    folderpath = 'Cavity Scan'
-
+    folderpath = "Cavity Scan"
 
     # creating directory for files to be
 
-    if not os.path.exists(f'{folderpath}/{filename}_{k}'):
-        os.makedirs(f'{folderpath}/{filename}_{k}')
-        os.makedirs(f'{folderpath}/{filename}_{k}/CavityRuns')
-        print('folder for data has been created: ', f'{folderpath}/{filename}_{k}')
+    if not os.path.exists(f"{folderpath}/{filename}_{k}"):
+        os.makedirs(f"{folderpath}/{filename}_{k}")
+        os.makedirs(f"{folderpath}/{filename}_{k}/CavityRuns")
+        print("folder for data has been created: ", f"{folderpath}/{filename}_{k}")
     else:
-        while os.path.exists(f'{folderpath}/{filename}_{k}'):
+        while os.path.exists(f"{folderpath}/{filename}_{k}"):
             k += 1
-        os.makedirs(f'{folderpath}/{filename}_{k}')
-        os.makedirs(f'{folderpath}/{filename}_{k}/CavityRuns')
-        print('folder for data has been created: ', f'{folderpath}/{filename}_{k}')
+        os.makedirs(f"{folderpath}/{filename}_{k}")
+        os.makedirs(f"{folderpath}/{filename}_{k}/CavityRuns")
+        print("folder for data has been created: ", f"{folderpath}/{filename}_{k}")
 
     directory = f"{folderpath}/{filename}_{k}"
-    rundirectory = f'{folderpath}/{filename}_{k}/CavityRuns'
+    rundirectory = f"{folderpath}/{filename}_{k}/CavityRuns"
 
-    if not os.path.exists(f'{directory}/{filename}.csv'):
-        open(f'{directory}/{filename}.csv', 'w+')
-        print('Sucessfully named file ', f'{directory}/{filename}.csv')
+    if not os.path.exists(f"{directory}/{filename}.csv"):
+        open(f"{directory}/{filename}.csv", "w+")
+        print("Sucessfully named file ", f"{directory}/{filename}.csv")
 
     zaberController.zaberSetSpeed(101204)
     zaberController.homeZaber()
     zaberController.zaberDevice.poll_until_idle()
 
-    print('Zaber has arrived at home position 0 mm')
+    print("Zaber has arrived at home position 0 mm")
     StopFreq = StopFreqinput - awgFreq
     try:
         StepSize = float(StepSize)
         stepUpVar = True
-        valonController.writeValonCommand(f'FrequencyStep {StepSize} MHz')
+        valonController.writeValonCommand(f"FrequencyStep {StepSize} MHz")
     except ValueError:
         stepUpVar = False
         print("Only running single sequence.")
@@ -89,12 +89,12 @@ def CavitySearch():
     global endPosZaber, speedZaber, maxList, timeList
     maxList = []
     timeList = []
-    runBool = 'y'
+    runBool = "y"
     i = 0
 
-    while runBool == 'y':
+    while runBool == "y":
         NewFreq = valonFreq + StepSize * i + awgFreq
-        print(f'The new Valon Frequency is: {NewFreq}')
+        print(f"The new Valon Frequency is: {NewFreq}")
 
         startPosZaberMM = 0
         endPosZaberMM = 50
@@ -113,7 +113,7 @@ def CavitySearch():
                 break
             except ValueError:
                 print("Invalid integer. The number must be between 0 and 3.5.")
-        #homingspeed = 101204
+        # homingspeed = 101204
         SRScontroller.setFreq(300)  # trigger rate for cavity search
         zaberController.zaberSetSpeed(101204)
         zaberController.homeZaber()
@@ -121,7 +121,7 @@ def CavitySearch():
         zaberController.zaberDevice.poll_until_idle()
         currPos = zaberController.zaberDevice.get_position()
         currPos = currPos / 220997
-        print('Zaber is at position ', currPos)
+        print("Zaber is at position ", currPos)
         zaberController.zaberSetSpeed(speedZaber)
 
         time.sleep(2)
@@ -144,9 +144,15 @@ def CavitySearch():
             print("Length of max: ", len(maxLists))
             print("Length of pos: ", len(posArr))
 
-            DF = pd.DataFrame({'Zaber Position (mm)': posArr, "Intensity (Volts)": maxLists, 'Frequency': NewFreq})
-            x = DF['Zaber Position (mm)']
-            y = DF['Intensity (Volts)']
+            DF = pd.DataFrame(
+                {
+                    "Zaber Position (mm)": posArr,
+                    "Intensity (Volts)": maxLists,
+                    "Frequency": NewFreq,
+                }
+            )
+            x = DF["Zaber Position (mm)"]
+            y = DF["Intensity (Volts)"]
 
         # threshold = input('Threshold for peak selection (in V): ')
         threshold = 0.008
@@ -161,13 +167,19 @@ def CavitySearch():
         plt.pause(10)
         plt.close()
 
-        df1 = pd.DataFrame({'Zaber Position (mm)': x, 'Intensity (V)': y, 'Frequency (MHz)': NewFreq})
-        df2 = pd.DataFrame({'Peaks': x[peaks], 'Intensity': y[peaks]})
+        df1 = pd.DataFrame(
+            {"Zaber Position (mm)": x, "Intensity (V)": y, "Frequency (MHz)": NewFreq}
+        )
+        df2 = pd.DataFrame({"Peaks": x[peaks], "Intensity": y[peaks]})
         df2 = df2.reset_index(drop=True)
-        pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(f'{directory}/{filename}.csv', mode="a", index=False)
-        pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(f'{rundirectory}/{NewFreq}MHz.csv', mode="w+", index=False)
+        pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(
+            f"{directory}/{filename}.csv", mode="a", index=False
+        )
+        pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(
+            f"{rundirectory}/{NewFreq}MHz.csv", mode="w+", index=False
+        )
 
-        print('run #', i + 1, 'has been added to: ', f'{directory}/{filename}.csv')
+        print("run #", i + 1, "has been added to: ", f"{directory}/{filename}.csv")
 
         # SRScontroller.stopTrig()
         # oscilloscopeController.oscCalibStop()
@@ -177,8 +189,10 @@ def CavitySearch():
                 valonController.valonStepUp()
 
             else:
-                print('You have reached the stop frequency. You will find your data in .csv file: ',
-                      f'{directory}/{filename}.csv')
+                print(
+                    "You have reached the stop frequency. You will find your data in .csv file: ",
+                    f"{directory}/{filename}.csv",
+                )
                 break
 
         elif stepUpVar == True and StopFreqVar == False:
@@ -187,7 +201,10 @@ def CavitySearch():
                 i += 1
                 valonController.valonStepUp()
             if runBool == "n":
-                print(f"Experiment concluded. You will find your data in .csv file: ", f'{directory}/{filename}.csv')
+                print(
+                    f"Experiment concluded. You will find your data in .csv file: ",
+                    f"{directory}/{filename}.csv",
+                )
                 zaberController.homeZaber()
             break
 
@@ -219,8 +236,9 @@ def acquireThread():
     tempMaxList = []
     while loopVar == 1:
         # currently we are not acquiring based on frequency
-        tempMaxList.append(float(oscilloscopeController.queryOscCmd(
-            'MEASUrement:MEAS1:VALUE?')))  # MEAS2 does the number reference the channel
+        tempMaxList.append(
+            float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
+        )  # MEAS2 does the number reference the channel
 
     maxList.append(tempMaxList)
 
