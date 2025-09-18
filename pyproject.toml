@@ -13,3 +13,8 @@ dependencies = [
     "scipy>=1.16.2",
     "zaber-serial>=0.9.1",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+]

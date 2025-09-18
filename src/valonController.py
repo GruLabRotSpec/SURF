@@ -1,4 +1,4 @@
-#for valon:
+# for valon:
 import serial
 from serial.tools import list_ports
 import time
@@ -6,12 +6,13 @@ import time
 delay = 0.1
 port_name = "COM3"
 
+
 def initializeValon(port):
     global valonConnect
 
-    #creating class of valonConnection
+    # creating class of valonConnection
     class VSerialPort(serial.Serial):
-        def __init__( self, portParam = None):
+        def __init__(self, portParam=None):
             serial.Serial.__init__(self)
             # try:
             self.baudrate = 9600
@@ -21,10 +22,10 @@ def initializeValon(port):
             self.setDTR(False)
             self.flushInput()
             self.setDTR(True)
-            self.write(b'ID?\r')
-            response_bytes = self.read(1024) #total bytes expected back from return
+            self.write(b"ID?\r")
+            response_bytes = self.read(1024)  # total bytes expected back from return
             print(response_bytes)
-            #CW mode (continuous wave)
+            # CW mode (continuous wave)
             print("________________________________________________________")
             print(f"Serial port for Valon: {port_name} opened successfully.")
             print("________________________________________________________")
@@ -33,14 +34,15 @@ def initializeValon(port):
             #     print(f"Error opening serial port: {e}")
 
     valonConnect = VSerialPort(port)
-    
+
     return valonConnect
 
-#write Valon cmds, either writing or querying based on presence of \r
+
+# write Valon cmds, either writing or querying based on presence of \r
 def writeValonCommand(cmd):
-    #format command with line termination \r, encode (utf8 I think), send to Valon
+    # format command with line termination \r, encode (utf8 I think), send to Valon
     formatCmd = f"{cmd}"
-    formatCmd += "\r" 
+    formatCmd += "\r"
     valonConnect.reset_input_buffer()
     print(formatCmd)
     valonConnect.write(formatCmd.encode())
@@ -49,6 +51,7 @@ def writeValonCommand(cmd):
     response = response_bytes.decode().strip()
     print(response)
     return response
+
 
 def valonSettings(RFLevel):
     print("Establishing Valon Settings: ")
@@ -59,7 +62,9 @@ def valonSettings(RFLevel):
     writeValonCommand(f"PoWeR{RFLevel}")
 
     writeValonCommand("OEN 1")
-#valon settings init
+
+
+# valon settings init
 # def valonSettings():
 #     print("Establishing Valon Settings: ")
 #     writeValonCommand("MODe CW ")
@@ -73,58 +78,65 @@ def valonSettings(RFLevel):
 
 #     writeValonCommand("OEN 1")
 
-def valonSetStepSizeSWEEP(stepSize):            ## for Chirp pulse sweep not Cavity
+
+def valonSetStepSizeSWEEP(stepSize):  ## for Chirp pulse sweep not Cavity
     writeValonCommand(f"STEP {stepSize}M")
+
+
 def valonStartSweep(StartFreqSweep):
     writeValonCommand(f"STARt {StartFreqSweep}M")
+
 
 def valonStopSweep(StopFreqSweep):
     writeValonCommand(f"STOP {StopFreqSweep}M")
 
-def valonSweepRate(SweepRate):
-    writeValonCommand(f"RATE {SweepRate}")  #in ms
 
-def valonSWEEPMode(Start,Stop,Step,Rate):
+def valonSweepRate(SweepRate):
+    writeValonCommand(f"RATE {SweepRate}")  # in ms
+
+
+def valonSWEEPMode(Start, Stop, Step, Rate):
     valonStartSweep(Start)
     valonStopSweep(Stop)
     valonSetStepSizeSWEEP(Step)
     valonSweepRate(Rate)
     writeValonCommand("MODe SWEep")
 
+
 ## Continuous wave settings
 def valonStepUp():
     writeValonCommand("FrequencyINCRement")
-    valonFreq = writeValonCommand('Frequency')
+    valonFreq = writeValonCommand("Frequency")
     print(valonFreq)
-    
+
 
 def valonStepDown():
     writeValonCommand("FrequencyDECRement")
     valonFreq = writeValonCommand("Frequency")
     print(valonFreq)
 
+
 def valonFrequencyStepCW(StepSize):
     writeValonCommand(f"FrequencyStep {StepSize}M")
     writeValonCommand("Frequency")
 
 
-#def valonSettings():
-    #print("Establishing Valon Settings: ")
+# def valonSettings():
+# print("Establishing Valon Settings: ")
 
-   # currRF = writeValonCommand("PoWeR?")
+# currRF = writeValonCommand("PoWeR?")
 
-    #set RFLevel, defaults to 1 in valonSettings
-    #turn on RF level
- #   writeValonCommand("PDN 1")
+# set RFLevel, defaults to 1 in valonSettings
+# turn on RF level
+#   writeValonCommand("PDN 1")
 
-    # rfLevelVal = input("RF Level in Db/M: ")
-    # writeValonCommand(f"PoWeR{rfLevelVal}")
-    # writeValonCommand("PDN 1")
+# rfLevelVal = input("RF Level in Db/M: ")
+# writeValonCommand(f"PoWeR{rfLevelVal}")
+# writeValonCommand("PDN 1")
 
-    #sets reference source, EXT is 1, INT is 0
-    #refSource = input("EXT or INT Reference Source? (INT/EXT): ")
-    #if refSource == "EXT":
-  #  writeValonCommand("REFS 1")
-    # elif refSource == "INT":
-    #     writeValonCommand("REFS 0")
-
+# sets reference source, EXT is 1, INT is 0
+# refSource = input("EXT or INT Reference Source? (INT/EXT): ")
+# if refSource == "EXT":
+#  writeValonCommand("REFS 1")
+# elif refSource == "INT":
+#     writeValonCommand("REFS 0")

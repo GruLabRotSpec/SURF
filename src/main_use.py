@@ -10,24 +10,26 @@ import os
 ###### Inputs manual
 # Valon Inputs
 
-RFLevel = 10  #dbm
-totalFreq = 11700# all frequencies should include the awg frequency so no need to subtract
+RFLevel = 10  # dbm
+totalFreq = (
+    11700  # all frequencies should include the awg frequency so no need to subtract
+)
 StopFreqinput = 11200
 stepsize = 0.5
-StepDirection = 'down'  #up or down
+StepDirection = "down"  # up or down
 # Zaber Inputs
 speedZaber = 0.003  # speed for scanning in mm/s
 
 # parameters for code to know, but are not instrument inputs
 awgFreq = 30
-Intensity = 0.2 # intensity of starting cavity position (V)
-gatepos = ('18.45E-6')
+Intensity = 0.2  # intensity of starting cavity position (V)
+gatepos = "18.45E-6"
 # Experiment Inputs
 acqs = 300
 trigRate = 5
-#setup = 'cavity_scan_peak001.set'
-filename = 'OCS_isotopescan_11700_11200_9_8_25'
-channel = 'CH4'  # oscilloscope channel, doesn't change often but sometimes
+# setup = 'cavity_scan_peak001.set'
+filename = "OCS_isotopescan_11700_11200_9_8_25"
+channel = "CH4"  # oscilloscope channel, doesn't change often but sometimes
 
 
 def initializeInstruments():
@@ -35,11 +37,11 @@ def initializeInstruments():
     try:
         oscilloscopeController.initializeScope()
         SRScontroller.initializeSRS()
-        valonConnect = valonController.initializeValon('COM3')
+        valonConnect = valonController.initializeValon("COM3")
         valonController.valonSettings(RFLevel)
         zaberController.initializeZaber()
-        #response = MyPTE1.Connect()
-        #print(response)
+        # response = MyPTE1.Connect()
+        # print(response)
     except PermissionError:
         print("ATTN: Permission Error. Make sure Valon and Zaber windows are closed.")
 
@@ -49,25 +51,25 @@ def setParameters():
 
     ########## creating directory for files to be
     k = 0
-    folderpath = 'Cavity Data'
+    folderpath = "Cavity Data"
 
-    if not os.path.exists(f'{folderpath}/{filename}_{k}'):
-        os.makedirs(f'{folderpath}/{filename}_{k}')
-        os.makedirs(f'{folderpath}/{filename}_{k}/CavityFiles')
-        print('folder for data has been created: ', f'{folderpath}/{filename}_{k}')
+    if not os.path.exists(f"{folderpath}/{filename}_{k}"):
+        os.makedirs(f"{folderpath}/{filename}_{k}")
+        os.makedirs(f"{folderpath}/{filename}_{k}/CavityFiles")
+        print("folder for data has been created: ", f"{folderpath}/{filename}_{k}")
     else:
-        while os.path.exists(f'{folderpath}/{filename}_{k}'):
+        while os.path.exists(f"{folderpath}/{filename}_{k}"):
             k += 1
-        os.makedirs(f'{folderpath}/{filename}_{k}')
-        os.makedirs(f'{folderpath}/{filename}_{k}/CavityFiles')
-        print('folder for data has been created: ', f'{folderpath}/{filename}_{k}')
+        os.makedirs(f"{folderpath}/{filename}_{k}")
+        os.makedirs(f"{folderpath}/{filename}_{k}/CavityFiles")
+        print("folder for data has been created: ", f"{folderpath}/{filename}_{k}")
 
     directory = f"{folderpath}/{filename}_{k}"
-    rundirectory = f'{folderpath}/{filename}_{k}/CavityFiles'
+    rundirectory = f"{folderpath}/{filename}_{k}/CavityFiles"
 
-    if not os.path.exists(f'{directory}/{filename}.csv'):
-        open(f'{directory}/{filename}.csv', 'w+')
-        print('Successfully named file ', f'{directory}/{filename}.csv')
+    if not os.path.exists(f"{directory}/{filename}.csv"):
+        open(f"{directory}/{filename}.csv", "w+")
+        print("Successfully named file ", f"{directory}/{filename}.csv")
 
     # setting parameters
 
@@ -75,12 +77,15 @@ def setParameters():
     timedelay = acqs / trigRate
 
     print(
-        f'At a trigger rate of {trigRate} with {acqs} acquisitions, each run the oscilloscope will require a time delay of {timedelay}')
+        f"At a trigger rate of {trigRate} with {acqs} acquisitions, each run the oscilloscope will require a time delay of {timedelay}"
+    )
 
     iterations = abs(StopFreqinput - totalFreq) / stepsize
-    totalTime = (iterations * timedelay + 14 * iterations) / 60  # in minutes includes zaber scanning time
+    totalTime = (
+        iterations * timedelay + 14 * iterations
+    ) / 60  # in minutes includes zaber scanning time
 
-    print(f'The estimated time for this scan is at least {totalTime} mins')
+    print(f"The estimated time for this scan is at least {totalTime} mins")
 
     valonFreq = totalFreq - awgFreq
     valonController.writeValonCommand(f"Frequency {valonFreq} MHz")
@@ -89,7 +94,7 @@ def setParameters():
     try:
         StepSize = float(stepsize)
         stepUpVar = True
-        valonController.writeValonCommand(f'FrequencyStep {StepSize} MHz')
+        valonController.writeValonCommand(f"FrequencyStep {StepSize} MHz")
     except ValueError:
         stepUpVar = False
         print("Only running single sequence.")
@@ -114,12 +119,12 @@ def CalibrateAndRun():
     i = 0  # when i = 0 it is the first run
     while runBool == "y":
         if i == 0:
-           # status = MyPTE1.Set_Switch("A", 0)
+            # status = MyPTE1.Set_Switch("A", 0)
             currPos = zaberController.zaberDevice.get_position()
             currPos = currPos / 20997
-            print('Zaber is at position', currPos)
+            print("Zaber is at position", currPos)
             oscilloscopeController.SetScopeSettings(channel, gatepos)
-            #oscilloscopeController.recallsetup(setup)
+            # oscilloscopeController.recallsetup(setup)
             # run experiment
             getWave()
 
@@ -133,13 +138,43 @@ def CalibrateAndRun():
             oscilloscopeController.oscCalibStop()
             SRScontroller.stopPulse()
 
+            (
+                timeScale,
+                timeStart,
+                verticalScale,
+                verticalOffset,
+                verticalPosition,
+                FreqCent,
+                FreqSpan,
+                Resolution,
+                GatePos,
+                GateWidth,
+            ) = oscilloscopeController.grabParam()
 
-            timeScale, timeStart, verticalScale, verticalOffset, verticalPosition, FreqCent, FreqSpan, Resolution, GatePos, GateWidth = oscilloscopeController.grabParam()
-
-            Parameters = [trigRate, acqs, timeScale, timeStart, verticalScale, verticalOffset, verticalPosition,
-                          Resolution, GatePos, GateWidth]
-            ParameterLabel = ['Trigger Rate', 'acquisitions', 'Horizontal Spacing', 'Time Start', 'Vertical Scale',
-                              'Vertical Offset', 'Vertical Position', 'Resolution', 'Gate Position', 'Gate Width']
+            Parameters = [
+                trigRate,
+                acqs,
+                timeScale,
+                timeStart,
+                verticalScale,
+                verticalOffset,
+                verticalPosition,
+                Resolution,
+                GatePos,
+                GateWidth,
+            ]
+            ParameterLabel = [
+                "Trigger Rate",
+                "acquisitions",
+                "Horizontal Spacing",
+                "Time Start",
+                "Vertical Scale",
+                "Vertical Offset",
+                "Vertical Position",
+                "Resolution",
+                "Gate Position",
+                "Gate Width",
+            ]
 
             # For exporting
             TotalFrequency = NewFreq + awgFreq
@@ -147,25 +182,34 @@ def CalibrateAndRun():
             LowerBound = TotalFrequency - StepSize / 2
             print(UpperBound)
             print(LowerBound)
-            DF1 = pd.DataFrame({'Frequency (MHz)': xxValues, 'Intensity': yyValues})
+            DF1 = pd.DataFrame({"Frequency (MHz)": xxValues, "Intensity": yyValues})
             DF2 = pd.DataFrame(
-                {'Center Freq': [TotalFrequency], 'Cavity Position': [currPos], 'Intensity of Cavity': [Intensity]})
-            DF1_2 = DF1.loc[((DF1['Frequency (MHz)'] >= LowerBound) & (DF1['Frequency (MHz)'] <= UpperBound))]
-            if StepDirection == 'down':
+                {
+                    "Center Freq": [TotalFrequency],
+                    "Cavity Position": [currPos],
+                    "Intensity of Cavity": [Intensity],
+                }
+            )
+            DF1_2 = DF1.loc[
+                (
+                    (DF1["Frequency (MHz)"] >= LowerBound)
+                    & (DF1["Frequency (MHz)"] <= UpperBound)
+                )
+            ]
+            if StepDirection == "down":
                 DF1_2 = DF1_2[::-1]
-            DF3 = pd.DataFrame({'Scope Parameter': ParameterLabel, 'Value': Parameters})
+            DF3 = pd.DataFrame({"Scope Parameter": ParameterLabel, "Value": Parameters})
             DF1 = DF1.reset_index()
             DF1_2 = DF1_2.reset_index()
             DF2 = DF2.reset_index()
 
             j = 0
-            pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(f'{rundirectory}/{TotalFrequency}.csv', mode="w+",
-                                                              index=False)  #Individual full data
-            pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(f'{directory}/{filename}.csv', mode="a",
-                                                                     index=False)  #appended main file with filtered data
-
-
-
+            pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
+                f"{rundirectory}/{TotalFrequency}.csv", mode="w+", index=False
+            )  # Individual full data
+            pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
+                f"{directory}/{filename}.csv", mode="a", index=False
+            )  # appended main file with filtered data
 
         else:
             while True:
@@ -179,51 +223,71 @@ def CalibrateAndRun():
                     time.sleep(10)
                     oscilloscopeController.oscCalibStop()
 
-                    if StepDirection == 'up':
+                    if StepDirection == "up":
                         NewFreq = valonFreq + StepSize * i
                         startPosZaber = (currPos / 20997) - 0.01
                         endPosZaber = (currPos / 20997) + 0.03
 
-                    elif StepDirection == 'down':
+                    elif StepDirection == "down":
                         NewFreq = valonFreq - StepSize * i
-                        startPosZaber = (currPos / 20997)
+                        startPosZaber = currPos / 20997
                         endPosZaber = (currPos / 20997) - 0.06
 
                     TotalFrequency = NewFreq + awgFreq
-                    print(f'the new center freq is: {TotalFrequency}')
-                    print(f'The new Valon Frequency is: {NewFreq}')
+                    print(f"the new center freq is: {TotalFrequency}")
+                    print(f"The new Valon Frequency is: {NewFreq}")
                     currPos = zaberController.zaberDevice.get_position()
 
-                    #for plotting
+                    # for plotting
                     startPosZaberMM = startPosZaber
                     endPosZaberMM = endPosZaber
                     totalDistZaberMM = abs(endPosZaber - startPosZaber)
 
-                    print("Attempting to travel from ", startPosZaber, " mm to ", endPosZaber, " mm")
-                    if endPosZaber <= 50 and startPosZaber <= 50 and endPosZaber >= 0 and startPosZaber >= 0:
+                    print(
+                        "Attempting to travel from ",
+                        startPosZaber,
+                        " mm to ",
+                        endPosZaber,
+                        " mm",
+                    )
+                    if (
+                        endPosZaber <= 50
+                        and startPosZaber <= 50
+                        and endPosZaber >= 0
+                        and startPosZaber >= 0
+                    ):
                         endPosZaber = round(endPosZaber * 20997.375)
                         startPosZaber = round(startPosZaber * 20997.375)
-                        runBool = 'y'
-                    elif endPosZaber > 50 and startPosZaber <= 50 and endPosZaber >= 0 and startPosZaber >= 0:
+                        runBool = "y"
+                    elif (
+                        endPosZaber > 50
+                        and startPosZaber <= 50
+                        and endPosZaber >= 0
+                        and startPosZaber >= 0
+                    ):
                         endPosZaber = 50
                         endPosZaber = round(endPosZaber * 20997.375)
                         startPosZaber = round(startPosZaber * 20997.375)
-                        runBool = 'n'
-                        print('The end of the zaber extension has been reached, this will be the last run.')
+                        runBool = "n"
+                        print(
+                            "The end of the zaber extension has been reached, this will be the last run."
+                        )
                     elif endPosZaber < 0 and startPosZaber < 50:
                         endPosZaber = 0
                         endPosZaber = round(endPosZaber * 20997.375)
                         startPosZaber = round(startPosZaber * 20997.375)
-                        runBool = 'n'
-                        print('The zaber has reached home, this will be the last run.')
+                        runBool = "n"
+                        print("The zaber has reached home, this will be the last run.")
                     elif endPosZaber < 0 or startPosZaber < 0 or startPosZaber > 50:
                         raise ValueError
                     break
 
                 except ValueError:
-                    print("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
+                    print(
+                        "Invalid integers somewhere. The numbers must be between 0 and 50mm."
+                    )
                     break
-                #setting the speed for the zaber
+                # setting the speed for the zaber
 
             while True:
                 try:
@@ -241,7 +305,9 @@ def CalibrateAndRun():
             # Retuning of the cavity position
 
             SRScontroller.setFreq(300)
-            zaberController.zaberSetSpeed(101204)  # speed for moving to the beginning spot not the speed for scanning
+            zaberController.zaberSetSpeed(
+                101204
+            )  # speed for moving to the beginning spot not the speed for scanning
             print(f"Moving Zaber to {startPosZaberMM}")
             zaberController.moveToZaber(startPosZaber)
             zaberController.zaberDevice.poll_until_idle()
@@ -297,7 +363,7 @@ def CalibrateAndRun():
             # moving to new cavity position for next data acquisition
             print("Moving to maximum position at: ", maxPos, " mm")
             zaberController.zaberSetSpeed(101204)
-            #status = MyPTE1.Set_Switch("A", 0)
+            # status = MyPTE1.Set_Switch("A", 0)
             zaberController.moveToZaber(int(maxPos * 20997))
             zaberController.zaberDevice.poll_until_idle()
             currPos = zaberController.zaberDevice.get_position()
@@ -312,19 +378,27 @@ def CalibrateAndRun():
             oscilloscopeController.oscCalibStop()
             SRScontroller.stopPulse()
 
-
             # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
             UpperBound = TotalFrequency + StepSize / 2
             LowerBound = TotalFrequency - StepSize / 2
 
             # Individual file
-            DF1 = pd.DataFrame({'Frequency (MHz)': xxValues1, 'Intensity': yyValues1})
-            DF3 = pd.DataFrame({'Zaber Position(mm):': posArr1, 'Intensity': maxLists})
+            DF1 = pd.DataFrame({"Frequency (MHz)": xxValues1, "Intensity": yyValues1})
+            DF3 = pd.DataFrame({"Zaber Position(mm):": posArr1, "Intensity": maxLists})
             DF2 = pd.DataFrame(
-                {'Center Freq': [TotalFrequency], 'Cavity Position': [currPos / 20997],
-                 'Intensity of Cavity': [maxIntensity]})
-            DF1_2 = DF1.loc[((DF1['Frequency (MHz)'] >= LowerBound) & (DF1['Frequency (MHz)'] <= UpperBound))]
-            if StepDirection == 'down':
+                {
+                    "Center Freq": [TotalFrequency],
+                    "Cavity Position": [currPos / 20997],
+                    "Intensity of Cavity": [maxIntensity],
+                }
+            )
+            DF1_2 = DF1.loc[
+                (
+                    (DF1["Frequency (MHz)"] >= LowerBound)
+                    & (DF1["Frequency (MHz)"] <= UpperBound)
+                )
+            ]
+            if StepDirection == "down":
                 DF1_2 = DF1_2[::-1]
 
             DF1 = DF1.reset_index()
@@ -333,44 +407,63 @@ def CalibrateAndRun():
             DF2 = DF2.reset_index()
 
             j = 0
-            pd.concat([pd.concat([DF1, DF3, DF2], axis=1)]).to_csv(f'{rundirectory}/{TotalFrequency}.csv', mode="w+",
-                                                                   index=False)
-            pd.concat([pd.concat([DF1_2, DF2], axis=1)]).to_csv(f'{directory}/{filename}.csv', mode="a", index=False,
-                                                                header=False)
+            pd.concat([pd.concat([DF1, DF3, DF2], axis=1)]).to_csv(
+                f"{rundirectory}/{TotalFrequency}.csv", mode="w+", index=False
+            )
+            pd.concat([pd.concat([DF1_2, DF2], axis=1)]).to_csv(
+                f"{directory}/{filename}.csv", mode="a", index=False, header=False
+            )
 
-            print('run #', i + 1, 'has been added to: ', f'{directory}/{filename}.csv')
+            print("run #", i + 1, "has been added to: ", f"{directory}/{filename}.csv")
 
         ### determining if there will be subsequent runs
-        if runBool == 'y':
-            if stepUpVar == True and StopFreqVar == True and StepDirection == 'up' and NewFreq < StopFreq:
+        if runBool == "y":
+            if (
+                stepUpVar == True
+                and StopFreqVar == True
+                and StepDirection == "up"
+                and NewFreq < StopFreq
+            ):
                 i += 1
                 valonController.valonStepUp()
-            elif stepUpVar == True and StopFreqVar == True and StepDirection == 'down' and NewFreq >= StopFreq:
+            elif (
+                stepUpVar == True
+                and StopFreqVar == True
+                and StepDirection == "down"
+                and NewFreq >= StopFreq
+            ):
                 i += 1
                 valonController.valonStepDown()
-            elif NewFreq > StopFreq and StepDirection == 'up':
-                runBool = 'n'
+            elif NewFreq > StopFreq and StepDirection == "up":
+                runBool = "n"
                 zaberController.homeZaber()
                 SRScontroller.stopTrig()
-                print('You have reached the stop frequency. You will find your data in .csv file: ',
-                      f'{directory}/{filename}.csv')
+                print(
+                    "You have reached the stop frequency. You will find your data in .csv file: ",
+                    f"{directory}/{filename}.csv",
+                )
                 break
-            elif NewFreq < StopFreq and StepDirection == 'down':
+            elif NewFreq < StopFreq and StepDirection == "down":
                 zaberController.homeZaber()
                 SRScontroller.stopTrig()
-                print('You have reached the stop frequency. You will find your data in .csv file: ',
-                      f'{directory}/{filename}.csv')
+                print(
+                    "You have reached the stop frequency. You will find your data in .csv file: ",
+                    f"{directory}/{filename}.csv",
+                )
                 break
             elif stepUpVar == True and StopFreqVar == False:
                 runBool = input(
-                    "Do you want to run another experiment? (Y/N): ").lower()  # primarily for interactive mode so not expecting this to be used in this version
+                    "Do you want to run another experiment? (Y/N): "
+                ).lower()  # primarily for interactive mode so not expecting this to be used in this version
                 if runBool == "y":
                     i += 1
                     valonController.valonStepUp()
-        elif runBool == 'n':
+        elif runBool == "n":
             zaberController.homeZaber()
             SRScontroller.stopTrig()
-            print(f'The experiment has ended. Your data can be found in {directory}/{filename}.csv')
+            print(
+                f"The experiment has ended. Your data can be found in {directory}/{filename}.csv"
+            )
             break
 
 
@@ -378,7 +471,7 @@ def zaberThread():
     global loopVar
     loopVar = 1
     timeZaberStart = time.perf_counter()
-    totalTime = zaberController.zaberStart(speedZaber)  #is this line necessary?
+    totalTime = zaberController.zaberStart(speedZaber)  # is this line necessary?
     zaberController.zaberDevice.move_abs(endPosZaber)
     zaberController.zaberDevice.poll_until_idle()
     timeZaberEnd = time.perf_counter()
@@ -391,13 +484,15 @@ def zaberThread():
     return
 
 
-#vcurrently doesn't run based on trigFreq, if required then use if/else with time.perfcounter()
+# vcurrently doesn't run based on trigFreq, if required then use if/else with time.perfcounter()
 def acquireThread():
     global loopVar
     tempMaxList = []
     while loopVar == 1:
         # currently we are not acquiring based on frequency
-        tempMaxList.append(float(oscilloscopeController.queryOscCmd('MEASUrement:MEAS1:VALUE?')))
+        tempMaxList.append(
+            float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
+        )
 
     maxList.append(tempMaxList)
 
@@ -407,8 +502,19 @@ def fftFromScope():
 
     waveValues = oscilloscopeController.acqFTCurve(channel, timedelay)
 
-    timeScale, timeStart, verticalScale, verticalOffset, verticalPosition, FreqCent, FreqSpan, Resolution, GatePos, GateWidth = oscilloscopeController.grabParam()
-    Start = FreqCent-FreqSpan/2
+    (
+        timeScale,
+        timeStart,
+        verticalScale,
+        verticalOffset,
+        verticalPosition,
+        FreqCent,
+        FreqSpan,
+        Resolution,
+        GatePos,
+        GateWidth,
+    ) = oscilloscopeController.grabParam()
+    Start = FreqCent - FreqSpan / 2
     # acquire vals
     xValues, yValues = scaleFFT(waveValues, Start)
 
@@ -435,9 +541,14 @@ def getWave():
 
 def scaleFFT(waveValues, Start):
 
-    fftYValues = np.array(waveValues, dtype='float')
-    fftXValues = np.linspace(timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False) / 1000000
-    Start = Start/1000000
+    fftYValues = np.array(waveValues, dtype="float")
+    fftXValues = (
+        np.linspace(
+            timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False
+        )
+        / 1000000
+    )
+    Start = Start / 1000000
     fftXValues = [x + NewFreq for x in fftXValues]
     fftXValues = [x + Start for x in fftXValues]
     newfftXValues = fftXValues[3:]
