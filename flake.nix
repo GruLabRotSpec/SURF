@@ -2,7 +2,7 @@
   description = "Hello world flake using uv2nix";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     pyproject-nix = {
       url = "github:pyproject-nix/pyproject.nix";
@@ -36,12 +36,14 @@
       inherit (nixpkgs) lib;
 
       workspace = uv2nix.lib.workspace.loadWorkspace { workspaceRoot = ./.; };
+      # hacks = lib.callPackage pyproject-nix.build.hacks { };
 
       overlay = workspace.mkPyprojectOverlay {
         sourcePreference = "wheel";
       };
 
-      pyprojectOverrides = _final: _prev: { };
+      pyprojectOverrides = _final: _prev: {
+      };
 
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -71,6 +73,13 @@
           python
           black
           uv
+
+          qt6.full
+          qt6.qtbase
+
+          qt6.wrapQtAppsHook
+          makeWrapper
+          bashInteractive
         ];
 
         env = {
@@ -78,11 +87,25 @@
           UV_PYTHON = python.interpreter;
         }
         // lib.optionalAttrs pkgs.stdenv.isLinux {
-          LD_LIBRARY_PATH = lib.makeLibraryPath pkgs.pythonManylinuxPackages.manylinux1;
+          LD_LIBRARY_PATH = lib.makeLibraryPath (
+            pkgs.pythonManylinuxPackages.manylinux1
+            ++ [
+              pkgs.zlib
+              pkgs.zstd
+              pkgs.libxkbcommon
+              pkgs.fontconfig
+              pkgs.freetype
+              pkgs.dbus
+            ]
+          );
         };
 
         shellHook = ''
           unset PYTHONPATH
+
+          bashdir=$(mktemp -d)
+          makeWrapper "$(type -p bash)" "$bashdir/bash" "''${qtWrapperArgs[@]}"
+          exec "$bashdir/bash"
         '';
       };
     };
