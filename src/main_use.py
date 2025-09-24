@@ -11,9 +11,7 @@ import os
 # Valon Inputs
 
 RFLevel = 10  # dbm
-totalFreq = (
-    11700  # all frequencies should include the awg frequency so no need to subtract
-)
+totalFreq = 11700  # all frequencies should include the awg frequency so no need to subtract
 StopFreqinput = 11200
 stepsize = 0.5
 StepDirection = "down"  # up or down
@@ -163,6 +161,7 @@ def CalibrateAndRun():
                 GatePos,
                 GateWidth,
             ]
+
             ParameterLabel = [
                 "Trigger Rate",
                 "acquisitions",
@@ -180,8 +179,10 @@ def CalibrateAndRun():
             TotalFrequency = NewFreq + awgFreq
             UpperBound = TotalFrequency + StepSize / 2
             LowerBound = TotalFrequency - StepSize / 2
+
             print(UpperBound)
             print(LowerBound)
+
             DF1 = pd.DataFrame({"Frequency (MHz)": xxValues, "Intensity": yyValues})
             DF2 = pd.DataFrame(
                 {
@@ -190,14 +191,14 @@ def CalibrateAndRun():
                     "Intensity of Cavity": [Intensity],
                 }
             )
+
             DF1_2 = DF1.loc[
-                (
-                    (DF1["Frequency (MHz)"] >= LowerBound)
-                    & (DF1["Frequency (MHz)"] <= UpperBound)
-                )
+                ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
             ]
+
             if StepDirection == "down":
                 DF1_2 = DF1_2[::-1]
+
             DF3 = pd.DataFrame({"Scope Parameter": ParameterLabel, "Value": Parameters})
             DF1 = DF1.reset_index()
             DF1_2 = DF1_2.reset_index()
@@ -227,11 +228,13 @@ def CalibrateAndRun():
                         NewFreq = valonFreq + StepSize * i
                         startPosZaber = (currPos / 20997) - 0.01
                         endPosZaber = (currPos / 20997) + 0.03
-
                     elif StepDirection == "down":
                         NewFreq = valonFreq - StepSize * i
                         startPosZaber = currPos / 20997
                         endPosZaber = (currPos / 20997) - 0.06
+                    else:
+                        print(f"{StepDirection} is an invalid StepDirection")
+                        exit()
 
                     TotalFrequency = NewFreq + awgFreq
                     print(f"the new center freq is: {TotalFrequency}")
@@ -283,9 +286,7 @@ def CalibrateAndRun():
                     break
 
                 except ValueError:
-                    print(
-                        "Invalid integers somewhere. The numbers must be between 0 and 50mm."
-                    )
+                    print("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
                     break
                 # setting the speed for the zaber
 
@@ -393,10 +394,7 @@ def CalibrateAndRun():
                 }
             )
             DF1_2 = DF1.loc[
-                (
-                    (DF1["Frequency (MHz)"] >= LowerBound)
-                    & (DF1["Frequency (MHz)"] <= UpperBound)
-                )
+                ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
             ]
             if StepDirection == "down":
                 DF1_2 = DF1_2[::-1]
@@ -461,9 +459,7 @@ def CalibrateAndRun():
         elif runBool == "n":
             zaberController.homeZaber()
             SRScontroller.stopTrig()
-            print(
-                f"The experiment has ended. Your data can be found in {directory}/{filename}.csv"
-            )
+            print(f"The experiment has ended. Your data can be found in {directory}/{filename}.csv")
             break
 
 
@@ -490,9 +486,7 @@ def acquireThread():
     tempMaxList = []
     while loopVar == 1:
         # currently we are not acquiring based on frequency
-        tempMaxList.append(
-            float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
-        )
+        tempMaxList.append(float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?")))
 
     maxList.append(tempMaxList)
 
@@ -543,9 +537,7 @@ def scaleFFT(waveValues, Start):
 
     fftYValues = np.array(waveValues, dtype="float")
     fftXValues = (
-        np.linspace(
-            timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False
-        )
+        np.linspace(timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False)
         / 1000000
     )
     Start = Start / 1000000
