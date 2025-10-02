@@ -343,7 +343,7 @@ def CalibrateAndRun():
                 print(max(maxLists))
 
                 # Plot position vs intensity
-                plotter.plot_position_vs_intensity(plt, posArr1, maxLists)
+                plotter.plot_position_vs_intensity(posArr1, maxLists)
 
             for items in maxList:
                 print("len: ", len(items))
