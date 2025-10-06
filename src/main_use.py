@@ -6,6 +6,8 @@ import threading
 import valonController, oscilloscopeController, zaberController, SRScontroller
 import os
 
+import Cavity
+
 ####################This version of the code is for the GUI or when not wanting code prompted inputs
 ###### Inputs manual
 # Valon Inputs
@@ -305,16 +307,10 @@ def CalibrateAndRun():
 
             # Retuning of the cavity position
 
-            SRScontroller.setFreq(300)
-            zaberController.zaberSetSpeed(
-                101204
-            )  # speed for moving to the beginning spot not the speed for scanning
-            print(f"Moving Zaber to {startPosZaberMM}")
-            zaberController.moveToZaber(startPosZaber)
-            zaberController.zaberDevice.poll_until_idle()
-            zaberController.zaberSetSpeed(speedZaber)
-            time.sleep(5)
-            oscilloscopeController.oscCalibStart()
+            cavity = Cavity()
+
+            cavity.retune_cavity_position(startPosZaber, startPosZaberMM, speedZaber)
+
             SRScontroller.startTrig()
 
             # setting up threading for scanning
@@ -362,13 +358,8 @@ def CalibrateAndRun():
             plt.close()
 
             # moving to new cavity position for next data acquisition
-            print("Moving to maximum position at: ", maxPos, " mm")
-            zaberController.zaberSetSpeed(101204)
-            # status = MyPTE1.Set_Switch("A", 0)
-            zaberController.moveToZaber(int(maxPos * 20997))
-            zaberController.zaberDevice.poll_until_idle()
-            currPos = zaberController.zaberDevice.get_position()
-            print("Running scan... Zaber is at position: ", currPos / 20997)
+
+            cavity.move_cavity_position(maxPos)
 
             SRScontroller.setTrig(trigRate)
 
