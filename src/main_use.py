@@ -42,6 +42,7 @@ def initializeInstruments():
         # print(response)
     except PermissionError:
         print("ATTN: Permission Error. Make sure Valon and Zaber windows are closed.")
+        exit()
 
 
 def setParameters():
@@ -107,7 +108,7 @@ def setParameters():
 
 
 def CalibrateAndRun():
-    global maxList, timeList, speedZaber, endPosZaber, NewFreq, TotalFrequency, endPosZaberMM, startPosZaberMM, totalDistZaberMM, startPosZaber
+    global maxList, timeList, endPosZaber, NewFreq, TotalFrequency, endPosZaberMM, startPosZaberMM, totalDistZaberMM, startPosZaber
     maxList = []
     timeList = []
     maxMaxVals = []
@@ -218,8 +219,7 @@ def CalibrateAndRun():
     ):
         valonController.valonStepDown()
     else:
-        print("ERROR: Valon didn't step in first run.")
-        exit()
+        raise ValueError("ERROR: Valon didn't step in first run.")
 
     ### All Other Runs ###
     i = 1
@@ -240,10 +240,6 @@ def CalibrateAndRun():
             NewFreq = valonFreq - StepSize * i
             startPosZaber = currPos / 20997
             endPosZaber = (currPos / 20997) - 0.06
-        else:
-            # TODO: Refactor to be verified at the top
-            print(f"{StepDirection} is an invalid StepDirection")
-            exit()
 
         TotalFrequency = NewFreq + awgFreq
         print(f"the new center freq is: {TotalFrequency}")
@@ -281,22 +277,7 @@ def CalibrateAndRun():
             runBool = False
             print("The zaber has reached home, this will be the last run.")
         elif endPosZaber < 0 or startPosZaber < 0 or startPosZaber > 50:
-            print("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
-            exit()
-
-        # setting the speed for the zaber
-        # FIXME: Needs testing, but I think this crashes
-        # and was only saved by try catch.
-        # Needs to be fixed if that is the case
-        if speedZaber <= 3.5 and speedZaber > 0:
-            totalTime = totalDistZaberMM / speedZaber
-            print("Run time is: ", totalTime, " s")
-            speedZaber = round(speedZaber * 34402.099737532773)
-
-        elif speedZaber < 0 or speedZaber > 3.5:
-            print("Invalid integer. The number must be between 0 and 3.5.")
-            # TODO: Refactor to be verified at the top
-            exit()
+            raise ValueError("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
 
         # Retuning of the cavity position
 
@@ -307,8 +288,8 @@ def CalibrateAndRun():
         print(f"Moving Zaber to {startPosZaberMM}")
         zaberController.moveToZaber(startPosZaber)
         zaberController.zaberDevice.poll_until_idle()
-        zaberController.zaberSetSpeed(speedZaber)
-        time.sleep(5)  # TODO: Supposedly we can remove this. Needs testing.
+        zaberController.zaberSetSpeed(round(speedZaber * 34402.099737532773))
+        #time.sleep(5)  # TODO: Supposedly we can remove this. Needs testing.
         oscilloscopeController.oscCalibStart()
         SRScontroller.startTrig()
 
@@ -453,17 +434,17 @@ def CalibrateAndRun():
 
 def zaberThread():
     global loopVar
-    loopVar = 1
+    loopVar = True
     timeZaberStart = time.perf_counter()
-    totalTime = zaberController.zaberStart(speedZaber)  # is this line necessary?
+    #zaberController.zaberStart(round(speedZaber * 34402.099737532773))  # is this line necessary?
     zaberController.zaberDevice.move_abs(endPosZaber)
-    zaberController.zaberDevice.poll_until_idle()
+    #zaberController.zaberDevice.poll_until_idle()
     timeZaberEnd = time.perf_counter()
     currPos = zaberController.zaberDevice.get_position()
     print("Zaber is at end position: ", currPos / 20997, " mm")
     totalTimeZaber = timeZaberEnd - timeZaberStart
     print("Zaber move time (s): ", totalTimeZaber)
-    loopVar = 0
+    loopVar = False
     timeList.append(totalTimeZaber)
     return
 
@@ -472,7 +453,7 @@ def zaberThread():
 def acquireThread():
     global loopVar
     tempMaxList = []
-    while loopVar == 1:
+    while loopVar:
         # currently we are not acquiring based on frequency
         tempMaxList.append(float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?")))
 
@@ -537,6 +518,19 @@ def scaleFFT(waveValues, Start):
 
 
 def main():
+    # Input Validation
+    # TODO: Move this to gui
+    if (StepDirection not in ["up", "down"]):
+        raise ValueError(f"{StepDirection} is an invalid StepDirection")
+    
+    if (speedZaber <= 0 or speedZaber > 2):
+        raise ValueError(f"Speedzaber is set to invalid speed: {speedZaber}")
+    
+    if(totalFreq < StopFreqinput and StepDirection == "down"):
+        raise ValueError("Stopfreq more that toalfreq and moving down.")
+    elif(totalFreq > StopFreqinput and StepDirection == "up"):
+        raise ValueError("Stopfreq less that toalfreq and moving up.")
+    
     initializeInstruments()
     setParameters()
     CalibrateAndRun()
