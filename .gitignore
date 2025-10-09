@@ -7,3 +7,6 @@ build/
 .env
 .venv
 .envrc
+
+# Data
+Cavity Data
