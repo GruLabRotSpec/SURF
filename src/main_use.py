@@ -6,6 +6,8 @@ import threading
 import valonController, oscilloscopeController, zaberController, SRScontroller
 import os
 
+import plot as plotter
+
 ####################This version of the code is for the GUI or when not wanting code prompted inputs
 ###### Inputs manual
 # Valon Inputs
@@ -309,21 +311,16 @@ def CalibrateAndRun():
         print("aq length: ", len(maxList))
 
         # processing scanned information and plotting it
-
         for maxLists in maxList:
             posArr1 = np.linspace(startPosZaberMM, endPosZaberMM, len(maxLists))
             print("Length of max: ", len(maxList))
             print("Length of pos: ", len(posArr1))
             maxIntensity = max(maxLists)
             print(max(maxLists))
-            plt.plot(posArr1, maxLists)
-            plt.title("Zaber Position vs. Intensity")
-            plt.xlabel("Zaber Position (mm)")
-            plt.ylabel("Intensity (Volts)")
-            plt.show(block=False)
-            plt.pause(3)
-            plt.close()
 
+            # Plot position vs intensity
+            plotter.plot_position_vs_intensity(posArr1, maxLists)
+            
         for items in maxList:
             print("len: ", len(items))
             maxer = max(items)
@@ -481,20 +478,9 @@ def fftFromScope():
     # acquire vals
     xValues, yValues = scaleFFT(waveValues, Start)
 
-    generatePlot(xValues, yValues)
+    plotter.generate_plot(xValues, yValues)
 
     return xValues, yValues
-
-
-def generatePlot(xWave, yWave):
-    plt.plot(xWave, yWave)
-    plt.title("Data")
-    plt.xlabel("Frequency")
-    plt.ylabel("Relative Intensity")
-    plt.show(block=False)
-    plt.pause(3)
-    plt.close()
-    return
 
 
 def getWave():
