@@ -13,7 +13,9 @@ import Cavity
 # Valon Inputs
 
 RFLevel = 10  # dbm
-totalFreq = 11700  # all frequencies should include the awg frequency so no need to subtract
+totalFreq = (
+    11700  # all frequencies should include the awg frequency so no need to subtract
+)
 StopFreqinput = 11200
 stepsize = 0.5
 StepDirection = "down"  # up or down
@@ -116,6 +118,8 @@ def CalibrateAndRun():
     runBool = "y"
     NewFreq = valonFreq
 
+    cavity = Cavity.Cavity()
+
     i = 0  # when i = 0 it is the first run
     while runBool == "y":
         if i == 0:
@@ -195,7 +199,10 @@ def CalibrateAndRun():
             )
 
             DF1_2 = DF1.loc[
-                ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
+                (
+                    (DF1["Frequency (MHz)"] >= LowerBound)
+                    & (DF1["Frequency (MHz)"] <= UpperBound)
+                )
             ]
 
             if StepDirection == "down":
@@ -288,7 +295,9 @@ def CalibrateAndRun():
                     break
 
                 except ValueError:
-                    print("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
+                    print(
+                        "Invalid integers somewhere. The numbers must be between 0 and 50mm."
+                    )
                     break
                 # setting the speed for the zaber
 
@@ -306,9 +315,6 @@ def CalibrateAndRun():
                     break
 
             # Retuning of the cavity position
-
-            cavity = Cavity()
-
             cavity.retune_cavity_position(startPosZaber, startPosZaberMM, speedZaber)
 
             SRScontroller.startTrig()
@@ -385,7 +391,10 @@ def CalibrateAndRun():
                 }
             )
             DF1_2 = DF1.loc[
-                ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
+                (
+                    (DF1["Frequency (MHz)"] >= LowerBound)
+                    & (DF1["Frequency (MHz)"] <= UpperBound)
+                )
             ]
             if StepDirection == "down":
                 DF1_2 = DF1_2[::-1]
@@ -450,7 +459,9 @@ def CalibrateAndRun():
         elif runBool == "n":
             zaberController.homeZaber()
             SRScontroller.stopTrig()
-            print(f"The experiment has ended. Your data can be found in {directory}/{filename}.csv")
+            print(
+                f"The experiment has ended. Your data can be found in {directory}/{filename}.csv"
+            )
             break
 
 
@@ -477,7 +488,9 @@ def acquireThread():
     tempMaxList = []
     while loopVar == 1:
         # currently we are not acquiring based on frequency
-        tempMaxList.append(float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?")))
+        tempMaxList.append(
+            float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
+        )
 
     maxList.append(tempMaxList)
 
@@ -528,7 +541,9 @@ def scaleFFT(waveValues, Start):
 
     fftYValues = np.array(waveValues, dtype="float")
     fftXValues = (
-        np.linspace(timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False)
+        np.linspace(
+            timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False
+        )
         / 1000000
     )
     Start = Start / 1000000
