@@ -364,7 +364,6 @@ def CalibrateAndRun():
             plt.close()
 
             # moving to new cavity position for next data acquisition
-
             cavity.move_cavity_position(maxPos)
 
             SRScontroller.setTrig(trigRate)
