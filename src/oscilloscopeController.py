@@ -41,7 +41,10 @@ def initializeScope():
 def writeOscCmd(command):
     oscilloScope.write(command)
     errorCheck = oscilloScope.write("*ESR?")
-    print(f"Command status register: {errorCheck}")
+
+    if (errorCheck != 6):
+        print(f"Command status register error: {errorCheck}")
+
     oscilloScope.write("*cls")
 
 
