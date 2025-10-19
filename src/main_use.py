@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import threading
-import valonController, oscilloscopeController, zaberController, SRScontroller
+import valonController, oscilloscopeController, zaberController
 import os
 
 import plot as plotter
 import Cavity
+import DelayGeneratorController
 
 ####################This version of the code is for the GUI or when not wanting code prompted inputs
 ###### Inputs manual
@@ -39,12 +40,12 @@ def initializeInstruments():
     global valonConnect
     try:
         oscilloscopeController.initializeScope()
-        SRScontroller.initializeSRS()
+        # This is temporarily here for readability until the new class is made
+        global dgc = DelayGeneratorController.DelayGeneratorController()
         valonConnect = valonController.initializeValon("COM3")
         valonController.valonSettings(RFLevel)
         zaberController.initializeZaber()
-        # response = MyPTE1.Connect()
-        # print(response)
+
     except PermissionError:
         print("ATTN: Permission Error. Make sure Valon and Zaber windows are closed.")
         exit()
@@ -77,7 +78,7 @@ def setParameters():
 
     # setting parameters
 
-    SRScontroller.setTrig(trigRate)
+    dgc.set_trig(trigRate)
     timedelay = acqs / trigRate
 
     print(
@@ -131,15 +132,15 @@ def CalibrateAndRun():
     # run experiment
     getWave()
 
-    SRScontroller.startPulse()
-    SRScontroller.setTrig(trigRate)
+    dgc.start_pulse()
+    dgc.set_trig(trigRate)
 
     # collect data
     xxValues, yyValues = fftFromScope()
 
     # stop scope and pulse valve
     oscilloscopeController.oscCalibStop()
-    SRScontroller.stopPulse()
+    dgc.stop_pulse()
 
     (
         timeScale,
@@ -310,7 +311,7 @@ def CalibrateAndRun():
 
         # Retuning of the cavity position
         cavity.retune_cavity_position(startPosZaber, startPosZaberMM, speedZaber)
-        SRScontroller.startTrig()
+        dgc.start_trig()
 
         # setting up threading for scanning
         threadZaber1 = threading.Thread(target=zaberThread)
@@ -354,14 +355,14 @@ def CalibrateAndRun():
         # moving to new cavity position for next data acquisition
         cavity.move_cavity_position(max_pos)
 
-        SRScontroller.setTrig(trigRate)
+        dgc.set_trig(trigRate)
 
         oscilloscopeController.SetScopeSettings(channel, gatepos)
         getWave()
-        SRScontroller.startPulse()
+        dgc.start_pulse()
         xxValues1, yyValues1 = fftFromScope()
         oscilloscopeController.oscCalibStop()
-        SRScontroller.stopPulse()
+        dgc.stop_pulse()
 
         # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
         UpperBound = TotalFrequency + StepSize / 2
@@ -404,7 +405,7 @@ def CalibrateAndRun():
         ### determining if there will be subsequent runs
         if not runBool:
             zaberController.homeZaber()
-            SRScontroller.stopTrig()
+            dgc.stop_trig()
             print(
                 f"The experiment has ended. Your data can be found in {directory}/{filename}.csv"
             )
@@ -429,7 +430,7 @@ def CalibrateAndRun():
         elif NewFreq > StopFreq and StepDirection == "up":
             runBool = False
             zaberController.homeZaber()
-            SRScontroller.stopTrig()
+            dgc.stop_trig()
             print(
                 "You have reached the stop frequency. You will find your data in .csv file: ",
                 f"{directory}/{filename}.csv",
@@ -437,7 +438,7 @@ def CalibrateAndRun():
             break
         elif NewFreq < StopFreq and StepDirection == "down":
             zaberController.homeZaber()
-            SRScontroller.stopTrig()
+            dgc.stop_trig()
             print(
                 "You have reached the stop frequency. You will find your data in .csv file: ",
                 f"{directory}/{filename}.csv",
