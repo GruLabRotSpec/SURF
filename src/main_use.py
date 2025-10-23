@@ -41,7 +41,8 @@ def initializeInstruments():
     try:
         oscilloscopeController.initializeScope()
         # This is temporarily here for readability until the new class is made
-        global dgc = DelayGeneratorController.DelayGeneratorController()
+        global dgc
+        dgc = DelayGeneratorController.DelayGeneratorController()
         valonConnect = valonController.initializeValon("COM3")
         valonController.valonSettings(RFLevel)
         zaberController.initializeZaber()
@@ -121,7 +122,7 @@ def CalibrateAndRun():
     runBool = True
     NewFreq = valonFreq
 
-    cavity = Cavity.Cavity()
+    cavity = Cavity.Cavity(dgc)
 
     ### First Run ###
     # status = MyPTE1.Set_Switch("A", 0)

@@ -10,7 +10,7 @@ class DelayGeneratorController:
         print("_______________________________________________________")
         print("SRS opened successfully... Switching to EXT Triggering.")
         print("_______________________________________________________")
-        self.stopPulse()
+        self.stop_pulse()
         # Turn on external trigger
         self.__write_cmd("TM 1; TL 1")
 
@@ -24,7 +24,7 @@ class DelayGeneratorController:
     def get_delays(self):
         return self.__delays
 
-    def set_frequency(self, freq)
+    def set_frequency(self, freq):
         self.__frequency = float(freq)
         print("Activating internal trigger at ", self.__frequency)
         return self.__frequency
