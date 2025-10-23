@@ -2,57 +2,57 @@ import time
 import pyvisa as visa
 import numpy as np
 
-VISUAL_ADRESS_SCOPE = "TCPIP0::169.254.23.223::inst0::INSTR"
 
-
-class Oscilloscope:
+class OscilloscopeController:
     # initializing scope
     def __init__(self):
         rm = visa.ResourceManager()
-        self.oscilloScope = rm.open_resource(VISUAL_ADRESS_SCOPE)  # delay after each command
-        self.oscilloScope.timeout = 10000  # ms
-        self.oscilloScope.encoding = "latin_1"
-        self.oscilloScope.write_termination = "\n"
-        # oscilloScope.read_termination = '\n'
-        self.oscilloScope.expect_termination = False
-        self.oscilloScope.chunk_size = 102400  # larger data sizes
-        # oscillowriteOscCmd('*rst') #reset
+        self.__visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+        self.__oscilloscope = rm.open_resource(
+            self.__visa_address
+        )  # delay after each command
+        self.__oscilloscope.timeout = 10000  # ms
+        self.__oscilloscope.encoding = "latin_1"
+        self.__oscilloscope.write_termination = "\n"
+        self.__oscilloscope.expect_termination = False
+        self.__oscilloscope.chunk_size = 102400  # larger data sizes
         time.sleep(1)
-        r = self.oscilloScope.query("*opc?")  # sync
+        r = self.__oscilloscope.query("*opc?")  # sync
         print(r)
-        self.oscilloScope.write("*cls")
+        self.__oscilloscope.write("*cls")
 
     # sends command, ensures no error after
-    def writeOscCmd(self, command):
-        self.oscilloScope.write(command)
-        errorCheck = self.oscilloScope.write("*ESR?")
+    def write_cmd(self, command):
+        self.__oscilloscope.write(command)
+        errorCheck = self.__oscilloscope.write("*ESR?")
 
         # ESR giving command error "5": Command Error. Shows that an error occurred while the
         # instrument was parsing a command or query.
         if errorCheck != 6:
             print(f"Command status register error: {errorCheck}")
 
-        self.oscilloScope.write("*cls")
+        self.__oscilloscope.write("*cls")
 
     # query command
-    def queryOscCmd(self, command):
-        output = self.oscilloScope.query(f"{command}")
-        # print(command, ": ", output)
+    def query_cmd(self, command):
+        output = self.__oscilloscope.query(f"{command}")
         return output
 
     # grabParam for generating waveform plot
-    def grabParam(self):
-        timeScale = float(self.queryOscCmd("wfmoutpre:xincr?"))  # horizontal spacing
-        timeStart = float(self.queryOscCmd("wfmoutpre:xzero?"))
-        verticalScale = float(self.queryOscCmd("wfmoutpre:ymult?"))  # volts / level
-        verticalOffset = float(self.queryOscCmd("wfmoutpre:yzero?"))  # reference voltage
-        verticalPosition = float(self.queryOscCmd("wfmoutpre:yoff?"))  # reference position (level)
+    def grab_param(self):
+        timeScale = float(self.query_cmd("wfmoutpre:xincr?"))  # horizontal spacing
+        timeStart = float(self.query_cmd("wfmoutpre:xzero?"))
+        verticalScale = float(self.query_cmd("wfmoutpre:ymult?"))  # volts / level
+        verticalOffset = float(self.query_cmd("wfmoutpre:yzero?"))  # reference voltage
+        verticalPosition = float(
+            self.query_cmd("wfmoutpre:yoff?")
+        )  # reference position (level)
 
-        FreqCent = float(self.queryOscCmd("MATH4:SPECTral:CENTER?"))
-        FreqSpan = float(self.queryOscCmd("MATH4:SPECTral:SPAN?"))
-        Resolution = float(self.queryOscCmd("MATH4:SPECTral:RESBw?"))
-        GatePos = float(self.queryOscCmd("MATH4:SPECTral:GATEPOS?"))
-        GateWidth = float(self.queryOscCmd("MATH4:SPECTral:GATEWIDTH?"))
+        FreqCent = float(self.query_cmd("MATH4:SPECTral:CENTER?"))
+        FreqSpan = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
+        Resolution = float(self.query_cmd("MATH4:SPECTral:RESBw?"))
+        GatePos = float(self.query_cmd("MATH4:SPECTral:GATEPOS?"))
+        GateWidth = float(self.query_cmd("MATH4:SPECTral:GATEWIDTH?"))
 
         return (
             timeScale,
@@ -68,137 +68,135 @@ class Oscilloscope:
         )
 
     # starts oscilloscope run
-    def oscCalibStart(self):
+    def calib_start(self):
         # initial config
-        self.writeOscCmd("acquire:state 0")
-        self.writeOscCmd("header 0")
-        self.writeOscCmd("data:encdg SRIBINARY")
-        self.writeOscCmd("data:source CH1")  # channel
-        self.writeOscCmd("wfmoutpre:byt_n 1")  # 1 byte per sample
+        self.write_cmd("acquire:state 0")
+        self.write_cmd("header 0")
+        self.write_cmd("data:encdg SRIBINARY")
+        self.write_cmd("data:source CH1")  # channel
+        self.write_cmd("wfmoutpre:byt_n 1")  # 1 byte per sample
 
         # acq config
-        self.writeOscCmd("acquire:state 0")  # stop
-        self.writeOscCmd("acquire:STOPAfter RUNSTop")  # cont
-        self.writeOscCmd("acquire:state 1")
+        self.write_cmd("acquire:state 0")  # stop
+        self.write_cmd("acquire:STOPAfter RUNSTop")  # cont
+        self.write_cmd("acquire:state 1")
 
     # stops oscilloscope run
-    def oscCalibStop(self):
-        self.writeOscCmd("acquire:state 0")
+    def calib_stop(self):
+        self.write_cmd("acquire:state 0")
 
-    def clearOsc(self):
-        self.writeOscCmd("CLEAR ALL")  # doesn't work
+    def clear(self):
+        self.write_cmd("CLEAR ALL")  # doesn't work
 
-    def oscRunScope(self):
-        self.writeOscCmd("acquire:state 1")  # run
+    def run(self):
+        self.write_cmd("acquire:state 1")  # run
 
-    def acquireFFTDataAtMax(self):
+    def acquire_fft_data_at_max(self):
         # math4 input param
-        self.writeOscCmd("header 0")
-        self.writeOscCmd("data:encdg SRPbinary")
-        self.writeOscCmd("data:source MATH4")  # channel
-        self.writeOscCmd("wfmoutpre:byt_nr 4")
+        self.write_cmd("header 0")
+        self.write_cmd("data:encdg SRPbinary")
+        self.write_cmd("data:source MATH4")  # channel
+        self.write_cmd("wfmoutpre:byt_nr 4")
 
         # io config
-        self.writeOscCmd("header 0")
-        self.writeOscCmd("data:encdg SRPbinary")
-        self.writeOscCmd("data:start 1")  # first sample
-        self.writeOscCmd("wfmoutpre:byt_nr 4")
+        self.write_cmd("header 0")
+        self.write_cmd("data:encdg SRPbinary")
+        self.write_cmd("data:start 1")  # first sample
+        self.write_cmd("wfmoutpre:byt_nr 4")
 
         # acq config
-        self.writeOscCmd("acquire:state 0")  # stop
-        self.writeOscCmd("acquire:STOPAfter RUNSTop")  # cont acq
-        self.writeOscCmd("curvestream?")
-        self.writeOscCmd("acquire:state 1")  # run
+        self.write_cmd("acquire:state 0")  # stop
+        self.write_cmd("acquire:STOPAfter RUNSTop")  # cont acq
+        self.write_cmd("curvestream?")
+        self.write_cmd("acquire:state 1")  # run
 
         # data query
         t7 = time.perf_counter()
-        bin_wave = self.oscilloScope.query_binary_values(
+        bin_wave = self.__oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
         print("acquire time: ", t8 - t7)
 
-        self.writeOscCmd("WFMOutpre?")
+        self.write_cmd("WFMOutpre?")
 
         return bin_wave
 
-    def recallsetup(self, setup):
-        # TODO: This probably should not be hardcoded
-        folder = "C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab"
-        self.writeOscCmd(f'RECALL:SETUP "{folder}\\{setup}"')
+    def recall_setup(
+        self,
+        setup,
+        folder="C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab",
+    ):
+        self.write_cmd(f'RECALL:SETUP "{folder}\\{setup}"')
         time.sleep(3)
         print("Successfully recalled setup")
 
-    def recallsetupScopeCavity(self):
-        # writeOscCmd('RECALL:SETUP "4MS_cavity000.set"')
-        self.writeOscCmd('RECALL:SETUP "cavity_ch2000002.set"')
-        # writeOscCmd('RECALL:SETUP "cavity0917001.set"')
-
+    def recall_setup_cavity(self, setup="cavity_ch2000002.set"):
+        self.write_cmd(f'RECALL:SETUP "{setup}"')
         time.sleep(7)
 
-    def recallMolPeakScope(self):
-        # writeOscCmd('RECALL:SETUP "091724000.set"')
-        # writeOscCmd('RECALL:SETUP "4MS_cavity000.set"')
-        # writeOscCmd('RECALL:SETUP "molpeak_nbn000.set"')        #setup for N butynitrile
-        self.writeOscCmd('RECALL:SETUP "cavity000.set"')
+    def recall_mol_peak(self, setup="cavity000.set"):
+        self.write_cmd(f'RECALL:SETUP "{setup}"')
         time.sleep(7)
 
-    def acqFTCurve(self, channel, acqtime):  # this is for actually pulling the data
-        self.writeOscCmd("header 0")
-        self.writeOscCmd("data:encdg SRPbinary")
-        self.writeOscCmd("data:source MATH4")  # channel
-        self.writeOscCmd("wfmoutpre:byt_nr 4")
+    def acq_ft_curve(self, channel, acqtime):  # this is for actually pulling the data
+        self.write_cmd("header 0")
+        self.write_cmd("data:encdg SRPbinary")
+        self.write_cmd("data:source MATH4")  # channel
+        self.write_cmd("wfmoutpre:byt_nr 4")
 
         # acq configuration
-        self.writeOscCmd("acquire:state 0")  # stop
-        self.writeOscCmd("acquire:STOPAfter RUNSTop")  # cont acq
-        self.writeOscCmd("curvestream?")
-        self.writeOscCmd("acquire:state 1")  # run
-        self.writeOscCmd(f"{channel}:SCAle 0.9")
+        self.write_cmd("acquire:state 0")  # stop
+        self.write_cmd("acquire:STOPAfter RUNSTop")  # cont acq
+        self.write_cmd("curvestream?")
+        self.write_cmd("acquire:state 1")  # run
+        self.write_cmd(f"{channel}:SCAle 0.9")
 
         # data query
         time.sleep(acqtime)
         t7 = time.perf_counter()
-        new_bin_wave = self.oscilloScope.query_binary_values(
+        new_bin_wave = self.__oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
         print("acquire time: ", t8 - t7)
 
-        self.writeOscCmd("WFMOutpre?")
+        self.write_cmd("WFMOutpre?")
 
         return new_bin_wave
 
-    def SetScopeSettings(self, channel, gatepos):
-        self.writeOscCmd("SELECT:MATH3 0")
-        self.writeOscCmd("SELECT:MATH4 1")
+    def set_settings(self, channel, gate_pos):
+        self.write_cmd("SELECT:MATH3 0")
+        self.write_cmd("SELECT:MATH4 1")
 
-        self.writeOscCmd(f'MATH4:DEFINE "SpectralMag(AVG({channel}))"')
-        self.writeOscCmd("MATH4:NUMAvg 1000000")
-        self.writeOscCmd("MATH4:VERTical:POSition -4")
-        self.writeOscCmd("MATH4:SPECTral:WINdow Hanning")
-        self.writeOscCmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.writeOscCmd("HORizontal:MODE:SCAle 5E-6")
-        self.writeOscCmd("MATH4:SPECTral:RESBw 100E3")
-        self.writeOscCmd("MATH4:SPECTral:CENTER 30E6")
-        self.writeOscCmd("MATH4:SPECTral:SPAN 20E6")
-        self.writeOscCmd(f"MATH4:SPECTral:GATEPOS {gatepos}")
-        self.writeOscCmd("MATH4:VERTICAL:SCALE 500E-6")  # sets math channel vertical scale
+        self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({channel}))"')
+        self.write_cmd("MATH4:NUMAvg 1000000")
+        self.write_cmd("MATH4:VERTical:POSition -4")
+        self.write_cmd("MATH4:SPECTral:WINdow Hanning")
+        self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
+        self.write_cmd("HORizontal:MODE:SCAle 5E-6")
+        self.write_cmd("MATH4:SPECTral:RESBw 100E3")
+        self.write_cmd("MATH4:SPECTral:CENTER 30E6")
+        self.write_cmd("MATH4:SPECTral:SPAN 20E6")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {gate_pos}")
+        self.write_cmd(
+            "MATH4:VERTICAL:SCALE 500E-6"
+        )  # sets math channel vertical scale
         time.sleep(2)
-        self.writeOscCmd(f"{channel}:SCAle 1")
+        self.write_cmd(f"{channel}:SCAle 1")
 
-    def SetScopeTuningSettings(self, channel):
-        self.writeOscCmd("SELECT:MATH4 0")
-        self.writeOscCmd("SELECT:MATH3 1")
-        self.writeOscCmd(f'MATH3:DEFINE "SpectralMag({channel})"')
+    def set_tuning_settings(self, channel):
+        self.write_cmd("SELECT:MATH4 0")
+        self.write_cmd("SELECT:MATH3 1")
+        self.write_cmd(f'MATH3:DEFINE "SpectralMag({channel})"')
 
-        self.writeOscCmd("MATH3:SPECTral:WINdow KAISERBessel")
-        self.writeOscCmd("MATH3:VERTical:POSition -4")
-        self.writeOscCmd("HORizontal:MODE:SAMPLERate 100E6")
-        self.writeOscCmd("HORizontal:MODE:SCAle 500E-9")
-        self.writeOscCmd("MATH3:SPECTral:RESBw 835E3")
-        self.writeOscCmd("MATH3:SPECTral:CENTER 30E6")
-        self.writeOscCmd(f"MATH3:SPECTral:GATEPOS 1E-6")
-        self.writeOscCmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
+        self.write_cmd("MATH3:SPECTral:WINdow KAISERBessel")
+        self.write_cmd("MATH3:VERTical:POSition -4")
+        self.write_cmd("HORizontal:MODE:SAMPLERate 100E6")
+        self.write_cmd("HORizontal:MODE:SCAle 500E-9")
+        self.write_cmd("MATH3:SPECTral:RESBw 835E3")
+        self.write_cmd("MATH3:SPECTral:CENTER 30E6")
+        self.write_cmd(f"MATH3:SPECTral:GATEPOS 1E-6")
+        self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
 
-        self.oscCalibStart()
+        self.calib_start()
