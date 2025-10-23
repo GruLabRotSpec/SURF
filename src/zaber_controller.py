@@ -1,37 +1,24 @@
 from zaber_motion.ascii import Connection
+from zaber_motion.units import Units
 
 
-class Zaber:
-    def __init__(self) -> None:
-        port = Connection.open_serial_port("COM5")
+class ZaberController:
+    def __init__(self, max_speed, port = "COM5") -> None:
+        port = Connection.open_serial_port(port)
+        print(port.detect_devices())
         self.device = port.get_device(1)
         self.axis = self.device.get_axis(1)
-        # self.device.send(f"/limit.max {zaberMax}")
+        self.max_speed = max_speed
 
-    # moves Zaber to abs pos
-    def moveToZaber(self, pos):
-        zaberDevice.move_abs(pos)
-        self.axis.move_absolute()
-        Pos = zaberDevice.get_position()
-        currPos = Pos / 20997
-        print(f"Zaber is at position: {currPos}")
+    def move_to(self, pos):
+        self.axis.move_absolute(pos, Units.LENGTH_MILLIMETRES, velocity=self.max_speed, 
+                                velocity_unit=Units.VELOCITY_MILLIMETRES_PER_SECOND)
+
+    def get_pos(self) -> float:
+        return self.axis.get_position(Units.LENGTH_MILLIMETRES)
 
     def home(self):
         self.axis.home()
 
-    # moves by relative pos, or distance from curr pos
-    def moveByZaber(self, dist):
-        zaberDevice.move_abs(dist)
-        currPos = zaberDevice.get_position()
-        print(f"Zaber is at position: {currPos}")
-
-    # initializes movement at speed
-    def zaberStart(zaberSpeed):
-        zaberDevice.move_vel(zaberSpeed)
-
-    def zaberSetSpeed(zaberSpeed):
-        zaberDevice.send(f"/set maxspeed {zaberSpeed}")
-
-    def zaberSetup(startPosZaber):
-        zaberDevice.move_abs(startPosZaber)
-        # zaberDevice.send(f"/set rel {endPosZaber}") #changed this
+    def set_speed(self, speed):
+        self.max_speed = speed
