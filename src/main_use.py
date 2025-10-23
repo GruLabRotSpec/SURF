@@ -129,7 +129,7 @@ def CalibrateAndRun():
     # status = MyPTE1.Set_Switch("A", 0)
     currPos = zaber.get_pos()
     print("Zaber is at position", currPos)
-    oscilloscope.SetScopeSettings(channel, gatepos)
+    oscilloscope.set_settings(channel, gatepos)
     # oscilloscope.recallsetup(setup)
     # run experiment
     getWave()
@@ -141,7 +141,7 @@ def CalibrateAndRun():
     xxValues, yyValues = fftFromScope()
 
     # stop scope and pulse valve
-    oscilloscope.oscCalibStop()
+    oscilloscope.calib_stop()
     SRScontroller.stopPulse()
 
     (
@@ -155,7 +155,7 @@ def CalibrateAndRun():
         Resolution,
         GatePos,
         GateWidth,
-    ) = oscilloscope.grabParam()
+    ) = oscilloscope.grab_param()
 
     Parameters = [
         trigRate,
@@ -240,9 +240,9 @@ def CalibrateAndRun():
 
         currPos = zaber.get_pos()
 
-        oscilloscope.SetScopeTuningSettings(channel)
+        oscilloscope.set_tuning_settings(channel)
         time.sleep(10)  # TODO: Figure out how to remove this
-        oscilloscope.oscCalibStop()
+        oscilloscope.calib_stop()
 
         if StepDirection == "up":
             NewFreq = valonFreq + StepSize * i
@@ -293,7 +293,7 @@ def CalibrateAndRun():
         for threadInstances in threads1:
             threadInstances.join()
 
-        oscilloscope.oscCalibStop()
+        oscilloscope.calib_stop()
 
         print("aq length: ", len(maxList))
 
@@ -326,11 +326,11 @@ def CalibrateAndRun():
 
         SRScontroller.setTrig(trigRate)
 
-        oscilloscope.SetScopeSettings(channel, gatepos)
+        oscilloscope.set_settings(channel, gatepos)
         getWave()
         SRScontroller.startPulse()
         xxValues1, yyValues1 = fftFromScope()
-        oscilloscope.oscCalibStop()
+        oscilloscope.calib_stop()
         SRScontroller.stopPulse()
 
         # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
@@ -431,7 +431,7 @@ def acquireThread():
     tempMaxList = []
     while loopVar:
         # currently we are not acquiring based on frequency
-        tempMaxList.append(float(oscilloscope.queryOscCmd("MEASUrement:MEAS1:VALUE?")))
+        tempMaxList.append(float(oscilloscope.query_cmd("MEASUrement:MEAS1:VALUE?")))
 
     maxList.append(tempMaxList)
 
@@ -439,7 +439,7 @@ def acquireThread():
 def fftFromScope():
     global timeScale, timeStart, verticalScale, verticalOffset, verticalPosition, FreqCent, FreqSpan
 
-    waveValues = oscilloscope.acqFTCurve(channel, timedelay)
+    waveValues = oscilloscope.acq_ft_curve(channel, timedelay)
 
     (
         timeScale,
@@ -452,7 +452,7 @@ def fftFromScope():
         Resolution,
         GatePos,
         GateWidth,
-    ) = oscilloscope.grabParam()
+    ) = oscilloscope.grab_param()
     Start = FreqCent - FreqSpan / 2
     # acquire vals
     xValues, yValues = scaleFFT(waveValues, Start)
@@ -463,7 +463,7 @@ def fftFromScope():
 
 
 def getWave():
-    getWave = oscilloscope.acquireFFTDataAtMax()
+    getWave = oscilloscope.acquire_fft_data_at_max()
     return getWave
 
 
