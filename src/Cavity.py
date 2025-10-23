@@ -1,15 +1,16 @@
 import oscilloscopeController
-import SRScontroller
+import DelayGeneratorController
 import zaberController
 
 
 class Cavity:
-    def __init__(self):
+    def __init__(self, srscontroller):
         self.__zaber_retune_speed = 101204
+        self.srscontroller = srscontroller
 
     def retune_cavity_position(self, start_pos_zaber, start_pos_zaber_mm, zaber_speed):
         # Retuning of the cavity position
-        SRScontroller.setFreq(300)
+        self.srscontroller.set_freq(300)
         zaberController.zaberSetSpeed(
             self.__zaber_retune_speed
         )  # Speed for moving to the beginning spot, not the speed for scanning
@@ -18,7 +19,7 @@ class Cavity:
         zaberController.zaberDevice.poll_until_idle()
         zaberController.zaberSetSpeed(zaber_speed)
         oscilloscopeController.oscCalibStart()
-        SRScontroller.startTrig()
+        self.srscontroller.start_trig()
 
     def move_cavity_position(self, max_pos):
         # Moving to new cavity position for next data acquisition
