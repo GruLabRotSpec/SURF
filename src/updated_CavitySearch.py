@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import threading
-import zaberController, SRScontroller, valonController, oscilloscopeController
+import zaberController, DelayGeneratorController, valonController, oscilloscopeController
 from scipy.signal import find_peaks
 import os
 
