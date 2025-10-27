@@ -1,4 +1,4 @@
-from DelayGeneratorController import DelayGeneratorController
+from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController
 from oscilloscope_controller import OscilloscopeController
 
