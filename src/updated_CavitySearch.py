@@ -37,7 +37,7 @@ def DefineParameters():
     awgFreq = 30
     valonFreq = totalFreq - awgFreq
     valonController.writeValonCommand(f"Frequency {valonFreq} MHz")
-    # oscilloscopeController.recallsetup('cavity_ch2000001.set')
+    # oscilloscopeController.recall_setup('cavity_ch2000001.set')
 
     k = 0
     folderpath = "Cavity Scan"
@@ -125,7 +125,7 @@ def CavitySearch():
         zaberController.zaberSetSpeed(speedZaber)
 
         time.sleep(2)
-        oscilloscopeController.oscCalibStart()
+        oscilloscopeController.calib_start()
         SRScontroller.startTrig()
 
         threadZaber1 = threading.Thread(target=zaberThread)
@@ -138,7 +138,7 @@ def CavitySearch():
         for threadInstances in threads1:
             threadInstances.join()
         SRScontroller.stopTrig()
-        oscilloscopeController.oscCalibStop()
+        oscilloscopeController.calib_stop()
         for maxLists in maxList:
             posArr = np.linspace(startPosZaberMM, endPosZaberMM, len(maxLists))
             print("Length of max: ", len(maxLists))
@@ -182,7 +182,7 @@ def CavitySearch():
         print("run #", i + 1, "has been added to: ", f"{directory}/{filename}.csv")
 
         # SRScontroller.stopTrig()
-        # oscilloscopeController.oscCalibStop()
+        # oscilloscopeController.calib_stop()
         if stepUpVar == True and StopFreqVar == True:
             if NewFreq <= StopFreq:
                 i += 1
