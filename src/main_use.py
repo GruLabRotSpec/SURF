@@ -5,7 +5,7 @@ import pandas as pd
 import threading
 import valonController, SRScontroller
 from zaber_controller import ZaberController
-from oscilloscope_controller import Oscilloscope
+from oscilloscope_controller import OscilloscopeController
 import os
 
 import plot as plotter
@@ -42,7 +42,7 @@ def initializeInstruments():
     global oscilloscope
     try:
         zaber = ZaberController(speedZaber)
-        oscilloscope = Oscilloscope()
+        oscilloscope = OscilloscopeController()
         SRScontroller.initializeSRS()
         valonConnect = valonController.initializeValon("COM3")
         valonController.valonSettings(RFLevel)
