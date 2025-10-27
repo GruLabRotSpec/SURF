@@ -1,10 +1,10 @@
 import SRScontroller
 from zaber_controller import ZaberController
-from oscilloscope_controller import Oscilloscope
+from oscilloscope_controller import OscilloscopeController
 
 
 class Cavity:
-    def __init__(self, zaber: ZaberController, oscilloscope: Oscilloscope):
+    def __init__(self, zaber: ZaberController, oscilloscope: OscilloscopeController):
         self.__zaber_retune_speed = 4.8
         self.zaber = zaber
         self.oscilloscope = oscilloscope
