@@ -8,7 +8,7 @@ class ValonController:
     def __init__(self, port = "COM3"):
         self.__delay = 0.1
         self.__port = port
-        self.__connection = VSerialPort.VSerialPort(self.__port)
+        self.__connection = VSerialPort(self.__port)
 
 
 # Write Valon cmds, either writing or querying based on presence of \r
