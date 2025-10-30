@@ -5,9 +5,9 @@ from v_serial_port import VSerialPort
 
 
 class ValonController:
-    def __init__(self):
+    def __init__(self, port = "COM3"):
         self.__delay = 0.1
-        self.__port = "COM3"
+        self.__port = port
         self.__connection = VSerialPort.VSerialPort(self.__port)
 
 
