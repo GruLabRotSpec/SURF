@@ -3,7 +3,7 @@ import time
 
 
 class VSerialPort(serial.Serial):
-    def __init__(self, portParam=None):
+    def __init__(self, port_name):
         serial.Serial.__init__(self)
         # Try:
         self.baudrate = 9600
