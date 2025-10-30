@@ -5,7 +5,7 @@ import pandas as pd
 import threading
 import os
 
-import valonController
+from valon_controller import ValonController
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController
 from oscilloscope_controller import OscilloscopeController
@@ -38,7 +38,7 @@ channel = "CH4"  # oscilloscope channel, doesn't change often but sometimes
 
 
 def initializeInstruments():
-    global valonConnect
+    global valon
     global zaber
     global cavity
     global oscilloscope
@@ -47,10 +47,10 @@ def initializeInstruments():
         zaber = ZaberController(speedZaber)
         oscilloscope = OscilloscopeController()
         dgc = DelayGeneratorController()
-        valonConnect = valonController.initializeValon("COM3")
+        valon = ValonController("COM3")
 
-        valonController.valonSettings(RFLevel)
-        
+        valon.set_settings(RFLevel)
+
         cavity = Cavity.Cavity(zaber, oscilloscope, dgc)
         # response = MyPTE1.Connect()
         # print(response)
@@ -101,13 +101,13 @@ def setParameters():
     print(f"The estimated time for this scan is at least {totalTime} mins")
 
     valonFreq = totalFreq - awgFreq
-    valonController.writeValonCommand(f"Frequency {valonFreq} MHz")
+    valon.write_cmd(f"Frequency {valonFreq} MHz")
     StopFreq = StopFreqinput - awgFreq
 
     try:
         StepSize = float(stepsize)
         stepUpVar = True
-        valonController.writeValonCommand(f"FrequencyStep {StepSize} MHz")
+        valon.write_cmd(f"FrequencyStep {StepSize} MHz")
     except ValueError:
         stepUpVar = False
         print("Only running single sequence.")
@@ -224,14 +224,14 @@ def CalibrateAndRun():
     )  # appended main file with filtered data
 
     if stepUpVar == True and StopFreqVar == True and StepDirection == "up" and NewFreq < StopFreq:
-        valonController.valonStepUp()
+        valon.step_up()
     elif (
         stepUpVar == True
         and StopFreqVar == True
         and StepDirection == "down"
         and NewFreq >= StopFreq
     ):
-        valonController.valonStepDown()
+        valon.step_down()
     else:
         raise ValueError("ERROR: Valon didn't step in first run.")
 
@@ -386,7 +386,7 @@ def CalibrateAndRun():
             and NewFreq < StopFreq
         ):
             i += 1
-            valonController.valonStepUp()
+            valon.step_up()
         elif (
             stepUpVar == True
             and StopFreqVar == True
@@ -394,7 +394,7 @@ def CalibrateAndRun():
             and NewFreq >= StopFreq
         ):
             i += 1
-            valonController.valonStepDown()
+            valon.step_down()
         elif NewFreq > StopFreq and StepDirection == "up":
             runBool = False
             zaber.home()
