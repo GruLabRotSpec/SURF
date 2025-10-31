@@ -53,7 +53,7 @@ class Spectrometer:
             self.__zaber_controller = ZaberController(self.__zaber_speed)
             self.__oscilloscope_controller = OscilloscopeController()
             self.__valon_controller = ValonController("COM3")
-            self.__cavity = Cavity.Cavity(
+            self.__cavity = Cavity(
                 self.__zaber_controller,
                 self.__oscilloscope_controller,
                 self.__delay_generator_controller,
@@ -70,9 +70,10 @@ class Spectrometer:
     def __set_status(self, status):
         self.__status = status
 
-    def scan_frequency(self, start_freq, stop_freq=11200, step_size=0.5):
+    def scan_frequency(self, start_freq=None, stop_freq=11200, step_size=0.5):
         # From old function setParameters(self):
         global valon_freq, step_up_var, stop_freq_var, time_delay
+        stop_freq_input = stop_freq
 
         # Creating directory for output files
         k = 0
@@ -105,7 +106,7 @@ class Spectrometer:
 
         # setting parameters
 
-        dgc.set_trig(self.__trig_rate)
+        self.__delay_generator_controller.set_trig(self.__trig_rate)
         time_delay = self.__acq_rate / self.__trig_rate
 
         print(
@@ -120,13 +121,13 @@ class Spectrometer:
         print(f"The estimated time for this scan is at least {total_time} mins")
 
         valon_freq = self.__total_freq - self.__awg_freq
-        valon.write_cmd(f"Frequency {valon_freq} MHz")
+        self.__valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
         stop_freq = stop_freq_input - self.__awg_freq
 
         try:
             step_size = float(step_size)
             step_up_var = True
-            valon.write_cmd(f"FrequencyStep {step_size} MHz")
+            self.__valon_controller.write_cmd(f"FrequencyStep {step_size} MHz")
         except ValueError:
             step_up_var = False
             print("Only running single sequence.")
@@ -149,20 +150,20 @@ class Spectrometer:
         new_freq = valon_freq
 
         ### First Run ###
-        curr_pos = zaber.get_pos()
+        curr_pos = self.__zaber_controller.get_pos()
         print("Zaber is at position", curr_pos)
-        oscilloscope.set_settings(self.__oscilloscope_channel, self.__gate_pos)
-        __get_wave()
+        self.__oscilloscope_controller.set_settings(self.__oscilloscope_channel, self.__gate_pos)
+        self.__get_wave()
 
-        dgc.start_pulse()
-        dgc.set_trig(trigRate)
+        self.__delay_generator_controller.start_pulse()
+        self.__delay_generator_controller.set_trig(self.__trig_rate)
 
         # collect data
-        xx_values, yy_values = __fft_from_scope()
+        xx_values, yy_values = self.__fft_from_scope()
 
         # stop scope and pulse valve
-        oscilloscope.calib_stop()
-        dgc.stop_pulse()
+        self.__oscilloscope_controller.calib_stop()
+        self.__delay_generator_controller.stop_pulse()
 
         (
             timeScale,
@@ -175,11 +176,11 @@ class Spectrometer:
             Resolution,
             GatePos,
             GateWidth,
-        ) = oscilloscope.grab_param()
+        ) = self.__oscilloscope_controller.grab_param()
 
         parameters = [
-            trigRate,
-            acqs,
+            self.__trig_rate,
+            self.__acq_rate,
             timeScale,
             timeStart,
             verticalScale,
@@ -248,14 +249,14 @@ class Spectrometer:
             and self.__step_direction == "up"
             and new_freq < stop_freq
         ):
-            valon.step_up()
+            self.__valon_controller.step_up()
         elif (
             step_up_var == True
             and stop_freq_var == True
             and self.__step_direction == "down"
             and new_freq >= stop_freq
         ):
-            valon.step_down()
+            self.__valon_controller.step_down()
         else:
             raise ValueError("ERROR: Valon didn't step in first run.")
 
@@ -266,11 +267,11 @@ class Spectrometer:
             time_list = []
             max_max_vals = []
 
-            curr_pos = zaber.get_pos()
+            curr_pos = self.__zaber_controller.get_pos()
 
-            oscilloscope.set_tuning_settings(self.__oscilloscope_channel)
+            self.__oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
             time.sleep(10)  # TODO: Figure out how to remove this
-            oscilloscope.calib_stop()
+            self.__oscilloscope_controller.calib_stop()
 
             if self.__step_direction == "up":
                 new_freq = valon_freq + step_size * i
@@ -284,7 +285,7 @@ class Spectrometer:
             total_frequency = new_freq + self.__awg_freq
             print(f"the new center freq is: {total_frequency}")
             print(f"The new Valon Frequency is: {new_freq}")
-            curr_pos = zaber.get_pos()
+            curr_pos = self.__zaber_controller.get_pos()
 
             print(
                 "Attempting to travel from ",
@@ -321,12 +322,12 @@ class Spectrometer:
                 )
 
             # Retuning of the cavity position
-            cavity.retune_cavity_position(start_pos_zaber, speedZaber)
-            dgc.start_trig()
+            self.__cavity.retune_cavity_position(start_pos_zaber, self.__zaber_speed)
+            self.__delay_generator_controller.start_trig()
 
             # setting up threading for scanning
-            threadZaber1 = threading.Thread(target=__zaber_thread)
-            threadAcquire1 = threading.Thread(target=__acquire_thread)
+            threadZaber1 = threading.Thread(target=self.__zaber_thread)
+            threadAcquire1 = threading.Thread(target=self.__acquire_thread)
 
             threads1 = [threadZaber1, threadAcquire1]
 
@@ -335,7 +336,7 @@ class Spectrometer:
             for threadInstances in threads1:
                 threadInstances.join()
 
-            oscilloscope.calib_stop()
+            self.__oscilloscope_controller.calib_stop()
 
             print("aq length: ", len(max_list))
 
@@ -364,16 +365,16 @@ class Spectrometer:
             plt.close()
 
             # moving to new cavity position for next data acquisition
-            cavity.move_cavity_position(max_pos)
+            self.__cavity.move_cavity_position(max_pos)
 
-            dgc.set_trig(trigRate)
+            self.__delay_generator_controller.set_trig(self.__trig_rate)
 
-            oscilloscope.set_settings(self.__oscilloscope_channel, self.__gate_pos)
-            __get_wave()
-            dgc.start_pulse()
-            xx_values_1, yy_values_1 = __fft_from_scope()
-            oscilloscope.calib_stop()
-            dgc.stop_pulse()
+            self.__oscilloscope_controller.set_settings(self.__oscilloscope_channel, self.__gate_pos)
+            self.__get_wave()
+            self.__delay_generator_controller.start_pulse()
+            xx_values_1, yy_values_1 = self.__fft_from_scope()
+            self.__oscilloscope_controller.calib_stop()
+            self.__delay_generator_controller.stop_pulse()
 
             # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
             upper_bound = total_frequency + step_size / 2
@@ -407,7 +408,7 @@ class Spectrometer:
 
             j = 0
             pd.concat([pd.concat([DF1, DF3, DF2], axis=1)]).to_csv(
-                f"{rundirectory}/{total_frequency}.csv", mode="w+", index=False
+                f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
             )
             pd.concat([pd.concat([DF1_2, DF2], axis=1)]).to_csv(
                 f"{self.__directory}/{self.__filename}.csv",
@@ -425,8 +426,8 @@ class Spectrometer:
 
             ### determining if there will be subsequent runs
             if not run_bool:
-                zaber.home()
-                dgc.stop_trig()
+                self.__zaber_controller.home()
+                self.__delay_generator_controller.stop_trig()
                 print(
                     f"The experiment has ended. Your data can be found in {self.__directory}/{self.__filename}.csv"
                 )
@@ -439,7 +440,7 @@ class Spectrometer:
                 and new_freq < stop_freq
             ):
                 i += 1
-                valon.step_up()
+                self.__valon_controller.step_up()
             elif (
                 step_up_var == True
                 and stop_freq_var == True
@@ -447,19 +448,19 @@ class Spectrometer:
                 and new_freq >= stop_freq
             ):
                 i += 1
-                valon.step_down()
+                self.__valon_controller.step_down()
             elif new_freq > stop_freq and self.__step_direction == "up":
                 run_bool = False
-                zaber.home()
-                dgc.stop_trig()
+                self.__zaber_controller.home()
+                self.__delay_generator_controller.stop_trig()
                 print(
                     "You have reached the stop frequency. You will find your data in .csv file: ",
                     f"{self.__directory}/{self.__filename}.csv",
                 )
                 break
             elif new_freq < stop_freq and self.__step_direction == "down":
-                zaber.home()
-                dgc.stop_trig()
+                self.__zaber_controller.home()
+                self.__delay_generator_controller.stop_trig()
                 print(
                     "You have reached the stop frequency. You will find your data in .csv file: ",
                     f"{self.__directory}/{self.__filename}.csv",
@@ -501,7 +502,7 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
 
-    def __fft_from_scope():
+    def __fft_from_scope(self):
         global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
@@ -549,4 +550,4 @@ class Spectrometer:
         fft_x_values = [x + start for x in fft_x_values]
         new_fft_x_values = fft_x_values[3:]
         new_fft_y_values = fft_y_values[3:]
-        return newfft_x_values, newfft_y_values
+        return new_fft_x_values, new_fft_y_values
