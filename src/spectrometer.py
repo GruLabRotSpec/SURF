@@ -24,9 +24,33 @@ class Spectrometer:
         self.__oscilloscope_controller = None
         self.__valon_controller = None
 
+        # Instrument settings (infrequently changed)
+        self.__zaber_speed = 0.003  # In mm/s
+        self.__oscilloscope_channel = "CH4"
+        self.__rf_level = 10
+        self.__total_freq = (
+            11700  # All frequencies should include the awg freq. so no need to subtract
+        )
+
+        # Experiment settings (infrequently changed)
+        self.__trig_rate = 5
+        self.__acq_rate = 300
+        self.__gate_pos = "18.45E-6"
+        self.__intensity = 0.2  # Intensity of starting cavity position (V)
+        self.__awg_freq = 30  # Frequency for the arbitrary waveform generator
+
+        # Experiment options (frequently changed)
+        self.__step_direction = "down"  # up or down
+
+        # Output options
+        self.__directory = ""
+        self.__run_directory = ""
+        self.__folder_name = "Cavity Data"
+        self.__filename = "OCS_isotopescan_11700_11200_9_8_25"
+
         try:
             self.__delay_generator_controller = DelayGeneratorController()
-            self.__zaber_controller = ZaberController(0.003)
+            self.__zaber_controller = ZaberController(self.__zaber_speed)
             self.__oscilloscope_controller = OscilloscopeController()
             self.__valon_controller = ValonController("COM3")
             self.__cavity = Cavity.Cavity(
@@ -46,13 +70,408 @@ class Spectrometer:
     def __set_status(self, status):
         self.__status = status
 
-    def scan_frequency(start_freq, stop_freq, step_size):
-        return
+    def scan_frequency(self, start_freq, stop_freq=11200, step_size=0.5):
+        # From old function setParameters(self):
+        global valon_freq, step_up_var, stop_freq_var, time_delay
+
+        # Creating directory for output files
+        k = 0
+
+        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__filename}_{k}",
+            )
+        else:
+            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+                k += 1
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__filename}_{k}",
+            )
+
+        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
+        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
+
+        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
+            open(f"{self.__directory}/{self.__filename}.csv", "w+")
+            print(
+                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
+            )
+
+        # setting parameters
+
+        dgc.set_trig(self.__trig_rate)
+        time_delay = self.__acq_rate / self.__trig_rate
+
+        print(
+            f"At a trigger rate of {self.__trig_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {time_delay}"
+        )
+
+        iterations = abs(stop_freq_input - self.__total_freq) / step_size
+        total_time = (
+            iterations * time_delay + 14 * iterations
+        ) / 60  # Includes zaber scanning time (in minutes)
+
+        print(f"The estimated time for this scan is at least {total_time} mins")
+
+        valon_freq = self.__total_freq - self.__awg_freq
+        valon.write_cmd(f"Frequency {valon_freq} MHz")
+        stop_freq = stop_freq_input - self.__awg_freq
+
+        try:
+            step_size = float(step_size)
+            step_up_var = True
+            valon.write_cmd(f"FrequencyStep {step_size} MHz")
+        except ValueError:
+            step_up_var = False
+            print("Only running single sequence.")
+        try:
+            stop_freq = float(stop_freq)
+            stop_freq_var = True
+        except ValueError:
+            stop_freq_var = False
+            print("No end frequency set. ")
+
+        print("All parameters set, moving to run sequence.")
+
+        # From old function CalibrateAndRun
+        # TotalFrequency does not appear to be the same as self.__total_freq
+        global max_list, time_list, end_pos_zaber, new_freq, total_frequency, start_pos_zaber
+        max_list = []
+        time_list = []
+        max_max_vals = []
+        run_bool = True
+        new_freq = valon_freq
+
+        ### First Run ###
+        curr_pos = zaber.get_pos()
+        print("Zaber is at position", curr_pos)
+        oscilloscope.set_settings(self.__oscilloscope_channel, self.__gate_pos)
+        __get_wave()
+
+        dgc.start_pulse()
+        dgc.set_trig(trigRate)
+
+        # collect data
+        xx_values, yy_values = __fft_from_scope()
+
+        # stop scope and pulse valve
+        oscilloscope.calib_stop()
+        dgc.stop_pulse()
+
+        (
+            timeScale,
+            timeStart,
+            verticalScale,
+            verticalOffset,
+            verticalPosition,
+            FreqCent,
+            FreqSpan,
+            Resolution,
+            GatePos,
+            GateWidth,
+        ) = oscilloscope.grab_param()
+
+        parameters = [
+            trigRate,
+            acqs,
+            timeScale,
+            timeStart,
+            verticalScale,
+            verticalOffset,
+            verticalPosition,
+            Resolution,
+            GatePos,
+            GateWidth,
+        ]
+
+        parameter_labels = [
+            "Trigger Rate",
+            "Acquisitions",
+            "Horizontal Spacing",
+            "Time Start",
+            "Vertical Scale",
+            "Vertical Offset",
+            "Vertical Position",
+            "Resolution",
+            "Gate Position",
+            "Gate Width",
+        ]
+
+        # For exporting
+        total_frequency = new_freq + self.__awg_freq
+        upper_bound = total_frequency + step_size / 2
+        lower_bound = total_frequency - step_size / 2
+
+        print(upper_bound)
+        print(lower_bound)
+
+        DF1 = pd.DataFrame({"Frequency (MHz)": xx_values, "Intensity": yy_values})
+        DF2 = pd.DataFrame(
+            {
+                "Center Freq": [total_frequency],
+                "Cavity Position": [curr_pos],
+                "Intensity of Cavity": [self.__intensity],
+            }
+        )
+
+        DF1_2 = DF1.loc[
+            (
+                (DF1["Frequency (MHz)"] >= lower_bound)
+                & (DF1["Frequency (MHz)"] <= upper_bound)
+            )
+        ]
+
+        if self.__step_direction == "down":
+            DF1_2 = DF1_2[::-1]
+
+        DF3 = pd.DataFrame({"Scope Parameter": parameter_labels, "Value": parameters})
+        DF1 = DF1.reset_index()
+        DF1_2 = DF1_2.reset_index()
+        DF2 = DF2.reset_index()
+
+        pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
+            f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
+        )  # Individual full data
+        pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
+            f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
+        )  # appended main file with filtered data
+
+        if (
+            step_up_var == True
+            and stop_freq_var == True
+            and self.__step_direction == "up"
+            and new_freq < stop_freq
+        ):
+            valon.step_up()
+        elif (
+            step_up_var == True
+            and stop_freq_var == True
+            and self.__step_direction == "down"
+            and new_freq >= stop_freq
+        ):
+            valon.step_down()
+        else:
+            raise ValueError("ERROR: Valon didn't step in first run.")
+
+        ### All Other Runs ###
+        i = 1
+        while run_bool:
+            max_list = []
+            time_list = []
+            max_max_vals = []
+
+            curr_pos = zaber.get_pos()
+
+            oscilloscope.set_tuning_settings(self.__oscilloscope_channel)
+            time.sleep(10)  # TODO: Figure out how to remove this
+            oscilloscope.calib_stop()
+
+            if self.__step_direction == "up":
+                new_freq = valon_freq + step_size * i
+                start_pos_zaber = curr_pos - 0.01
+                end_pos_zaber = curr_pos + 0.03
+            elif self.__step_direction == "down":
+                new_freq = valon_freq - step_size * i
+                start_pos_zaber = curr_pos
+                end_pos_zaber = curr_pos - 0.06
+
+            total_frequency = new_freq + self.__awg_freq
+            print(f"the new center freq is: {total_frequency}")
+            print(f"The new Valon Frequency is: {new_freq}")
+            curr_pos = zaber.get_pos()
+
+            print(
+                "Attempting to travel from ",
+                start_pos_zaber,
+                " mm to ",
+                end_pos_zaber,
+                " mm",
+            )
+
+            # TODO: Refactor to be verified at the top
+            if (
+                end_pos_zaber <= 50
+                and start_pos_zaber <= 50
+                and end_pos_zaber >= 0
+                and start_pos_zaber >= 0
+            ):
+                run_bool = True
+            elif (
+                end_pos_zaber > 50
+                and start_pos_zaber <= 50
+                and end_pos_zaber >= 0
+                and start_pos_zaber >= 0
+            ):
+                run_bool = False
+                print(
+                    "The end of the zaber extension has been reached, this will be the last run."
+                )
+            elif end_pos_zaber < 0 and start_pos_zaber < 50:
+                run_bool = False
+                print("The zaber has reached home, this will be the last run.")
+            elif end_pos_zaber < 0 or start_pos_zaber < 0 or start_pos_zaber > 50:
+                raise ValueError(
+                    "Invalid integers somewhere. The numbers must be between 0 and 50mm."
+                )
+
+            # Retuning of the cavity position
+            cavity.retune_cavity_position(start_pos_zaber, speedZaber)
+            dgc.start_trig()
+
+            # setting up threading for scanning
+            threadZaber1 = threading.Thread(target=__zaber_thread)
+            threadAcquire1 = threading.Thread(target=__acquire_thread)
+
+            threads1 = [threadZaber1, threadAcquire1]
+
+            for threadInstances in threads1:
+                threadInstances.start()
+            for threadInstances in threads1:
+                threadInstances.join()
+
+            oscilloscope.calib_stop()
+
+            print("aq length: ", len(max_list))
+
+            # processing scanned information and plotting it
+            for max_lists in max_list:
+                posArr1 = np.linspace(start_pos_zaber, end_pos_zaber, len(max_lists))
+                print("Length of max: ", len(max_list))
+                print("Length of pos: ", len(posArr1))
+                max_intensity = max(max_lists)
+                print(max(max_lists))
+
+                # Plot position vs intensity
+                plotter.plot_position_vs_intensity(posArr1, max_lists)
+
+            for items in max_list:
+                print("len: ", len(items))
+                maxer = max(items)
+                for index, values in enumerate(items):
+                    if values == maxer:
+                        print("Max position found: ", posArr1[index])
+                        peakMax = posArr1[index]
+                        max_max_vals.append(peakMax)
+
+            peakMidpt1 = round(len(max_max_vals) / 2)
+            max_pos = max_max_vals[peakMidpt1]
+            plt.close()
+
+            # moving to new cavity position for next data acquisition
+            cavity.move_cavity_position(max_pos)
+
+            dgc.set_trig(trigRate)
+
+            oscilloscope.set_settings(self.__oscilloscope_channel, self.__gate_pos)
+            __get_wave()
+            dgc.start_pulse()
+            xx_values_1, yy_values_1 = __fft_from_scope()
+            oscilloscope.calib_stop()
+            dgc.stop_pulse()
+
+            # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
+            upper_bound = total_frequency + step_size / 2
+            lower_bound = total_frequency - step_size / 2
+
+            # Individual file
+            DF1 = pd.DataFrame(
+                {"Frequency (MHz)": xx_values_1, "Intensity": yy_values_1}
+            )
+            DF3 = pd.DataFrame({"Zaber Position(mm):": posArr1, "Intensity": max_lists})
+            DF2 = pd.DataFrame(
+                {
+                    "Center Freq": [total_frequency],
+                    "Cavity Position": [curr_pos / 20997],
+                    "Intensity of Cavity": [max_intensity],
+                }
+            )
+            DF1_2 = DF1.loc[
+                (
+                    (DF1["Frequency (MHz)"] >= lower_bound)
+                    & (DF1["Frequency (MHz)"] <= upper_bound)
+                )
+            ]
+            if self.__step_direction == "down":
+                DF1_2 = DF1_2[::-1]
+
+            DF1 = DF1.reset_index()
+            DF3 = DF3.reset_index()
+            DF1_2 = DF1_2.reset_index()
+            DF2 = DF2.reset_index()
+
+            j = 0
+            pd.concat([pd.concat([DF1, DF3, DF2], axis=1)]).to_csv(
+                f"{rundirectory}/{total_frequency}.csv", mode="w+", index=False
+            )
+            pd.concat([pd.concat([DF1_2, DF2], axis=1)]).to_csv(
+                f"{self.__directory}/{self.__filename}.csv",
+                mode="a",
+                index=False,
+                header=False,
+            )
+
+            print(
+                "run #",
+                i + 1,
+                "has been added to: ",
+                f"{self.__directory}/{self.__filename}.csv",
+            )
+
+            ### determining if there will be subsequent runs
+            if not run_bool:
+                zaber.home()
+                dgc.stop_trig()
+                print(
+                    f"The experiment has ended. Your data can be found in {self.__directory}/{self.__filename}.csv"
+                )
+                break
+
+            if (
+                step_up_var == True
+                and stop_freq_var == True
+                and self.__step_direction == "up"
+                and new_freq < stop_freq
+            ):
+                i += 1
+                valon.step_up()
+            elif (
+                step_up_var == True
+                and stop_freq_var == True
+                and self.__step_direction == "down"
+                and new_freq >= stop_freq
+            ):
+                i += 1
+                valon.step_down()
+            elif new_freq > stop_freq and self.__step_direction == "up":
+                run_bool = False
+                zaber.home()
+                dgc.stop_trig()
+                print(
+                    "You have reached the stop frequency. You will find your data in .csv file: ",
+                    f"{self.__directory}/{self.__filename}.csv",
+                )
+                break
+            elif new_freq < stop_freq and self.__step_direction == "down":
+                zaber.home()
+                dgc.stop_trig()
+                print(
+                    "You have reached the stop frequency. You will find your data in .csv file: ",
+                    f"{self.__directory}/{self.__filename}.csv",
+                )
+                break
+
 
     def cavity_search():
         return
 
-    def __zaber__thread(self):
+
+    def __zaber_thread(self):
         global loop_var
         loop_var = True
         time_zaber_start = time.perf_counter()
@@ -65,6 +484,7 @@ class Spectrometer:
         loop_var = False
         time_list.append(total_time_zaber)
         return
+
 
     # Currently doesn't run based on trigFreq, if required then use if/else with time.perfcounter()
     def __acquire_thread(self):
@@ -80,10 +500,13 @@ class Spectrometer:
 
         max_list.append(temp_max_list)
 
+
     def __fft_from_scope():
         global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
 
-        wave_values = self.__oscilloscope_controller.acq_ft_curve(channel, time_delay)
+        wave_values = self.__oscilloscope_controller.acq_ft_curve(
+            self.__oscilloscope_channel, time_delay
+        )
 
         (
             time_scale,
@@ -108,6 +531,7 @@ class Spectrometer:
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
         return get_wave
+
 
     def __scale_fft(self, wave_values, start, new_freq):
         fft_y_values = np.array(wave_values, dtype="float")
