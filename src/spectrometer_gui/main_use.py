@@ -17,11 +17,11 @@ import plot as plotter
 ###### Inputs manual
 # Valon Inputs
 
-RFLevel = 10  # dbm
-totalFreq = 11700  # all frequencies should include the awg frequency so no need to subtract
-StopFreqinput = 11200
-stepsize = 0.5
-StepDirection = "down"  # up or down
+RFLevel = 12  # dbm
+totalFreq = 8550  # all frequencies should include the awg frequency so no need to subtract
+StopFreqinput = 8552
+stepsize = 1
+StepDirection = "up"  # up or down
 # Zaber Inputs
 speedZaber = 0.003  # speed for scanning in mm/s
 
@@ -33,7 +33,7 @@ gatepos = "18.45E-6"
 acqs = 300
 trigRate = 5
 # setup = 'cavity_scan_peak001.set'
-filename = "OCS_isotopescan_11700_11200_9_8_25"
+filename = "4MS_8550_8650MHz_11_12_25"
 channel = "CH4"  # oscilloscope channel, doesn't change often but sometimes
 
 
@@ -251,10 +251,10 @@ def CalibrateAndRun():
         if StepDirection == "up":
             NewFreq = valonFreq + StepSize * i
             startPosZaber = currPos - 0.01
-            endPosZaber = currPos + 0.03
+            endPosZaber = currPos + 0.06
         elif StepDirection == "down":
             NewFreq = valonFreq - StepSize * i
-            startPosZaber = currPos
+            startPosZaber = currPos + 0.01
             endPosZaber = currPos - 0.06
 
         TotalFrequency = NewFreq + awgFreq
