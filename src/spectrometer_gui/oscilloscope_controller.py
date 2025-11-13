@@ -144,6 +144,8 @@ class OscilloscopeController:
         self.write_cmd("data:encdg SRPbinary")
         self.write_cmd("data:source MATH4")  # channel
         self.write_cmd("wfmoutpre:byt_nr 4")
+        recordLength = int(self.query_cmd('horizontal:recordlength?'))
+        self.write_cmd('data:stop {}'.format(recordLength)) 
 
         # acq configuration
         self.write_cmd("acquire:state 0")  # stop
@@ -166,10 +168,10 @@ class OscilloscopeController:
         return new_bin_wave
 
     def set_settings(self, channel, gate_pos):
-        self.write_cmd("SELECT:MATH3 0")
-        self.write_cmd("SELECT:MATH4 1")
 
+        self.write_cmd("SELECT:MATH3 0")
         self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({channel}))"')
+        self.write_cmd("SELECT:MATH4 1")
         self.write_cmd("MATH4:NUMAvg 1000000")
         self.write_cmd("MATH4:VERTical:POSition -4")
         self.write_cmd("MATH4:SPECTral:WINdow Hanning")
@@ -187,16 +189,18 @@ class OscilloscopeController:
 
     def set_tuning_settings(self, channel):
         self.write_cmd("SELECT:MATH4 0")
-        self.write_cmd("SELECT:MATH3 1")
+        
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({channel})"')
-
-        self.write_cmd("MATH3:SPECTral:WINdow KAISERBessel")
+        self.write_cmd("SELECT:MATH3 1")
+        self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
         self.write_cmd("MATH3:VERTical:POSition -4")
-        self.write_cmd("HORizontal:MODE:SAMPLERate 100E6")
+        self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
         self.write_cmd("HORizontal:MODE:SCAle 500E-9")
-        self.write_cmd("MATH3:SPECTral:RESBw 835E3")
+        self.write_cmd("MATH3:SPECTral:RESBw 890E3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
-        self.write_cmd(f"MATH3:SPECTral:GATEPOS 1E-6")
+        self.write_cmd(f"MATH3:SPECTral:GATEPOS 600E-9")
         self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
 
         self.calib_start()
+
+

@@ -18,7 +18,7 @@ class Cavity:
         print(f"Moving Zaber to {start_pos_zaber}")
         self.zaber.move_to(start_pos_zaber)
         self.zaber.set_speed(zaber_speed)
-        self.oscilloscope.oscCalibStart()
+        self.oscilloscope.calib_start()
         self.srscontroller.start_trig()
 
     def move_cavity_position(self, max_pos):
