@@ -128,13 +128,7 @@ class Spectrometer:
 
         # From old function CalibrateAndRun
         # TotalFrequency does not appear to be the same as self.__total_freq
-        global \
-            max_list, \
-            time_list, \
-            end_pos_zaber, \
-            new_freq, \
-            total_frequency, \
-            start_pos_zaber
+        global max_list, time_list, end_pos_zaber, new_freq, total_frequency, start_pos_zaber
         max_list = []
         time_list = []
         max_max_vals = []
@@ -452,14 +446,7 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
     def __fft_from_scope(self, new_freq):
-        global \
-            time_scale, \
-            time_start, \
-            vertical_scale, \
-            vertical_offset, \
-            vertical_position, \
-            freq_cent, \
-            freq_span
+        global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
             self.__oscilloscope_channel, time_delay
@@ -484,6 +471,31 @@ class Spectrometer:
         plotter.generate_plot(x_values, y_values)
 
         return x_values, y_values
+
+    def set_instrument_settings(self, zaber_speed=0.003, rf_level=10):
+        self.__zaber_speed = zaber_speed
+        self.__rf_level = rf_level
+
+    def get_instrument_settings(self):
+        return (self.__zaber_speed, self.__rf_level)
+
+    def set_experiment_settings(
+        self, trig_rate=5, acq_rate=300, gate_pos="18.45E-6", intensity=0.2, awg_freq=30
+    ):
+        self.__trig_rate = trig_rate
+        self.__acq_rate = acq_rate
+        self.__gate_pos = gate_pos
+        self.__intensity = intensity
+        self.__awg_freq = awg_freq
+
+    def get_experiment_settings(self):
+        return (
+            self.__trig_rate,
+            self.__acq_rate,
+            self.__gate_pos,
+            self.__intensity,
+            self.__awg_freq,
+        )
 
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
