@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import threading
 import os
+from scipy.signal import find_peaks
 
 
 import plot as plotter
@@ -473,7 +474,7 @@ class Spectrometer:
         global valon_freq, step_up_var, stop_freq_var
         stop_freqinput = stop_freq
 
-        valon_freq = totalFreq - awg_freq
+        valon_freq = stop_freq - self.__awg_freq
         self.__valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
         # self.__oscilloscope_controller.recall_setup('cavity_ch2000001.set')
 
@@ -502,10 +503,9 @@ class Spectrometer:
 
         self.__zaber_controller.set_speed(2.0)
         self.__zaber_controller.home()
-        self.__zaber_controller.zaberDevice.poll_until_idle()
 
         print("Zaber has arrived at home position 0 mm")
-        stop_freq = stop_freqinput - awg_freq
+        stop_freq = stop_freqinput - self.__awg_freq
         try:
             step_size = float(step_size)
             step_up_var = True
@@ -529,7 +529,7 @@ class Spectrometer:
         i = 0
 
         while run_bool == True:
-            new_freq = valon_freq + step_size * i + awg_freq
+            new_freq = valon_freq + step_size * i + self.__awg_freq
             print(f"The new Valon Frequency is: {new_freq}")
 
             start_pos_zaber_mm = 0
@@ -550,11 +550,10 @@ class Spectrometer:
                 except ValueError:
                     print("Invalid integer. The number must be between 0 and 3.5.")
             # homingspeed = 101204
-            self.__delay_generator_controller.setFreq(300)  # Trigger rate for cavity search
-            self.__zaber_controller.set_speed(2.0) # May need to check
+            self.__delay_generator_controller.set_frequency(300)  # Trigger rate for cavity search
+            self.__zaber_controller.set_speed(2.0)
             self.__zaber_controller.home()
 
-            self.__zaber_controller.zaberDevice.poll_until_idle()
             curr_pos = self.__zaber_controller.get_pos()
 
             print("Zaber is at position ", curr_pos)
