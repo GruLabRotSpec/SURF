@@ -500,7 +500,7 @@ class Spectrometer:
             open(f"{self.__directory}/{self.__filename}.csv", "w+")
             print("Sucessfully named file ", f"{self.__directory}/{self.__filename}.csv")
 
-        self.__zaber_controller.set_speed(3.5)
+        self.__zaber_controller.set_speed(2.0)
         self.__zaber_controller.home()
         self.__zaber_controller.zaberDevice.poll_until_idle()
 
@@ -551,7 +551,7 @@ class Spectrometer:
                     print("Invalid integer. The number must be between 0 and 3.5.")
             # homingspeed = 101204
             self.__delay_generator_controller.setFreq(300)  # Trigger rate for cavity search
-            self.__zaber_controller.set_speed(3.5) # May need to check
+            self.__zaber_controller.set_speed(2.0) # May need to check
             self.__zaber_controller.home()
 
             self.__zaber_controller.zaberDevice.poll_until_idle()
