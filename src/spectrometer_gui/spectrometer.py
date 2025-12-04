@@ -74,34 +74,7 @@ class Spectrometer:
         global valon_freq, step_up_var, stop_freq_var, time_delay
         stop_freq_input = stop_freq
 
-        # Creating directory for output files
-        k = 0
-
-        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-        else:
-            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-                k += 1
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__self.__filename}_{k}",
-            )
-
-        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
-        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
-
-        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
-            open(f"{self.__directory}/{self.__filename}.csv", "w+")
-            print(
-                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
-            )
+        self.__setup_file_operations()
 
         # setting parameters
 
@@ -130,13 +103,7 @@ class Spectrometer:
 
         # From old function CalibrateAndRun
         # TotalFrequency does not appear to be the same as self.__total_freq
-        global \
-            max_list, \
-            time_list, \
-            end_pos_zaber, \
-            new_freq, \
-            total_frequency, \
-            start_pos_zaber
+        global max_list, time_list, end_pos_zaber, new_freq, total_frequency, start_pos_zaber
         max_list = []
         time_list = []
         max_max_vals = []
@@ -648,14 +615,7 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
     def __fft_from_scope(self, new_freq):
-        global \
-            time_scale, \
-            time_start, \
-            vertical_scale, \
-            vertical_offset, \
-            vertical_position, \
-            freq_cent, \
-            freq_span
+        global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
             self.__oscilloscope_channel, time_delay
@@ -711,10 +671,7 @@ class Spectrometer:
         self.__filename = filename
 
     def get_output_options(self):
-        return (
-            self.__folder_name,
-            self.__filename
-        )
+        return (self.__folder_name, self.__filename)
 
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
@@ -738,3 +695,33 @@ class Spectrometer:
         new_fft_x_values = fft_x_values[3:]
         new_fft_y_values = fft_y_values[3:]
         return new_fft_x_values, new_fft_y_values
+
+    def __setup_file_operations(self):
+        # Creating directory for output files
+        k = 0
+
+        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__filename}_{k}",
+            )
+        else:
+            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+                k += 1
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__self.__filename}_{k}",
+            )
+
+        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
+        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
+
+        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
+            open(f"{self.__directory}/{self.__filename}.csv", "w+")
+            print(
+                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
+            )
