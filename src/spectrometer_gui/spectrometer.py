@@ -284,7 +284,11 @@ class Spectrometer:
             )
 
             # Retuning of the cavity position
-            self.__cavity.retune_cavity_position(start_pos_zaber, self.__zaber_speed)
+            self.zaber.set_speed(self.__zaber_speed)
+            print(f"Moving Zaber to {start_pos_zaber}")
+            self.__zaber_controller.move_to(start_pos_zaber)
+            self.__oscilloscope_controller.calib_start()
+
             self.__delay_generator_controller.start_trig()
 
             # setting up threading for scanning
@@ -326,8 +330,12 @@ class Spectrometer:
             max_pos = max_max_vals[peakMidpt1]
             plt.close()
 
-            # moving to new cavity position for next data acquisition
-            self.__cavity.move_cavity_position(max_pos)
+            # Moving to new cavity position for next data acquisition
+            print("Moving to maximum position at: ", max_pos, " mm")
+            self.zaber.set_speed(self.__zaber_speed)
+            self.zaber.move_to(max_pos)
+            curr_pos = self.__zaber_controller.get_pos()
+            print("Running scan... Zaber is at position: ", curr_pos)
 
             self.__delay_generator_controller.set_trig(self.__trig_rate)
 
