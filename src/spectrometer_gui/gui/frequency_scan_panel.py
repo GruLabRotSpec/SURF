@@ -10,10 +10,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from gui.spectrometer_controller import SpectrometerController
+
 
 class FrequencyScanPanel(QWidget):
-    def __init__(self):
+    def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
+
+        self.spectrometer = spectrometer
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -37,18 +41,19 @@ class FrequencyScanPanel(QWidget):
         left_column.addWidget(form_panel)
 
         start_freq_label = QLabel("Starting Frequency")
-        start_freq_field = QLineEdit()
-        form.addRow(start_freq_label, start_freq_field)
+        self.start_freq_field = QLineEdit(text="10000")
+        form.addRow(start_freq_label, self.start_freq_field)
 
         step_size_label = QLabel("Step Size")
-        step_size_field = QLineEdit()
-        form.addRow(step_size_label, step_size_field)
+        self.step_size_field = QLineEdit(text="0.5")
+        form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
-        end_freq_field = QLineEdit()
-        form.addRow(end_freq_label, end_freq_field)
+        self.end_freq_field = QLineEdit(text="11200")
+        form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
+        start_button.clicked.connect(self.scan_button)
         left_column.addWidget(start_button)
 
         left_column.addStretch(1)
@@ -69,3 +74,8 @@ class FrequencyScanPanel(QWidget):
 
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
+    
+    def scan_button(self):
+        # Actually add validation so it wont crash
+        self.spectrometer.run_scan(int(self.start_freq_field.text()), int(self.end_freq_field.text()), float(self.step_size_field.text()))
+
