@@ -74,7 +74,34 @@ class Spectrometer:
         global valon_freq, step_up_var, stop_freq_var, time_delay
         stop_freq_input = stop_freq
 
-        self.__setup_file_operations()
+        # Creating directory for output files
+        k = 0
+
+        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__filename}_{k}",
+            )
+        else:
+            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
+                k += 1
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
+            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
+            print(
+                "folder for data has been created: ",
+                f"{self.__folder_name}/{self.__filename}_{k}",
+            )
+
+        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
+        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
+
+        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
+            open(f"{self.__directory}/{self.__filename}.csv", "w+")
+            print(
+                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
+            )
 
         # setting parameters
 
@@ -103,7 +130,8 @@ class Spectrometer:
 
         # From old function CalibrateAndRun
         # TotalFrequency does not appear to be the same as self.__total_freq
-        global max_list, time_list, end_pos_zaber, new_freq, total_frequency, start_pos_zaber
+        global max_list, time_list, new_freq, total_frequency
+
         max_list = []
         time_list = []
         max_max_vals = []
@@ -113,6 +141,7 @@ class Spectrometer:
         ### First Run ###
         curr_pos = self.__zaber_controller.get_pos()
         print("Zaber is at position", curr_pos)
+
         self.__oscilloscope_controller.set_settings(
             self.__oscilloscope_channel, self.__gate_pos
         )
@@ -128,45 +157,6 @@ class Spectrometer:
         self.__oscilloscope_controller.calib_stop()
         self.__delay_generator_controller.stop_pulse()
 
-        (
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            FreqCent,
-            FreqSpan,
-            Resolution,
-            GatePos,
-            GateWidth,
-        ) = self.__oscilloscope_controller.grab_param()
-
-        parameters = [
-            self.__trig_rate,
-            self.__acq_rate,
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            Resolution,
-            GatePos,
-            GateWidth,
-        ]
-
-        parameter_labels = [
-            "Trigger Rate",
-            "Acquisitions",
-            "Horizontal Spacing",
-            "Time Start",
-            "Vertical Scale",
-            "Vertical Offset",
-            "Vertical Position",
-            "Resolution",
-            "Gate Position",
-            "Gate Width",
-        ]
-
         # For exporting
         total_frequency = new_freq + self.__awg_freq
         upper_bound = total_frequency + step_size / 2
@@ -175,36 +165,9 @@ class Spectrometer:
         print(upper_bound)
         print(lower_bound)
 
-        DF1 = pd.DataFrame({"Frequency (MHz)": xx_values, "Intensity": yy_values})
-        DF2 = pd.DataFrame(
-            {
-                "Center Freq": [total_frequency],
-                "Cavity Position": [curr_pos],
-                "Intensity of Cavity": [self.__intensity],
-            }
+        self.write_data_to_csv(
+            xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
         )
-
-        DF1_2 = DF1.loc[
-            (
-                (DF1["Frequency (MHz)"] >= lower_bound)
-                & (DF1["Frequency (MHz)"] <= upper_bound)
-            )
-        ]
-
-        if step_direction == StepDirection.Down:
-            DF1_2 = DF1_2[::-1]
-
-        DF3 = pd.DataFrame({"Scope Parameter": parameter_labels, "Value": parameters})
-        DF1 = DF1.reset_index()
-        DF1_2 = DF1_2.reset_index()
-        DF2 = DF2.reset_index()
-
-        pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
-            f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
-        )  # Individual full data
-        pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
-            f"{self.__directory}/{self.__self.__filename}.csv", mode="a", index=False
-        )  # appended main file with filtered data
 
         if step_direction == StepDirection.Up and new_freq < stop_freq:
             self.__valon_controller.step_up()
@@ -236,6 +199,8 @@ class Spectrometer:
                 new_freq = valon_freq - step_size * run_number
                 start_pos_zaber = curr_pos
                 end_pos_zaber = curr_pos - 0.06
+            else:
+                raise ValueError("Invalid step direction", step_direction)
 
             total_frequency = new_freq + self.__awg_freq
             print(f"the new center freq is: {total_frequency}")
@@ -255,7 +220,9 @@ class Spectrometer:
             self.__delay_generator_controller.start_trig()
 
             # setting up threading for scanning
-            thread_zaber_1 = threading.Thread(target=self.__zaber_thread)
+            thread_zaber_1 = threading.Thread(
+                target=self.__zaber_thread, args=[end_pos_zaber]
+            )
             thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
 
             threads1 = [thread_zaber_1, thread_acquire_1]
@@ -311,42 +278,13 @@ class Spectrometer:
             upper_bound = total_frequency + step_size / 2
             lower_bound = total_frequency - step_size / 2
 
-            # Individual file
-            DF1 = pd.DataFrame(
-                {"Frequency (MHz)": xx_values_1, "Intensity": yy_values_1}
-            )
-            DF3 = pd.DataFrame({"Zaber Position(mm):": posArr1, "Intensity": max_lists})
-            DF2 = pd.DataFrame(
-                {
-                    "Center Freq": [total_frequency],
-                    "Cavity Position": [curr_pos],
-                    "Intensity of Cavity": [max_intensity],
-                }
-            )
-            DF1_2 = DF1.loc[
-                (
-                    (DF1["Frequency (MHz)"] >= lower_bound)
-                    & (DF1["Frequency (MHz)"] <= upper_bound)
-                )
-            ]
-
-            if step_direction == StepDirection.Down:
-                DF1_2 = DF1_2[::-1]
-
-            DF1 = DF1.reset_index()
-            DF3 = DF3.reset_index()
-            DF1_2 = DF1_2.reset_index()
-            DF2 = DF2.reset_index()
-
-            j = 0
-            pd.concat([pd.concat([DF1, DF3, DF2], axis=1)]).to_csv(
-                f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
-            )
-            pd.concat([pd.concat([DF1_2, DF2], axis=1)]).to_csv(
-                f"{self.__directory}/{self.__filename}.csv",
-                mode="a",
-                index=False,
-                header=False,
+            self.write_data_to_csv(
+                xx_values_1,
+                yy_values_1,
+                lower_bound,
+                upper_bound,
+                curr_pos,
+                step_direction,
             )
 
             print(
@@ -358,11 +296,9 @@ class Spectrometer:
 
             # Check for stop Freq
             if new_freq > stop_freq and step_direction == StepDirection.Up:
-                print("You have reached the stop frequency.")
+                print("You have reached the stop frequency")
                 break
             elif new_freq < stop_freq and step_direction == StepDirection.Down:
-                self.__zaber_controller.home()
-                self.__delay_generator_controller.stop_trig()
                 print("You have reached the stop frequency")
                 break
 
@@ -370,7 +306,7 @@ class Spectrometer:
             if end_pos_zaber > 50 or start_pos_zaber > 50:
                 print("The end of the zaber extension has been reached")
                 break
-            elif end_pos_zaber <= 0:
+            elif end_pos_zaber <= 0 or start_pos_zaber < 0:
                 print("The zaber has reached home")
                 break
 
@@ -450,21 +386,19 @@ class Spectrometer:
 
         print("All parameters acquired, moving to calibrate and run sequence.")
 
-        global end_pos_zaber, speed_zaber, max_list, time_list
+        global speed_zaber, max_list, time_list
         max_list = []
         time_list = []
         run_bool = True
         i = 0
 
-        while run_bool == True:
+        while run_bool:
             new_freq = valon_freq + step_size * i + self.__awg_freq
             print(f"The new Valon Frequency is: {new_freq}")
 
             start_pos_zaber_mm = 0
             end_pos_zaber_mm = 50
 
-            start_pos_zaber = round(start_pos_zaber_mm)
-            end_pos_zaber = round(end_pos_zaber_mm)
             while True:
                 try:
                     speed_zaber = 0.14
@@ -477,6 +411,7 @@ class Spectrometer:
                     break
                 except ValueError:
                     print("Invalid integer. The number must be between 0 and 3.5.")
+
             # homingspeed = 101204
             self.__delay_generator_controller.set_frequency(
                 300
@@ -493,7 +428,9 @@ class Spectrometer:
             self.__oscilloscope_controller.calib_start()
             self.__delay_generator_controller.start_trig()
 
-            thread_zaber_1 = threading.Thread(target=self.__zaber_thread)
+            thread_zaber_1 = threading.Thread(
+                target=self.__zaber_thread, args=[end_pos_zaber_mm]
+            )
             thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
 
             threads_1 = [thread_zaber_1, thread_acquire_1]
@@ -502,8 +439,10 @@ class Spectrometer:
                 thread_instances.start()
             for thread_instances in threads_1:
                 thread_instances.join()
+
             self.__delay_generator_controller.stop_trig()
             self.__oscilloscope_controller.calib_stop()
+
             for max_lists in max_list:
                 pos_arr = np.linspace(
                     start_pos_zaber_mm, end_pos_zaber_mm, len(max_lists)
@@ -559,7 +498,7 @@ class Spectrometer:
 
             # self.__delay_generator_controller.stop_trig()
             # self.__oscilloscope_controller.calib_stop()
-            if step_up_var == True and stop_freq_var == True:
+            if step_up_var and not stop_freq_var:
                 if new_freq <= stop_freq:
                     i += 1
                     self.__valon_controller.step_up()
@@ -571,31 +510,35 @@ class Spectrometer:
                     )
                     break
 
-            elif step_up_var == True and stop_freq_var == False:
+            elif step_up_var and not stop_freq_var:
                 run_bool = input(
                     "Do you want to run another experiment? (Y/N): "
                 ).lower()
-                if run_bool == True:
+                if run_bool:
                     i += 1
                     self.__valon_controller.step_up()
-                if run_bool == False:
+                if not run_bool:
                     print(
-                        f"Experiment concluded. You will find your data in .csv file: ",
+                        "Experiment concluded. You will find your data in .csv file: ",
                         f"{self.__directory}/{self.__filename}.csv",
                     )
                     self.__zaber_controller.home()
                 break
 
-    def __zaber_thread(self):
+    def __zaber_thread(self, end_pos_zaber):
         global loop_var
         loop_var = True
         time_zaber_start = time.perf_counter()
+
         self.__zaber_controller.move_to(end_pos_zaber)
+
         time_zaber_end = time.perf_counter()
         curr_pos = self.__zaber_controller.get_pos()
+
         print("Zaber is at end position: ", curr_pos, " mm")
         total_time_zaber = time_zaber_end - time_zaber_start
         print("Zaber move time (s): ", total_time_zaber)
+
         loop_var = False
         time_list.append(total_time_zaber)
         return
@@ -615,7 +558,14 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
     def __fft_from_scope(self, new_freq):
-        global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
+        global \
+            time_scale, \
+            time_start, \
+            vertical_scale, \
+            vertical_offset, \
+            vertical_position, \
+            freq_cent, \
+            freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
             self.__oscilloscope_channel, time_delay
@@ -640,6 +590,81 @@ class Spectrometer:
         plotter.generate_plot(x_values, y_values)
 
         return x_values, y_values
+
+    def write_data_to_csv(
+        self, xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
+    ):
+        (
+            timeScale,
+            timeStart,
+            verticalScale,
+            verticalOffset,
+            verticalPosition,
+            FreqCent,
+            FreqSpan,
+            Resolution,
+            GatePos,
+            GateWidth,
+        ) = self.__oscilloscope_controller.grab_param()
+
+        parameters = [
+            self.__trig_rate,
+            self.__acq_rate,
+            timeScale,
+            timeStart,
+            verticalScale,
+            verticalOffset,
+            verticalPosition,
+            Resolution,
+            GatePos,
+            GateWidth,
+        ]
+
+        parameter_labels = [
+            "Trigger Rate",
+            "Acquisitions",
+            "Horizontal Spacing",
+            "Time Start",
+            "Vertical Scale",
+            "Vertical Offset",
+            "Vertical Position",
+            "Resolution",
+            "Gate Position",
+            "Gate Width",
+        ]
+
+        DF1 = pd.DataFrame({"Frequency (MHz)": xx_values, "Intensity": yy_values})
+        DF2 = pd.DataFrame(
+            {
+                "Center Freq": [total_frequency],
+                "Cavity Position": [curr_pos],
+                "Intensity of Cavity": [self.__intensity],
+            }
+        )
+
+        DF1_2 = DF1.loc[
+            (
+                (DF1["Frequency (MHz)"] >= lower_bound)
+                & (DF1["Frequency (MHz)"] <= upper_bound)
+            )
+        ]
+
+        if step_direction == StepDirection.Down:
+            DF1_2 = DF1_2[::-1]
+
+        DF3 = pd.DataFrame({"Scope Parameter": parameter_labels, "Value": parameters})
+
+        DF1 = DF1.reset_index()
+        DF1_2 = DF1_2.reset_index()
+        DF2 = DF2.reset_index()
+
+        pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
+            f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
+        )  # Individual full data
+
+        pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
+            f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
+        )  # appended main file with filtered data
 
     def set_instrument_settings(self, zaber_speed=0.003, rf_level=10):
         self.__zaber_speed = zaber_speed
@@ -671,7 +696,10 @@ class Spectrometer:
         self.__filename = filename
 
     def get_output_options(self):
-        return (self.__folder_name, self.__filename)
+        return (
+            self.__folder_name,
+            self.__filename
+        )
 
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
@@ -695,33 +723,3 @@ class Spectrometer:
         new_fft_x_values = fft_x_values[3:]
         new_fft_y_values = fft_y_values[3:]
         return new_fft_x_values, new_fft_y_values
-
-    def __setup_file_operations(self):
-        # Creating directory for output files
-        k = 0
-
-        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-        else:
-            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-                k += 1
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__self.__filename}_{k}",
-            )
-
-        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
-        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
-
-        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
-            open(f"{self.__directory}/{self.__filename}.csv", "w+")
-            print(
-                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
-            )
