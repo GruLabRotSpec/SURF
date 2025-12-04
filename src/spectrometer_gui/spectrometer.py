@@ -691,6 +691,16 @@ class Spectrometer:
             self.__awg_freq,
         )
 
+    def set_output_options(self, folder_name, filename):
+        self.__folder_name = folder_name
+        self.__filename = filename
+
+    def get_output_options(self):
+        return (
+            self.__folder_name,
+            self.__filename
+        )
+
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
         return get_wave
