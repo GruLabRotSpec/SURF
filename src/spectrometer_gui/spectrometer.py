@@ -26,12 +26,9 @@ class Spectrometer:
         self.__status = "Idle"
 
         # Instrument settings (infrequently changed)
-        self.__zaber_speed = 0.003  # In mm/s
+        self.__zaber_speed = 0.01  # In mm/s
         self.__oscilloscope_channel = "CH4"
         self.__rf_level = 10
-        self.__total_freq = (
-            11700  # All frequencies should include the awg freq. so no need to subtract
-        )
 
         # Experiment settings (infrequently changed)
         self.__trig_rate = 5
@@ -112,14 +109,14 @@ class Spectrometer:
             f"At a trigger rate of {self.__trig_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {time_delay}"
         )
 
-        iterations = abs(stop_freq_input - self.__total_freq) / step_size
+        iterations = abs(stop_freq_input - start_freq) / step_size
         total_time = (
             iterations * time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
         print(f"The estimated time for this scan is at least {total_time} mins")
 
-        valon_freq = self.__total_freq - self.__awg_freq
+        valon_freq = start_freq - self.__awg_freq
         self.__valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
         self.__valon_controller.write_cmd(f"FrequencyStep {step_size} MHz")
 
@@ -332,7 +329,9 @@ class Spectrometer:
 
         valon_freq = stop_freq - self.__awg_freq
         self.__valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
-        # self.__oscilloscope_controller.recall_setup('cavity_ch2000001.set')
+        
+        # Set tuning settings
+        self.__oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
 
         k = 0
         self.__folder_name = "Cavity Scan"
@@ -399,20 +398,6 @@ class Spectrometer:
             start_pos_zaber_mm = 0
             end_pos_zaber_mm = 50
 
-            while True:
-                try:
-                    speed_zaber = 0.14
-                    if 3.5 >= speed_zaber > 0:
-                        totalTime = end_pos_zaber_mm / speed_zaber
-                        print("Run time is: ", totalTime, " s")
-                        speed_zaber = round(speed_zaber)
-                    elif speed_zaber < 0 or speed_zaber > 3.5:
-                        raise ValueError
-                    break
-                except ValueError:
-                    print("Invalid integer. The number must be between 0 and 3.5.")
-
-            # homingspeed = 101204
             self.__delay_generator_controller.set_frequency(
                 300
             )  # Trigger rate for cavity search
@@ -422,7 +407,7 @@ class Spectrometer:
             curr_pos = self.__zaber_controller.get_pos()
 
             print("Zaber is at position ", curr_pos)
-            self.__zaber_controller.set_speed(speed_zaber)
+            self.__zaber_controller.set_speed(self.__zaber_speed)
 
             time.sleep(2)
             self.__oscilloscope_controller.calib_start()
