@@ -1,3 +1,5 @@
+import asyncio
+
 from PySide6 import QtCore
 from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
@@ -69,3 +71,10 @@ class CavitySearchPanel(QWidget):
 
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
+
+    async def search_button(self):
+        await asyncio.gather(
+            self.spectrometer.run_search(
+                int(self.end_freq_field.text()), float(self.step_size_field.text())
+            )
+        )
