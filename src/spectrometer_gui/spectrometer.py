@@ -13,6 +13,7 @@ from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController
 from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
+from switch_controller import SwitchController
 from Cavity import Cavity  # Remove this class later
 
 
@@ -47,6 +48,7 @@ class Spectrometer:
         self.__zaber_controller = ZaberController(self.__zaber_speed)
         self.__oscilloscope_controller = OscilloscopeController()
         self.__valon_controller = ValonController("COM3")
+        self.__switch_controller = SwitchController()
         self.__cavity = Cavity(
             self.__zaber_controller,
             self.__oscilloscope_controller,
@@ -66,6 +68,9 @@ class Spectrometer:
             step_direction = StepDirection.Down
         else:
             return
+        
+        # Toggle switch
+        self.__switch_controller.set_switch_freq()
 
         # From old function setParameters(self):
         global valon_freq, step_up_var, stop_freq_var, time_delay
@@ -329,6 +334,9 @@ class Spectrometer:
 
         valon_freq = stop_freq - self.__awg_freq
         self.__valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
+
+        # Toggle switch
+        self.__switch_controller.set_switch_cavity()
         
         # Set tuning settings
         self.__oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
