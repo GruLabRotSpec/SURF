@@ -1,3 +1,5 @@
+import asyncio
+
 from PySide6 import QtCore
 from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
@@ -74,8 +76,13 @@ class FrequencyScanPanel(QWidget):
 
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
-    
-    def scan_button(self):
-        # Actually add validation so it wont crash
-        self.spectrometer.run_scan(int(self.start_freq_field.text()), int(self.end_freq_field.text()), float(self.step_size_field.text()))
 
+    async def scan_button(self):
+        # Actually add validation so it wont crash
+        await asyncio.gather(
+            self.spectrometer.run_scan(
+                int(self.start_freq_field.text()),
+                int(self.end_freq_field.text()),
+                float(self.step_size_field.text()),
+            )
+        )
