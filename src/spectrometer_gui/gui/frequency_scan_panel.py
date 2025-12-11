@@ -55,7 +55,7 @@ class FrequencyScanPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
-        start_button.clicked.connect(lambda: asyncio.ensure_future(self.scan_button))
+        start_button.clicked.connect(lambda: asyncio.ensure_future(self.scan_button()))
         left_column.addWidget(start_button)
 
         left_column.addStretch(1)
@@ -79,6 +79,7 @@ class FrequencyScanPanel(QWidget):
 
     async def scan_button(self):
         # Actually add validation so it wont crash
+        print("Starting frequency scan from the GUI...")
         await asyncio.gather(
             self.spectrometer.run_scan(
                 int(self.start_freq_field.text()),
@@ -86,3 +87,4 @@ class FrequencyScanPanel(QWidget):
                 float(self.step_size_field.text()),
             )
         )
+

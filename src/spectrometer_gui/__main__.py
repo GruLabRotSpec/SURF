@@ -1,3 +1,4 @@
+from PySide6 import QtAsyncio
 from PySide6.QtWidgets import QApplication, QLabel
 
 from spectrometer import Spectrometer
@@ -12,7 +13,7 @@ def main():
     window = MainWindow(app, spectrometer)
     window.show()
 
-    app.exec()
+    QtAsyncio.run()
 
 
 if __name__ == "__main__":

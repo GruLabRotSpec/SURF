@@ -5,9 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "asyncio>=4.0.0",
     "matplotlib>=3.10.6",
     "numpy>=2.3.3",
     "pandas>=2.3.2",
+    "pip>=25.3",
     "pyserial>=3.5",
     "pyside6>=6.9.2",
     "pythonnet>=3.0.5",

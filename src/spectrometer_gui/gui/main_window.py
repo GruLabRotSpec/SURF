@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         controller = SpectrometerController(spectrometer, bottom_bar_panel)
 
         frequency_scan = FrequencyScanPanel(controller)
-        cavity_search = CavitySearchPanel()
+        cavity_search = CavitySearchPanel(controller)
         control_panel = ControlPanel()
         analysis_panel = AnalysisPanel()
 

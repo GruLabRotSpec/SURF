@@ -12,10 +12,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from gui.spectrometer_controller import SpectrometerController
+
 
 class CavitySearchPanel(QWidget):
-    def __init__(self):
+    def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
+
+        self.spectrometer = spectrometer
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -43,15 +47,15 @@ class CavitySearchPanel(QWidget):
         form.addRow(start_freq_label, start_freq_field)
 
         step_size_label = QLabel("Step Size")
-        step_size_field = QLineEdit()
-        form.addRow(step_size_label, step_size_field)
+        self.step_size_field = QLineEdit("0.5")
+        form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
-        end_freq_field = QLineEdit()
-        form.addRow(end_freq_label, end_freq_field)
+        self.end_freq_field = QLineEdit("9000")
+        form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
-        start_button.clicked.connect(lambda: asyncio.ensure_future(self.search_button))
+        start_button.clicked.connect(lambda: asyncio.ensure_future(self.search_button()))
         left_column.addWidget(start_button)
 
         left_column.addStretch(1)
@@ -74,6 +78,7 @@ class CavitySearchPanel(QWidget):
         layout.setStretch(1, 1)
 
     async def search_button(self):
+        print("Starting cavity search from the GUI...")
         await asyncio.gather(
             self.spectrometer.run_search(
                 int(self.end_freq_field.text()), float(self.step_size_field.text())
