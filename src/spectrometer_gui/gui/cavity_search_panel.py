@@ -1,6 +1,6 @@
 import asyncio
 
-from PySide6 import QtCore
+from PySide6 import QtCore, QtAsyncio
 from PySide6.QtGui import QFont, QPixmap
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -51,6 +51,7 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, end_freq_field)
 
         start_button = QPushButton("Start")
+        start_button.clicked.connect(lambda: asyncio.ensure_future(self.search_button))
         left_column.addWidget(start_button)
 
         left_column.addStretch(1)
