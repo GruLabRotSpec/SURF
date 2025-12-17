@@ -6,6 +6,9 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from gui.settings_window import SettingsWindow
+from gui.about_window import AboutWindow
+
 from gui.frequency_scan_panel import FrequencyScanPanel
 from gui.cavity_search_panel import CavitySearchPanel
 from gui.control_panel import ControlPanel
@@ -61,13 +64,19 @@ class MainWindow(QMainWindow):
         error_action.triggered.connect(self.quit_app)
 
         # Edit Menu
-        self.menu_bar.addMenu("&Edit")
+        edit_menu = self.menu_bar.addMenu("&Edit")
+
+        settings_action = edit_menu.addAction("Settings")
+        settings_action.triggered.connect(self.show_settings)
 
         # View Menu
         self.menu_bar.addMenu("&View")
 
         # Help Menu
-        self.menu_bar.addMenu("&Help")
+        help_menu = self.menu_bar.addMenu("&Help")
+
+        about_action = help_menu.addAction("About")
+        about_action.triggered.connect(self.show_about)
 
     def quit_app(self):
         self.app.quit()
@@ -79,3 +88,11 @@ class MainWindow(QMainWindow):
             "You triggered a Critical Error!",
             QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Abort,
         )
+
+    def show_settings(self):
+        self.settings_window = SettingsWindow()
+        self.settings_window.show()
+
+    def show_about(self):
+        self.about_window = AboutWindow()
+        self.about_window.show()
