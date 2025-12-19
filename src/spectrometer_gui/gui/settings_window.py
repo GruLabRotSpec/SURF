@@ -9,7 +9,7 @@ from gui.advanced_settings_panel import AdvancedSettingsPanel
 
 class SettingsWindow(QWidget):
     def __init__(self):
-        super.__init__()
+        super().__init__()
 
         self.setWindowTitle("Settings")
 

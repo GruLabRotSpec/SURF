@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 
 class AboutWindow(QWidget):
     def __init__(self):
-        super.__init__()
+        super().__init__()
 
         self.setWindowTitle("About")
 
