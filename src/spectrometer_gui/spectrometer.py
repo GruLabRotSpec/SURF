@@ -247,7 +247,7 @@ class Spectrometer:
                 print(max(max_lists))
 
                 # Plot position vs intensity
-                plotter.plot_position_vs_intensity(posArr1, max_lists)
+                #plotter.plot_position_vs_intensity(posArr1, max_lists)
 
             for items in max_list:
                 print("len: ", len(items))
@@ -376,7 +376,7 @@ class Spectrometer:
         self.__zaber_controller.home()
 
         print("Zaber has arrived at home position 0 mm")
-        stop_freq = stop_freqinput - self.__awg_freq
+        # stop_freq = stop_freqinput - self.__awg_freq
         try:
             step_size = float(step_size)
             step_up_var = True
@@ -385,7 +385,7 @@ class Spectrometer:
             step_up_var = False
             print("Only running single sequence.")
         try:
-            stop_freq = float(stop_freq)
+            stop_freq = float(stop_freqinput)
             stop_freq_var = True
         except ValueError:
             stop_freq_var = False
@@ -457,14 +457,14 @@ class Spectrometer:
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
-            plt.plot(x, y)
-            plt.plot(x[peaks], y[peaks], "x")
-            plt.title("Zaber Position vs. Intensity")
-            plt.xlabel("Zaber Position (mm)")
-            plt.ylabel("Intensity (Volts)")
-            plt.show(block=False)
-            plt.pause(10)
-            plt.close()
+            # plt.plot(x, y)
+            # plt.plot(x[peaks], y[peaks], "x")
+            # plt.title("Zaber Position vs. Intensity")
+            # plt.xlabel("Zaber Position (mm)")
+            # plt.ylabel("Intensity (Volts)")
+            # plt.show(block=False)
+            # plt.pause(10)
+            # plt.close()
 
             df1 = pd.DataFrame(
                 {
@@ -489,10 +489,11 @@ class Spectrometer:
                 f"{self.__directory}/{self.__filename}.csv",
             )
 
-            # self.__delay_generator_controller.stop_trig()
-            # self.__oscilloscope_controller.calib_stop()
-            if step_up_var and not stop_freq_var:
-                if new_freq <= stop_freq:
+            self.__delay_generator_controller.stop_trig()
+            self.__oscilloscope_controller.calib_stop()
+
+            if step_up_var and stop_freq_var:
+                if new_freq < stop_freq:
                     i += 1
                     self.__valon_controller.step_up()
 
@@ -580,7 +581,7 @@ class Spectrometer:
         # acquire vals
         x_values, y_values = self.__scale_fft(wave_values, start, new_freq)
 
-        plotter.generate_plot(x_values, y_values)
+        #plotter.generate_plot(x_values, y_values)
 
         return x_values, y_values
 
