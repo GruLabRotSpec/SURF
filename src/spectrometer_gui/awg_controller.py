@@ -10,7 +10,7 @@ class RunMode(Enum):
 
 class AWGController:
     def __init__(self):
-        self.__visa_address = "UNKNOWN-REPLACE"
+        self.__visa_address = 'GPIB0::1::INSTR'
         self.__rm = visa.ResourceManager()
         self.__awg = self.__rm.open_resource(self.__visa_address)
         print("AWG connected successfully.")
@@ -25,7 +25,7 @@ class AWGController:
         self.__write_cmd("AWGControl:STOP")
 
     def get_status(self):
-        return self.__write_cmd("AWGCONTROL:RSTATE?")
+        return print(self.__write_cmd("AWGCONTROL:RSTATe?"))
 
     def get_run_mode(self):
         return self.__write_cmd("AWGControl:RMODe?")
