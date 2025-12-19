@@ -24,7 +24,7 @@ class AWGController:
     def stop(self):
         self.__write_cmd("AWGControl:STOP")
 
-    def get_status():
+    def get_status(self):
         return self.__write_cmd("AWGCONTROL:RSTATE?")
 
     def get_run_mode(self):
