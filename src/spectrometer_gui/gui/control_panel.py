@@ -14,7 +14,7 @@ class ControlPanel(QWidget):
         self.setLayout(layout)
 
         show_button = QPushButton("View additional settings...")
-        show_button.clicked.connect(show_more_settings)
+        show_button.clicked.connect(self.show_more_settings)
         layout.addWidget(show_button)
 
     def show_more_settings(self):
