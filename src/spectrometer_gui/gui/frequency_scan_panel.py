@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController
+from gui.graph_panel import GraphPanel
 
 
 class FrequencyScanPanel(QWidget):
@@ -67,9 +68,8 @@ class FrequencyScanPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        right_image = QLabel()
-        right_image.setPixmap(QPixmap("./src/gui/example_image.png"))
-        right_column.addWidget(right_image)
+        graph_panel = GraphPanel()
+        right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
@@ -87,4 +87,3 @@ class FrequencyScanPanel(QWidget):
                 float(self.step_size_field.text()),
             )
         )
-
