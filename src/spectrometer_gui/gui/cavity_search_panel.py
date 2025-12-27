@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController
+from gui.graph_panel import GraphPanel
 
 
 class CavitySearchPanel(QWidget):
@@ -55,7 +56,9 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
-        start_button.clicked.connect(lambda: asyncio.ensure_future(self.search_button()))
+        start_button.clicked.connect(
+            lambda: asyncio.ensure_future(self.search_button())
+        )
         left_column.addWidget(start_button)
 
         left_column.addStretch(1)
@@ -67,9 +70,8 @@ class CavitySearchPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        right_image = QLabel()
-        right_image.setPixmap(QPixmap("./src/gui/example_image.png"))
-        right_column.addWidget(right_image)
+        graph_panel = GraphPanel()
+        right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
