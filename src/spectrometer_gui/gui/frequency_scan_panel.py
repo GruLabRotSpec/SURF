@@ -59,6 +59,10 @@ class FrequencyScanPanel(QWidget):
         start_button.clicked.connect(lambda: asyncio.ensure_future(self.scan_button()))
         left_column.addWidget(start_button)
 
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setEnabled(False)
+        left_column.addWidget(cancel_button)
+
         left_column.addStretch(1)
 
         # Right Column
