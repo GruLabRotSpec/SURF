@@ -28,6 +28,7 @@ class Spectrometer:
 
         # Instrument settings (infrequently changed)
         self.__zaber_speed = 0.01  # In mm/s
+        self.__zaber_homing_speed = 2.0
         self.__oscilloscope_channel = "CH4"
         self.__rf_level = 10
 
@@ -68,7 +69,7 @@ class Spectrometer:
             step_direction = StepDirection.Down
         else:
             return
-        
+
         # Toggle switch
         self.__switch_controller.set_switch_freq()
 
@@ -337,7 +338,7 @@ class Spectrometer:
 
         # Toggle switch
         self.__switch_controller.set_switch_cavity()
-        
+
         # Set tuning settings
         self.__oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
 
@@ -372,7 +373,7 @@ class Spectrometer:
                 "Sucessfully named file ", f"{self.__directory}/{self.__filename}.csv"
             )
 
-        self.__zaber_controller.set_speed(2.0)
+        self.__zaber_controller.set_speed(self.__zaber_homing_speed)
         self.__zaber_controller.home()
 
         print("Zaber has arrived at home position 0 mm")
@@ -409,7 +410,7 @@ class Spectrometer:
             self.__delay_generator_controller.set_frequency(
                 300
             )  # Trigger rate for cavity search
-            self.__zaber_controller.set_speed(2.0)
+            self.__zaber_controller.set_speed(self.__zaber_homing_speed)
             self.__zaber_controller.home()
 
             curr_pos = self.__zaber_controller.get_pos()
@@ -660,8 +661,9 @@ class Spectrometer:
             f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
         )  # appended main file with filtered data
 
-    def set_instrument_settings(self, zaber_speed=0.003, rf_level=10):
+    def set_instrument_settings(self, zaber_speed=0.003, zaber_homing_speed=2.0, rf_level=10):
         self.__zaber_speed = zaber_speed
+        self.__zaber_homing_speed = zaber_homing_speed
         self.__rf_level = rf_level
 
     def get_instrument_settings(self):
