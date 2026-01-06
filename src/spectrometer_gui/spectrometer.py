@@ -14,6 +14,7 @@ from zaber_controller import ZaberController
 from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
 from switch_controller import SwitchController
+from awg_controller import AWGController
 from Cavity import Cavity  # Remove this class later
 
 
@@ -50,6 +51,7 @@ class Spectrometer:
         self.__oscilloscope_controller = OscilloscopeController()
         self.__valon_controller = ValonController("COM3")
         self.__switch_controller = SwitchController()
+        self.__awg_controller = AWGController()
         self.__cavity = Cavity(
             self.__zaber_controller,
             self.__oscilloscope_controller,
