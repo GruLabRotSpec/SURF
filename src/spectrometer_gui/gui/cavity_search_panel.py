@@ -56,9 +56,7 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
-        start_button.clicked.connect(
-            lambda: asyncio.ensure_future(self.search_button())
-        )
+        start_button.clicked.connect(lambda: asyncio.create_task(self.search_button()))
         left_column.addWidget(start_button)
 
         cancel_button = QPushButton("Cancel")
