@@ -85,6 +85,7 @@ class CavitySearchPanel(QWidget):
 
     async def search_button(self):
         print("Starting cavity search from the GUI...")
+        self.setEnabled(False)
         await asyncio.gather(
             self.spectrometer.run_search(
                 int(self.end_freq_field.text()), float(self.step_size_field.text())
