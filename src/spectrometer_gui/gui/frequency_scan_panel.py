@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController
+from gui.graph_panel import GraphPanel
 
 
 class FrequencyScanPanel(QWidget):
@@ -58,6 +59,10 @@ class FrequencyScanPanel(QWidget):
         start_button.clicked.connect(lambda: asyncio.create_task(self.scan_button()))
         left_column.addWidget(start_button)
 
+        cancel_button = QPushButton("Cancel")
+        cancel_button.setEnabled(False)
+        left_column.addWidget(cancel_button)
+
         left_column.addStretch(1)
 
         # Right Column
@@ -67,9 +72,8 @@ class FrequencyScanPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        right_image = QLabel()
-        right_image.setPixmap(QPixmap("./src/gui/example_image.png"))
-        right_column.addWidget(right_image)
+        graph_panel = GraphPanel()
+        right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
@@ -80,6 +84,7 @@ class FrequencyScanPanel(QWidget):
     async def scan_button(self):
         # Actually add validation so it wont crash
         print("Starting frequency scan from the GUI...")
+        self.setEnabled(False)
         await asyncio.gather(
             self.spectrometer.run_scan(
                 int(self.start_freq_field.text()),
@@ -87,4 +92,3 @@ class FrequencyScanPanel(QWidget):
                 float(self.step_size_field.text()),
             )
         )
-
