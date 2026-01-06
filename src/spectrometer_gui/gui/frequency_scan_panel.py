@@ -84,6 +84,7 @@ class FrequencyScanPanel(QWidget):
     async def scan_button(self):
         # Actually add validation so it wont crash
         print("Starting frequency scan from the GUI...")
+        self.setEnabled(False)
         await asyncio.gather(
             self.spectrometer.run_scan(
                 int(self.start_freq_field.text()),
