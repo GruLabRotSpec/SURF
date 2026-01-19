@@ -250,7 +250,7 @@ class Spectrometer:
                 print(max(max_lists))
 
                 # Plot position vs intensity
-                #plotter.plot_position_vs_intensity(posArr1, max_lists)
+                # plotter.plot_position_vs_intensity(posArr1, max_lists)
 
             for items in max_list:
                 print("len: ", len(items))
@@ -555,14 +555,7 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
     def __fft_from_scope(self, new_freq):
-        global \
-            time_scale, \
-            time_start, \
-            vertical_scale, \
-            vertical_offset, \
-            vertical_position, \
-            freq_cent, \
-            freq_span
+        global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
             self.__oscilloscope_channel, time_delay
@@ -584,7 +577,7 @@ class Spectrometer:
         # acquire vals
         x_values, y_values = self.__scale_fft(wave_values, start, new_freq)
 
-        #plotter.generate_plot(x_values, y_values)
+        # plotter.generate_plot(x_values, y_values)
 
         return x_values, y_values
 
@@ -663,7 +656,9 @@ class Spectrometer:
             f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
         )  # appended main file with filtered data
 
-    def set_instrument_settings(self, zaber_speed=0.003, zaber_homing_speed=2.0, rf_level=10):
+    def set_instrument_settings(
+        self, zaber_speed=0.003, zaber_homing_speed=2.0, rf_level=10
+    ):
         self.__zaber_speed = zaber_speed
         self.__zaber_homing_speed = zaber_homing_speed
         self.__rf_level = rf_level
@@ -689,15 +684,67 @@ class Spectrometer:
             self.__awg_freq,
         )
 
+    def set_all_options(
+        self,
+        rf_level,
+        zaber_speed,
+        zaber_homing_speed,
+        awg_status,
+        awg_freq,
+        awg_run_mode,
+        awg_ch_1_output,
+        awg_ch_2_output,
+        resolution,
+        sample_rate,
+        window_type,
+        gate_pos,
+        math_averages,
+        trigger_rate,
+    ):
+        self.set_instrument_settings(zaber_speed, zaber_homing_speed, rf_level)
+
+        # AWG
+        if awg_status:
+            self.__awg_controller.run()
+
+            if awg_run_mode:
+                self.__awg_controller.set_run_mode(awg_run_mode)
+
+            if awg_ch_1_output:
+                self.__awg_controller.enable_channel_output(1)
+            else:
+                self.__awg_controller.disable_channel_output(1)
+
+            if awg_ch_2_output:
+                self.__awg_controller.enable_channel_output(2)
+            else:
+                self.__awg_controller.disable_channel_output(2)
+
+        else:
+            self.__awg_controller.stop()
+
+        self.__awg_freq = awg_freq
+
+        # Oscilloscope
+        self.__oscilloscope_controller.write_cmd(f"MATH4:SPECTral:RESBw {resolution}")
+        self.__oscilloscope_controller.write_cmd(
+            f"HORizontal:MODE:SAMPLERate {sample_rate}"
+        )
+        self.__oscilloscope_controller.write_cmd(f"MATH3:SPECTral:WINdow {window_type}")
+        self.__oscilloscope_controller.write_cmd(
+            f"MATH4:SPECTral:GATEPOS {gate_position}"
+        )
+        self.__oscilloscope_controller.write_cmd(f"MATH4:NUMAvg {math_averages}")
+
+        # Delay generator
+        self.__delay_generator_controller.set_trig(trig_rate)
+
     def set_output_options(self, folder_name, filename):
         self.__folder_name = folder_name
         self.__filename = filename
 
     def get_output_options(self):
-        return (
-            self.__folder_name,
-            self.__filename
-        )
+        return (self.__folder_name, self.__filename)
 
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()
