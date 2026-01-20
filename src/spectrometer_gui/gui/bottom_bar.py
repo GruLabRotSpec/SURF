@@ -18,3 +18,12 @@ class BottomBarPanel(QWidget):
         layout.addStretch(5)
 
         self.setLayout(layout)
+
+    def set_status_elements(self, progress, text="Working"):
+        if progress === -1:
+            self.bottom_progress_bar.setRange(0, 0)
+        else:
+            self.bottom_progress_bar.setRange(0, 1)
+            self.bottom_progress_bar.setValue(progress)
+
+        self.bottom_text.setText(text)
