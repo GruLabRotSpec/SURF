@@ -1,5 +1,5 @@
 import asyncio
-
+from PySide6 import QtCore
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
@@ -58,9 +58,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tab_widget)
         layout.addWidget(bottom_bar_panel)
 
-        # I think this might need to be on a timer so the event
-        # loop has time to start
-        # asyncio.create_task(controller.initialize_spectrometer())
+        # This runs the first init after QtAsync gets loaded
+        QtCore.QTimer.singleShot(
+            100, lambda: asyncio.create_task(controller.initialize_all_devices())
+        )
 
     def setup_menu_bar(self):
         # File Menu
