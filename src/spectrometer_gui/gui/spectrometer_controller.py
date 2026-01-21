@@ -1,30 +1,35 @@
 import asyncio
+from enum import Enum
+from PySide6.QtCore import Signal, QObject
 
 from gui.bottom_bar import BottomBarPanel
 
 from spectrometer import Spectrometer
-from delay_generator_controller import DelayGeneratorController
-from zaber_controller import ZaberController
-from oscilloscope_controller import OscilloscopeController
-from valon_controller import ValonController
-from switch_controller import SwitchController
-from awg_controller import AWGController
 
 
-class SpectrometerController:
+class DeviceStatus(Enum):
+    CONNECTING = "connecting"
+    ONLINE = "online"
+    OFFLINE = "offline"
+
+
+class SpectrometerController(QObject):
+    device_status_changed = Signal(str, object)  # device_id, DeviceStatus
+
     def __init__(self, spectrometer: Spectrometer, bottom_bar: BottomBarPanel):
+        super().__init__()
         self.spectrometer = spectrometer
         self.bottom_bar = bottom_bar
         self.current_task = None
 
     def run_scan(self, start_freq=None, stop_freq=11200, step_size=0.5):
         self.bottom_bar.set_status_elements(0, "Starting scan...")
-
         self.current_task = asyncio.create_task(
             self._run_scan_async(start_freq, stop_freq, step_size)
         )
 
     async def _run_scan_async(self, start_freq, stop_freq, step_size):
+        # TODO: Actually support proper progress
         try:
             await asyncio.to_thread(
                 self.spectrometer.scan_frequency, start_freq, stop_freq, step_size
@@ -37,11 +42,10 @@ class SpectrometerController:
 
     def run_search(self, freq=9000, step_size=0.5):
         self.bottom_bar.set_status_elements(0, "Starting search...")
-
-        # Create and manage async task
         self.current_task = asyncio.create_task(self._run_search_async(freq, step_size))
 
     async def _run_search_async(self, freq, step_size):
+        # TODO:  Actually support proper progress
         try:
             await asyncio.to_thread(self.spectrometer.cavity_search, freq, step_size)
             self.bottom_bar.set_status_elements(1, "Search completed")
@@ -58,48 +62,24 @@ class SpectrometerController:
         success = await self.init_device_async(device_id)
         return success
 
-    async def init_device_async(self, device_id):
-        """Public async wrapper for device initialization"""
-        device_mapping = {
-            "zaber": (
-                "zaber_controller",
-                ZaberController,
-                [self.spectrometer.__zaber_speed],
-            ),
-            "oscilloscope": ("oscilloscope_controller", OscilloscopeController, []),
-            "valon": ("valon_controller", ValonController, ["COM3"]),
-            "switch": ("switch_controller", SwitchController, []),
-            "delay_generator": (
-                "delay_generator_controller",
-                DelayGeneratorController,
-                [],
-            ),
-            "awg": ("awg_controller", AWGController, []),
-        }
-
-        attr_name, controller_class, args = device_mapping[device_id]
-
-        success = self.spectrometer.init_device(attr_name, controller_class, args)
-
-        flag_name = f"{device_id}_initialized"
-        setattr(self.spectrometer, flag_name, success)
-
+    async def init_device_async(self, device_name):
+        self.device_status_changed.emit(device_name, DeviceStatus.CONNECTING)
+        success = await asyncio.to_thread(
+            self.spectrometer.init_device, f"{device_name}_controller"
+        )
+        status = DeviceStatus.ONLINE if success else DeviceStatus.OFFLINE
+        self.device_status_changed.emit(device_name, status)
         return success
 
-    async def initialize_spectrometer(self):
-        """Initialize spectrometer using moved initialize function"""
-        # Initialize each device and track status
-        device_configs = [
-            ("delay_generator", DelayGeneratorController, []),
-            ("zaber", ZaberController, [self.spectrometer.__zaber_speed]),
-            ("oscilloscope", OscilloscopeController, []),
-            ("valon", ValonController, ["COM3"]),
-            ("switch", SwitchController, []),
-            ("awg", AWGController, []),
+    async def initialize_all_devices(self):
+        devices = [
+            "zaber",
+            "oscilloscope",
+            "valon",
+            "switch",
+            "delay_generator",
+            "awg",
         ]
 
-        for device_id, controller_class, args in device_configs:
-            attr_name = f"{device_id}_controller"
-            success = self.spectrometer.init_device(attr_name, controller_class, args)
-            flag_name = f"{device_id}_initialized"
-            setattr(self.spectrometer, flag_name, success)
+        for device_name in devices:
+            await self.init_device_async(device_name)

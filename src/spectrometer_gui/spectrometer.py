@@ -69,40 +69,17 @@ class Spectrometer:
         self.__status = status
 
     def initialize(self):
-        # Initialize devices
-        self.delay_generator_initialized = self.__safe_init_device(
-            "delay_generator_controller", DelayGeneratorController, []
-        )
-        self.zaber_initialized = self.__safe_init_device(
-            "zaber_controller", ZaberController, [self.__zaber_speed]
-        )
-        self.oscilloscope_initialized = self.__safe_init_device(
-            "oscilloscope_controller", OscilloscopeController, []
-        )
-        self.valon_initialized = self.__safe_init_device(
-            "valon_controller", ValonController, ["COM3"]
-        )
-        self.switch_initialized = self.__safe_init_device(
-            "switch_controller", SwitchController, []
-        )
-        self.awg_initialized = self.__safe_init_device(
-            "awg_controller", AWGController, []
-        )
+        devices = [
+            "zaber",
+            "oscilloscope",
+            "valon",
+            "switch",
+            "delay_generator",
+            "awg",
+        ]
 
-        # Only set status to Idle if all devices initialized successfully
-        all_initialized = all(
-            [
-                self.delay_generator_initialized,
-                self.zaber_initialized,
-                self.oscilloscope_initialized,
-                self.valon_initialized,
-                self.switch_initialized,
-                self.awg_initialized,
-            ]
-        )
-
-        if all_initialized:
-            self.__status = SpectrometerStatus.Idle
+        for device_name in devices:
+            self.init_device(f"{device_name}_controller")
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
@@ -776,13 +753,36 @@ class Spectrometer:
         self.__oscilloscope_controller.calib_start()
         self.__delay_generator_controller.start_trig()
 
-    def init_device(self, attr_name, controller_class, args=[]):
+    def init_device(self, device_name):
+        # This should be replaced with a global config
+        device_mapping = {
+            "zaber_controller": (ZaberController, [self.__zaber_speed]),
+            "oscilloscope_controller": (OscilloscopeController, []),
+            "valon_controller": (ValonController, ["COM3"]),
+            "switch_controller": (SwitchController, []),
+            "delay_generator_controller": (DelayGeneratorController, []),
+            "awg_controller": (AWGController, []),
+        }
+
+        if device_name in device_mapping.keys():
+            controller_class, args = device_mapping[device_name]
+        else:
+            raise ValueError(f"{device_name} is a invalid device name")
+
         try:
-            setattr(self, f"__{attr_name}", controller_class(*args))
-            return True
+            setattr(self, f"__{device_name}", controller_class(*args))
+            success = True
         except Exception as e:
-            print(f"Failed to initialize {attr_name}: {e}")
-            return False
+            print(f"Failed to initialize {device_name}: {e}")
+            success = False
+
+        flag_name = f"{device_name}_initialized"
+        setattr(self, flag_name, success)
+
+        if all(self.get_device_status().values()):
+            self.status = SpectrometerStatus.Idle
+
+        return success
 
     def get_device_status(self):
         return {

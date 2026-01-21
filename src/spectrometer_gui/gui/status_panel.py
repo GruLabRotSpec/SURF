@@ -1,4 +1,5 @@
 import asyncio
+from enum import Enum
 from PySide6 import QtCore
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -10,7 +11,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
 )
 
-from gui.spectrometer_controller import SpectrometerController
+from gui.spectrometer_controller import SpectrometerController, DeviceStatus
 
 
 class StatusPanel(QWidget):
@@ -21,7 +22,9 @@ class StatusPanel(QWidget):
         self.device_circles = {}
         self.refresh_buttons = {}
         self.setup_ui()
-        self.refresh_all_status()
+
+        # Signals
+        self.spectrometer.device_status_changed.connect(self.on_device_status_changed)
 
     def setup_ui(self):
         layout = QHBoxLayout()
@@ -47,7 +50,6 @@ class StatusPanel(QWidget):
         status_group = QGroupBox("Device Status")
         status_layout = QFormLayout()
 
-        left_column = QWidget()
         status_group.setLayout(status_layout)
 
         # Device status rows
@@ -62,12 +64,9 @@ class StatusPanel(QWidget):
 
         for device_id, display_name in devices:
             status_label = QLabel("●")
-            status_label.setStyleSheet(
-                "color: gray; font-size: 16px; font-weight: bold;"
-            )
             self.device_circles[device_id] = status_label
+            self.update_circle(device_id, DeviceStatus.CONNECTING)
 
-            # Create row: Device name + Status indicator + Refresh button
             row_widget = QWidget()
             row_layout = QHBoxLayout()
             row_widget.setLayout(row_layout)
@@ -94,40 +93,29 @@ class StatusPanel(QWidget):
 
     def on_refresh_clicked(self, device_id):
         self.refresh_buttons[device_id].setEnabled(False)
-        self.update_circle(device_id, "gray")
-
         asyncio.create_task(self.refresh_device_async(device_id))
 
     async def refresh_device_async(self, device_id):
         try:
-            success = await self.spectrometer.refresh_device(device_id)
-        except Exception as e:
-            success = False
+            await self.spectrometer.refresh_device(device_id)
+        except Exception:
+            pass
 
-        QtCore.QTimer.singleShot(
-            100, lambda: self.update_device_status(device_id, success)
-        )
+        self.refresh_buttons[device_id].setEnabled(True)
 
-    def update_circle(self, device_id, color):
+    def update_circle(self, device_id, status):
         circle = self.device_circles[device_id]
         if circle:
-            if color == "green":
+            if status == DeviceStatus.ONLINE:
                 circle.setStyleSheet(
                     "color: #00AA00; font-size: 16px; font-weight: bold;"
                 )
-            elif color == "red":
+            elif status == DeviceStatus.OFFLINE:
                 circle.setStyleSheet(
                     "color: #CC0000; font-size: 16px; font-weight: bold;"
                 )
-            else:
+            else:  # CONNECTING
                 circle.setStyleSheet("color: gray; font-size: 16px; font-weight: bold;")
 
-    def update_device_status(self, device_id, success):
-        self.update_circle(device_id, "green" if success else "red")
-        self.refresh_buttons[device_id].setEnabled(True)
-
-    def refresh_all_status(self):
-        device_status = self.spectrometer.spectrometer.get_device_status()
-
-        for device_id, is_initialized in device_status.items():
-            self.update_circle(device_id, "green" if is_initialized else "red")
+    def on_device_status_changed(self, device_id, status):
+        self.update_circle(device_id, status)
