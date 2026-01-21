@@ -1,3 +1,5 @@
+import asyncio
+
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
@@ -13,6 +15,7 @@ from gui.frequency_scan_panel import FrequencyScanPanel
 from gui.cavity_search_panel import CavitySearchPanel
 from gui.control_panel import ControlPanel
 from gui.analysis_panel import AnalysisPanel
+from gui.status_panel import StatusPanel
 from gui.bottom_bar import BottomBarPanel
 from gui.spectrometer_controller import SpectrometerController
 
@@ -39,12 +42,14 @@ class MainWindow(QMainWindow):
 
         controller = SpectrometerController(spectrometer, bottom_bar_panel)
 
+        status_panel = StatusPanel(controller)
         frequency_scan = FrequencyScanPanel(controller)
         cavity_search = CavitySearchPanel(controller)
         control_panel = ControlPanel()
         analysis_panel = AnalysisPanel()
 
         self.tab_widget = QTabWidget(self)
+        self.tab_widget.addTab(status_panel, "Status")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
         self.tab_widget.addTab(cavity_search, "Cavity Search")
         self.tab_widget.addTab(control_panel, "Control")
@@ -52,6 +57,10 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(self.tab_widget)
         layout.addWidget(bottom_bar_panel)
+
+        # I think this might need to be on a timer so the event
+        # loop has time to start
+        # asyncio.create_task(controller.initialize_spectrometer())
 
     def setup_menu_bar(self):
         # File Menu
