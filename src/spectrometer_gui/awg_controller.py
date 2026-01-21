@@ -10,7 +10,7 @@ class RunMode(Enum):
 
 class AWGController:
     def __init__(self):
-        self.__visa_address = 'GPIB0::1::INSTR'
+        self.__visa_address = "GPIB0::1::INSTR"
         self.__rm = visa.ResourceManager()
         self.__awg = self.__rm.open_resource(self.__visa_address)
         print("AWG connected successfully.")
@@ -33,11 +33,11 @@ class AWGController:
     def set_run_mode(self, mode):
         self.__write_cmd(f"AWGControl:RMODe {mode}")
 
-    def enable_channel_output(self, channel: int):
-        self.__write_cmd(f"OUTPUT{channel}:STATE ON")
-
-    def disable_channel_output(self, channel: int):
-        self.__write_cmd(f"OUTPUT{channel}:STATE OFF")
+    def set_channel_output(self, channel: int, state: bool):
+        if state:
+            self.__write_cmd(f"OUTPUT{channel}:STATE ON")
+        else:
+            self.__write_cmd(f"OUTPUT{channel}:STATE OFF")
 
     def get_channel_output_state(self, channel: int):
         self.__write_cmd(f"OUTPUT{channel}:STATE?")
