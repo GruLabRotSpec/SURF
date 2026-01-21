@@ -55,16 +55,16 @@ class SpectrometerController:
             self.current_task.cancel()
 
     async def refresh_device(self, device_id):
-        success = await self.safe_init_device_async(device_id)
+        success = await self.init_device_async(device_id)
         return success
 
-    async def safe_init_device_async(self, device_id):
+    async def init_device_async(self, device_id):
         """Public async wrapper for device initialization"""
         device_mapping = {
             "zaber": (
                 "zaber_controller",
                 ZaberController,
-                [self.spectrometer._Spectrometer__zaber_speed],
+                [self.spectrometer.__zaber_speed],
             ),
             "oscilloscope": ("oscilloscope_controller", OscilloscopeController, []),
             "valon": ("valon_controller", ValonController, ["COM3"]),
@@ -79,9 +79,7 @@ class SpectrometerController:
 
         attr_name, controller_class, args = device_mapping[device_id]
 
-        success = self.spectrometer._Spectrometer__safe_init_device(
-            attr_name, controller_class, args
-        )
+        success = self.spectrometer.init_device(attr_name, controller_class, args)
 
         flag_name = f"{device_id}_initialized"
         setattr(self.spectrometer, flag_name, success)
@@ -93,7 +91,7 @@ class SpectrometerController:
         # Initialize each device and track status
         device_configs = [
             ("delay_generator", DelayGeneratorController, []),
-            ("zaber", ZaberController, [self.spectrometer._Spectrometer__zaber_speed]),
+            ("zaber", ZaberController, [self.spectrometer.__zaber_speed]),
             ("oscilloscope", OscilloscopeController, []),
             ("valon", ValonController, ["COM3"]),
             ("switch", SwitchController, []),
@@ -102,22 +100,6 @@ class SpectrometerController:
 
         for device_id, controller_class, args in device_configs:
             attr_name = f"{device_id}_controller"
-            success = self.spectrometer._Spectrometer__safe_init_device(
-                attr_name, controller_class, args
-            )
+            success = self.spectrometer.init_device(attr_name, controller_class, args)
             flag_name = f"{device_id}_initialized"
             setattr(self.spectrometer, flag_name, success)
-
-        try:
-            self.bottom_bar.set_status_elements(0, "Initializing devices...")
-            success_count = sum(self.spectrometer.get_device_status().values())
-            if success_count == 6:
-                self.bottom_bar.set_status_elements(
-                    1, "All devices initialized successfully"
-                )
-            else:
-                self.bottom_bar.set_status_elements(
-                    1, f"Initialized: {success_count}/6 devices"
-                )
-        except Exception as e:
-            self.bottom_bar.set_status_elements(1, f"Initialization failed: {e}")

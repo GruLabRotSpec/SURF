@@ -300,8 +300,12 @@ class Spectrometer:
             max_pos = max_max_vals[peakMidpt1]
             plt.close()
 
-            # moving to new cavity position for next data acquisition
-            self.__move_cavity_position(max_pos)
+            # Moving to new cavity position for next data acquisition
+            print("Moving to maximum position at: ", max_pos, " mm")
+            self.__zaber_controller.set_speed(self.__zaber_retune_speed)
+            self.__zaber_controller.move_to(max_pos)
+            curr_pos = self.__zaber_controller.get_pos()
+            print("Running scan... Zaber is at position: ", curr_pos)
 
             self.__delay_generator_controller.set_trig(self.__trig_rate)
 
@@ -734,15 +738,8 @@ class Spectrometer:
             if awg_run_mode:
                 self.__awg_controller.set_run_mode(awg_run_mode)
 
-            if awg_ch_1_output:
-                self.__awg_controller.enable_channel_output(1)
-            else:
-                self.__awg_controller.disable_channel_output(1)
-
-            if awg_ch_2_output:
-                self.__awg_controller.enable_channel_output(2)
-            else:
-                self.__awg_controller.disable_channel_output(2)
+            self.__awg_controller.set_channel_output(1, awg_ch_1_output)
+            self.__awg_controller.set_channel_output(2, awg_ch_2_output)
 
         else:
             self.__awg_controller.stop()
@@ -779,16 +776,7 @@ class Spectrometer:
         self.__oscilloscope_controller.calib_start()
         self.__delay_generator_controller.start_trig()
 
-    def __move_cavity_position(self, max_pos):
-        # Moving to new cavity position for next data acquisition
-        print("Moving to maximum position at: ", max_pos, " mm")
-        self.__zaber_controller.set_speed(self.__zaber_retune_speed)
-        self.__zaber_controller.move_to(max_pos)
-        curr_pos = self.__zaber_controller.get_pos()
-        print("Running scan... Zaber is at position: ", curr_pos)
-
-    def __safe_init_device(self, attr_name, controller_class, args=[]):
-        """Single helper method for all device initialization"""
+    def init_device(self, attr_name, controller_class, args=[]):
         try:
             setattr(self, f"__{attr_name}", controller_class(*args))
             return True
