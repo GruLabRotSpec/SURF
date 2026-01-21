@@ -20,7 +20,7 @@ class BottomBarPanel(QWidget):
         self.setLayout(layout)
 
     def set_status_elements(self, progress, text="Working"):
-        if progress === -1:
+        if progress == -1:
             self.bottom_progress_bar.setRange(0, 0)
         else:
             self.bottom_progress_bar.setRange(0, 1)
