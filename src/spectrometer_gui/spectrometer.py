@@ -15,7 +15,6 @@ from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
 from switch_controller import SwitchController
 from awg_controller import AWGController
-from Cavity import Cavity  # Remove this class later
 
 
 class StepDirection(Enum):
@@ -23,9 +22,15 @@ class StepDirection(Enum):
     Up = 1
 
 
+class SpectrometerStatus(Enum):
+    Uninitialized = 1
+    Idle = 2
+    Running = 3
+
+
 class Spectrometer:
     def __init__(self):
-        self.__status = "Idle"
+        self.__status = SpectrometerStatus.Uninitialized
 
         # Instrument settings (infrequently changed)
         self.__zaber_speed = 0.01  # In mm/s
@@ -40,29 +45,78 @@ class Spectrometer:
         self.__intensity = 0.2  # Intensity of starting cavity position (V)
         self.__awg_freq = 30  # Frequency for the arbitrary waveform generator
 
+        # Cavity tuning settings
+        self.__zaber_retune_speed = 4.8
+
+        # Device initialization status
+        self.zaber_initialized = False
+        self.oscilloscope_initialized = False
+        self.valon_initialized = False
+        self.delay_generator_initialized = False
+        self.awg_initialized = False
+        self.switch_initialized = False
+
         # Output options
         self.__directory = ""
         self.__run_directory = ""
         self.__folder_name = "Cavity Data"
         self.__filename = "OCS_isotopescan_11700_11200_9_8_25"
 
-        self.__delay_generator_controller = DelayGeneratorController()
-        self.__zaber_controller = ZaberController(self.__zaber_speed)
-        self.__oscilloscope_controller = OscilloscopeController()
-        self.__valon_controller = ValonController("COM3")
-        self.__switch_controller = SwitchController()
-        self.__awg_controller = AWGController()
-        self.__cavity = Cavity(
-            self.__zaber_controller,
-            self.__oscilloscope_controller,
-            self.__delay_generator_controller,
-        )
-
-    def get_status(self):
+    def get_status(self) -> SpectrometerStatus:
         return self.__status
 
-    def __set_status(self, status):
+    def __set_status(self, status: SpectrometerStatus):
         self.__status = status
+
+    def initialize(self):
+        # Initialize devices
+        self.delay_generator_initialized = self.__safe_init_device(
+            "delay_generator_controller", DelayGeneratorController, []
+        )
+        self.zaber_initialized = self.__safe_init_device(
+            "zaber_controller", ZaberController, [self.__zaber_speed]
+        )
+        self.oscilloscope_initialized = self.__safe_init_device(
+            "oscilloscope_controller", OscilloscopeController, []
+        )
+        self.valon_initialized = self.__safe_init_device(
+            "valon_controller", ValonController, ["COM3"]
+        )
+        self.switch_initialized = self.__safe_init_device(
+            "switch_controller", SwitchController, []
+        )
+        self.awg_initialized = self.__safe_init_device(
+            "awg_controller", AWGController, []
+        )
+
+        # Only set status to Idle if all devices initialized successfully
+        all_initialized = all(
+            [
+                self.delay_generator_initialized,
+                self.zaber_initialized,
+                self.oscilloscope_initialized,
+                self.valon_initialized,
+                self.switch_initialized,
+                self.awg_initialized,
+            ]
+        )
+
+        if all_initialized:
+            self.__status = SpectrometerStatus.Idle
+
+    def make_dir(self, subdirectory: str) -> str:
+        k = 0
+        base_path = f"{self.__folder_name}/{self.__filename}_{k}"
+
+        while os.path.exists(base_path):
+            k += 1
+            base_path = f"{self.__folder_name}/{self.__filename}_{k}"
+
+        os.makedirs(base_path)
+        os.makedirs(f"{base_path}/{subdirectory}")
+
+        print("folder for data has been created: ", base_path)
+        return base_path
 
     def scan_frequency(self, start_freq, stop_freq, step_size=0.5):
         if start_freq < stop_freq:
@@ -75,32 +129,13 @@ class Spectrometer:
         # Toggle switch
         self.__switch_controller.set_switch_freq()
 
-        # From old function setParameters(self):
+    def setParameters(self):
         global valon_freq, step_up_var, stop_freq_var, time_delay
         stop_freq_input = stop_freq
 
         # Creating directory for output files
-        k = 0
-
-        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-        else:
-            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-                k += 1
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-
-        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
-        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityFiles"
+        self.__directory = self.make_dir("CavityFiles")
+        self.__run_directory = f"{self.__directory}/CavityFiles"
 
         if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
             open(f"{self.__directory}/{self.__filename}.csv", "w+")
@@ -221,7 +256,7 @@ class Spectrometer:
             )
 
             # Retuning of the cavity position
-            self.__cavity.retune_cavity_position(start_pos_zaber, self.__zaber_speed)
+            self.__retune_cavity_position(start_pos_zaber, self.__zaber_speed)
             self.__delay_generator_controller.start_trig()
 
             # setting up threading for scanning
@@ -266,7 +301,7 @@ class Spectrometer:
             plt.close()
 
             # moving to new cavity position for next data acquisition
-            self.__cavity.move_cavity_position(max_pos)
+            self.__move_cavity_position(max_pos)
 
             self.__delay_generator_controller.set_trig(self.__trig_rate)
 
@@ -344,30 +379,12 @@ class Spectrometer:
         # Set tuning settings
         self.__oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
 
-        k = 0
+        self.__directory = ""
         self.__folder_name = "Cavity Scan"
 
         # creating directory for files to be
-
-        if not os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityRuns")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-        else:
-            while os.path.exists(f"{self.__folder_name}/{self.__filename}_{k}"):
-                k += 1
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}")
-            os.makedirs(f"{self.__folder_name}/{self.__filename}_{k}/CavityRuns")
-            print(
-                "folder for data has been created: ",
-                f"{self.__folder_name}/{self.__filename}_{k}",
-            )
-
-        self.__directory = f"{self.__folder_name}/{self.__filename}_{k}"
-        self.__run_directory = f"{self.__folder_name}/{self.__filename}_{k}/CavityRuns"
+        self.__directory = self.make_dir("CavityRuns")
+        self.__run_directory = f"{self.__directory}/CavityRuns"
 
         if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
             open(f"{self.__directory}/{self.__filename}.csv", "w+")
@@ -555,7 +572,14 @@ class Spectrometer:
         max_list.append(temp_max_list)
 
     def __fft_from_scope(self, new_freq):
-        global time_scale, time_start, vertical_scale, vertical_offset, vertical_position, freq_cent, freq_span
+        global \
+            time_scale, \
+            time_start, \
+            vertical_scale, \
+            vertical_offset, \
+            vertical_position, \
+            freq_cent, \
+            freq_span
 
         wave_values = self.__oscilloscope_controller.acq_ft_curve(
             self.__oscilloscope_channel, time_delay
@@ -731,13 +755,11 @@ class Spectrometer:
             f"HORizontal:MODE:SAMPLERate {sample_rate}"
         )
         self.__oscilloscope_controller.write_cmd(f"MATH3:SPECTral:WINdow {window_type}")
-        self.__oscilloscope_controller.write_cmd(
-            f"MATH4:SPECTral:GATEPOS {gate_position}"
-        )
+        self.__oscilloscope_controller.write_cmd(f"MATH4:SPECTral:GATEPOS {gate_pos}")
         self.__oscilloscope_controller.write_cmd(f"MATH4:NUMAvg {math_averages}")
 
         # Delay generator
-        self.__delay_generator_controller.set_trig(trig_rate)
+        self.__delay_generator_controller.set_trig(trigger_rate)
 
     def set_output_options(self, folder_name, filename):
         self.__folder_name = folder_name
@@ -745,6 +767,44 @@ class Spectrometer:
 
     def get_output_options(self):
         return (self.__folder_name, self.__filename)
+
+    def __retune_cavity_position(self, start_pos_zaber, zaber_speed):
+        # Retuning of the cavity position
+        self.__delay_generator_controller.set_frequency(300)
+        self.__zaber_controller.set_speed(self.__zaber_retune_speed)
+        # Speed for moving to the beginning spot, not the speed for scanning
+        print(f"Moving Zaber to {start_pos_zaber}")
+        self.__zaber_controller.move_to(start_pos_zaber)
+        self.__zaber_controller.set_speed(zaber_speed)
+        self.__oscilloscope_controller.calib_start()
+        self.__delay_generator_controller.start_trig()
+
+    def __move_cavity_position(self, max_pos):
+        # Moving to new cavity position for next data acquisition
+        print("Moving to maximum position at: ", max_pos, " mm")
+        self.__zaber_controller.set_speed(self.__zaber_retune_speed)
+        self.__zaber_controller.move_to(max_pos)
+        curr_pos = self.__zaber_controller.get_pos()
+        print("Running scan... Zaber is at position: ", curr_pos)
+
+    def __safe_init_device(self, attr_name, controller_class, args=[]):
+        """Single helper method for all device initialization"""
+        try:
+            setattr(self, f"__{attr_name}", controller_class(*args))
+            return True
+        except Exception as e:
+            print(f"Failed to initialize {attr_name}: {e}")
+            return False
+
+    def get_device_status(self):
+        return {
+            "delay_generator": self.delay_generator_initialized,
+            "zaber": self.zaber_initialized,
+            "oscilloscope": self.oscilloscope_initialized,
+            "valon": self.valon_initialized,
+            "switch": self.switch_initialized,
+            "awg": self.awg_initialized,
+        }
 
     def __get_wave(self):
         get_wave = self.__oscilloscope_controller.acquire_fft_data_at_max()

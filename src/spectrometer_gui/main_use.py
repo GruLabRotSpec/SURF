@@ -18,7 +18,9 @@ import plot as plotter
 # Valon Inputs
 
 RFLevel = 12  # dbm
-totalFreq = 8550  # all frequencies should include the awg frequency so no need to subtract
+totalFreq = (
+    8550  # all frequencies should include the awg frequency so no need to subtract
+)
 StopFreqinput = 8552
 stepsize = 1
 StepDirection = "up"  # up or down
@@ -60,7 +62,15 @@ def initializeInstruments():
 
 
 def setParameters():
-    global valonFreq, directory, rundirectory, stepUpVar, StopFreqVar, StopFreq, StepSize, timedelay
+    global \
+        valonFreq, \
+        directory, \
+        rundirectory, \
+        stepUpVar, \
+        StopFreqVar, \
+        StopFreq, \
+        StepSize, \
+        timedelay
 
     ########## creating directory for files to be
     k = 0
@@ -205,7 +215,10 @@ def CalibrateAndRun():
     )
 
     DF1_2 = DF1.loc[
-        ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
+        (
+            (DF1["Frequency (MHz)"] >= LowerBound)
+            & (DF1["Frequency (MHz)"] <= UpperBound)
+        )
     ]
 
     if StepDirection == "down":
@@ -223,7 +236,12 @@ def CalibrateAndRun():
         f"{directory}/{filename}.csv", mode="a", index=False
     )  # appended main file with filtered data
 
-    if stepUpVar == True and StopFreqVar == True and StepDirection == "up" and NewFreq < StopFreq:
+    if (
+        stepUpVar == True
+        and StopFreqVar == True
+        and StepDirection == "up"
+        and NewFreq < StopFreq
+    ):
         valon.step_up()
     elif (
         stepUpVar == True
@@ -271,16 +289,30 @@ def CalibrateAndRun():
         )
 
         # TODO: Refactor to be verified at the top
-        if endPosZaber <= 50 and startPosZaber <= 50 and endPosZaber >= 0 and startPosZaber >= 0:
+        if (
+            endPosZaber <= 50
+            and startPosZaber <= 50
+            and endPosZaber >= 0
+            and startPosZaber >= 0
+        ):
             runBool = True
-        elif endPosZaber > 50 and startPosZaber <= 50 and endPosZaber >= 0 and startPosZaber >= 0:
+        elif (
+            endPosZaber > 50
+            and startPosZaber <= 50
+            and endPosZaber >= 0
+            and startPosZaber >= 0
+        ):
             runBool = False
-            print("The end of the zaber extension has been reached, this will be the last run.")
+            print(
+                "The end of the zaber extension has been reached, this will be the last run."
+            )
         elif endPosZaber < 0 and startPosZaber < 50:
             runBool = False
             print("The zaber has reached home, this will be the last run.")
         elif endPosZaber < 0 or startPosZaber < 0 or startPosZaber > 50:
-            raise ValueError("Invalid integers somewhere. The numbers must be between 0 and 50mm.")
+            raise ValueError(
+                "Invalid integers somewhere. The numbers must be between 0 and 50mm."
+            )
 
         # Retuning of the cavity position
         cavity.retune_cavity_position(startPosZaber, speedZaber)
@@ -352,7 +384,10 @@ def CalibrateAndRun():
             }
         )
         DF1_2 = DF1.loc[
-            ((DF1["Frequency (MHz)"] >= LowerBound) & (DF1["Frequency (MHz)"] <= UpperBound))
+            (
+                (DF1["Frequency (MHz)"] >= LowerBound)
+                & (DF1["Frequency (MHz)"] <= UpperBound)
+            )
         ]
         if StepDirection == "down":
             DF1_2 = DF1_2[::-1]
@@ -376,7 +411,9 @@ def CalibrateAndRun():
         if not runBool:
             zaber.home()
             dgc.stop_trig()
-            print(f"The experiment has ended. Your data can be found in {directory}/{filename}.csv")
+            print(
+                f"The experiment has ended. Your data can be found in {directory}/{filename}.csv"
+            )
             break
 
         if (
@@ -441,7 +478,14 @@ def acquireThread():
 
 
 def fftFromScope():
-    global timeScale, timeStart, verticalScale, verticalOffset, verticalPosition, FreqCent, FreqSpan
+    global \
+        timeScale, \
+        timeStart, \
+        verticalScale, \
+        verticalOffset, \
+        verticalPosition, \
+        FreqCent, \
+        FreqSpan
 
     waveValues = oscilloscope.acq_ft_curve(channel, timedelay)
 
@@ -472,10 +516,11 @@ def getWave():
 
 
 def scaleFFT(waveValues, Start):
-
     fftYValues = np.array(waveValues, dtype="float")
     fftXValues = (
-        np.linspace(timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False)
+        np.linspace(
+            timeStart, timeScale * len(waveValues), len(waveValues), endpoint=False
+        )
         / 1000000
     )
     Start = Start / 1000000
