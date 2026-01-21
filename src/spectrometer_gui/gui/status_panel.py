@@ -1,6 +1,8 @@
 import asyncio
+import os
 from enum import Enum
 from PySide6 import QtCore
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
@@ -79,7 +81,11 @@ class StatusPanel(QWidget):
             row_layout.addWidget(status_label)
 
             # Refresh button
-            refresh_btn = QPushButton("🔄")
+            refresh_btn = QPushButton()
+            icon_path = os.path.join(
+                os.path.dirname(__file__), "icons/refresh_icon.svg"
+            )
+            refresh_btn.setIcon(QIcon(icon_path))
             refresh_btn.setFixedSize(30, 30)
             refresh_btn.clicked.connect(
                 lambda checked, dev=device_id: self.on_refresh_clicked(dev)
