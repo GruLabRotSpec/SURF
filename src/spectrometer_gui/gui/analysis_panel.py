@@ -1,6 +1,8 @@
+from PySide6 import QtCore
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
+    QHBoxLayout,
     QWidget,
     QFormLayout,
     QPushButton,
@@ -15,11 +17,7 @@ class AnalysisPanel(QWidget):
     def __init__(self):
         super().__init__()
 
-        label = QLabel("Analysis")
-
-        layout = QVBoxLayout()
-        layout.addWidget(label)
-
+        layout = QHBoxLayout()
         self.setLayout(layout)
 
         # Left column
@@ -51,7 +49,7 @@ class AnalysisPanel(QWidget):
         right_column_panel = QWidget()
         right_column_panel.setLayout(right_column)
 
-        # right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # graph_panel = GraphPanel()
         # right_column.addWidget(graph_panel)
