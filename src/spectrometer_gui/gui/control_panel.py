@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
+    QHBoxLayout,
     QWidget,
     QPushButton,
     QGroupBox,
@@ -16,14 +17,21 @@ class ControlPanel(QWidget):
     def __init__(self):
         super().__init__()
 
-        label = QLabel("Control")
 
-        layout = QVBoxLayout()
-        layout.addWidget(label)
-
+        layout = QHBoxLayout()
         self.setLayout(layout)
 
-        zaber_group = QGroupBox()
+        # Left Column
+        left_column = QVBoxLayout()
+        left_column_panel = QWidget()
+        left_column_panel.setLayout(left_column)
+
+        left_column.addStretch(1)
+
+        label = QLabel("Control")
+        left_column.addWidget(label)
+
+        zaber_group = QGroupBox("Zaber")
 
         zaber_form = QFormLayout()
         zaber_group.setLayout(zaber_form)
@@ -36,7 +44,7 @@ class ControlPanel(QWidget):
         zaber_speed_2_field = QLineEdit("2.0")
         zaber_form.addRow(zaber_speed_2_label, zaber_speed_2_field)
 
-        layout.addWidget(zaber_group)
+        left_column.addWidget(zaber_group)
 
         awg_group = QGroupBox("Arbitrary waveform generator")
 
@@ -65,9 +73,9 @@ class ControlPanel(QWidget):
         awg_form.addRow(ch_2_label, ch_2_on_btn)
         awg_form.addRow(ch_2_label, ch_2_off_btn)
 
-        layout.addWidget(awg_group)
+        left_column.addWidget(awg_group)
 
-        valon_group = QGroupBox()
+        valon_group = QGroupBox("Valon")
 
         valon_form = QFormLayout()
         valon_group.setLayout(valon_form)
@@ -78,7 +86,7 @@ class ControlPanel(QWidget):
 
         layout.addWidget(valon_group)
 
-        oscilloscope_group = QGroupBox()
+        oscilloscope_group = QGroupBox("Oscilloscope")
 
         oscilloscope_form = QFormLayout()
         oscilloscope_group.setLayout(oscilloscope_form)
@@ -103,9 +111,16 @@ class ControlPanel(QWidget):
         math_avg_field = QLineEdit()
         oscilloscope_form.addRow(math_avg_label, math_avg_field)
 
-        layout.addWidget(oscilloscope_group)
+        left_column.addWidget(oscilloscope_group)
 
-        timing_group = QGroupBox()
+        # Right Column
+        right_column = QVBoxLayout()
+        right_column_panel = QWidget()
+        right_column_panel.setLayout(right_column)
+
+        right_column.addStretch(1)
+
+        timing_group = QGroupBox("Delay generator")
 
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
@@ -114,7 +129,13 @@ class ControlPanel(QWidget):
         delay_gas_field = QLineEdit()
         timing_form.addRow(delay_gas_label, delay_gas_field)
 
-        layout.addWidget(timing_group)
+        right_column.addWidget(timing_group)
+
+        layout.addWidget(left_column_panel)
+        layout.addWidget(right_column_panel)
+
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 1)
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
