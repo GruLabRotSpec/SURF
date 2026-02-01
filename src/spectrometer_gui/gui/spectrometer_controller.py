@@ -16,9 +16,10 @@ class DeviceStatus(Enum):
 class SpectrometerController(QObject):
     device_status_changed = Signal(str, object)  # device_id, DeviceStatus
 
-    def __init__(self, spectrometer: Spectrometer, bottom_bar: BottomBarPanel):
+    def __init__(self, spectrometer: Spectrometer, config: {}, bottom_bar: BottomBarPanel):
         super().__init__()
         self.spectrometer = spectrometer
+        self.config = config # Used for setting control options
         self.bottom_bar = bottom_bar
         self.current_task = None
 

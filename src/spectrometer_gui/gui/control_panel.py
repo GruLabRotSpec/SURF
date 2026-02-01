@@ -10,13 +10,15 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 
+from gui.spectrometer_controller import SpectrometerController
 from gui.settings_window import SettingsWindow
 
 
 class ControlPanel(QWidget):
-    def __init__(self):
+    def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
+        self.spectrometer = spectrometer
 
         layout = QHBoxLayout()
         self.setLayout(layout)
