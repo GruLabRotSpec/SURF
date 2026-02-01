@@ -60,7 +60,7 @@ class Spectrometer:
         self.__directory = ""
         self.__run_directory = ""
         self.__folder_name = "Cavity Data"
-        self.__filename = "OCS_isotopescan_11700_11200_9_8_25"
+        self.__filename = "my_scan"
 
     def get_status(self) -> SpectrometerStatus:
         return self.__status
