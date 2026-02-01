@@ -34,11 +34,11 @@ class DelayGeneratorConfig(BaseModel):
 
 
 class Config(BaseModel):
-    valon: ValonConfig
-    zaber: ZaberConfig
-    awg: AWGConfig
-    delay_generator: DelayGeneratorConfig
-    oscilloscope: OscilloscopeConfig
+    valon_controller: ValonConfig
+    zaber_controller: ZaberConfig
+    awg_controller: AWGConfig
+    delay_generator_controller: DelayGeneratorConfig
+    oscilloscope_controller: OscilloscopeConfig
 
 
 def load_config(config_path) -> Config:
