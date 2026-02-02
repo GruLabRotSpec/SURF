@@ -1,9 +1,12 @@
+import asyncio
+from PySide6 import QtCore
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QTabWidget,
     QWidget,
     QVBoxLayout,
+    QFileDialog
 )
 
 from gui.settings_window import SettingsWindow
@@ -13,10 +16,13 @@ from gui.frequency_scan_panel import FrequencyScanPanel
 from gui.cavity_search_panel import CavitySearchPanel
 from gui.control_panel import ControlPanel
 from gui.analysis_panel import AnalysisPanel
+from gui.status_panel import StatusPanel
 from gui.bottom_bar import BottomBarPanel
 from gui.spectrometer_controller import SpectrometerController
 
 from spectrometer import Spectrometer
+
+from config import load_config
 
 
 class MainWindow(QMainWindow):
@@ -37,14 +43,16 @@ class MainWindow(QMainWindow):
 
         bottom_bar_panel = BottomBarPanel()
 
-        controller = SpectrometerController(spectrometer, bottom_bar_panel)
+        controller = SpectrometerController(spectrometer, {}, bottom_bar_panel)
 
+        status_panel = StatusPanel(controller)
         frequency_scan = FrequencyScanPanel(controller)
         cavity_search = CavitySearchPanel(controller)
-        control_panel = ControlPanel()
+        control_panel = ControlPanel(controller)
         analysis_panel = AnalysisPanel()
 
         self.tab_widget = QTabWidget(self)
+        self.tab_widget.addTab(status_panel, "Status")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
         self.tab_widget.addTab(cavity_search, "Cavity Search")
         self.tab_widget.addTab(control_panel, "Control")
@@ -53,12 +61,23 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.tab_widget)
         layout.addWidget(bottom_bar_panel)
 
+        # This runs the first init after QtAsync gets loaded
+        QtCore.QTimer.singleShot(
+            100, lambda: asyncio.create_task(controller.initialize_all_devices())
+        )
+
     def setup_menu_bar(self):
         # File Menu
         file_menu = self.menu_bar.addMenu("&File")
 
         quit_action = file_menu.addAction("Show Error")
         quit_action.triggered.connect(self.show_error)
+
+        open_config_action = file_menu.addAction("Open control options from file...")
+        open_config_action.triggered.connect(self.open_config)
+
+        save_config_action = file_menu.addAction("Save control options to file...")
+        save_config_action.triggered.connect(self.save_config)
 
         error_action = file_menu.addAction("Quit")
         error_action.triggered.connect(self.quit_app)
@@ -77,6 +96,25 @@ class MainWindow(QMainWindow):
 
         about_action = help_menu.addAction("About")
         about_action.triggered.connect(self.show_about)
+
+    def open_config(self):
+        dialog = QFileDialog()
+
+        filename, _ = dialog.getOpenFileName(self, "Open Control Options from File", "", "GruGUI control options file (*.toml)")
+
+        if filename:
+            self.controller.config = load_config(filename)
+            print(load_config(filename))
+        else:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Please select a valid control options file to open.",
+                QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
+            )
+
+    def save_config(self):
+        return
 
     def quit_app(self):
         self.app.quit()

@@ -56,12 +56,15 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")
-        start_button.clicked.connect(lambda: asyncio.create_task(self.search_button()))
+        start_button.clicked.connect(self.start_search)
         left_column.addWidget(start_button)
+        self.start_button = start_button
 
         cancel_button = QPushButton("Cancel")
+        cancel_button.clicked.connect(self.cancel_search)
         cancel_button.setEnabled(False)
         left_column.addWidget(cancel_button)
+        self.cancel_button = cancel_button
 
         left_column.addStretch(1)
 
@@ -72,8 +75,8 @@ class CavitySearchPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        graph_panel = GraphPanel()
-        right_column.addWidget(graph_panel)
+        # graph_panel = GraphPanel()
+        # right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
@@ -81,11 +84,18 @@ class CavitySearchPanel(QWidget):
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
 
-    async def search_button(self):
-        print("Starting cavity search from the GUI...")
+    def start_search(self):
         self.setEnabled(False)
-        await asyncio.gather(
-            self.spectrometer.run_search(
-                int(self.end_freq_field.text()), float(self.step_size_field.text())
-            )
+        self.start_button.setEnabled(False)
+        self.cancel_button.setEnabled(True)
+
+        # Start search via controller (controller handles async internally)
+        self.spectrometer.run_search(
+            int(self.end_freq_field.text()), float(self.step_size_field.text())
         )
+
+    def cancel_search(self):
+        self.spectrometer.cancel_operation()
+        self.setEnabled(True)
+        self.start_button.setEnabled(True)
+        self.cancel_button.setEnabled(False)

@@ -8,6 +8,7 @@ from spectrometer import Spectrometer
 
 def main():
     spectrometer = Spectrometer()
+    spectrometer.initialize()
 
     # Test frequency scan
     def frequencyScan():
