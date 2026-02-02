@@ -1,8 +1,8 @@
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
-from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NaviToolbar
+from matplotlib.backends.backend_qt import NavigationToolbar2QT as NaviToolbar
 
-from graph_canvas import GraphCanvas
+from gui.graph_canvas import GraphCanvas
 
 
 class GraphPanel(QWidget):
