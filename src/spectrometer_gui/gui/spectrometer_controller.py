@@ -24,7 +24,7 @@ class SpectrometerController(QObject):
         self.current_task = None
 
     def run_scan(self, start_freq=None, stop_freq=11200, step_size=0.5):
-        self.bottom_bar.set_status_elements(0, "Starting scan...")
+        self.bottom_bar.set_status_elements(-1, "Starting scan...")
         self.current_task = asyncio.create_task(
             self._run_scan_async(start_freq, stop_freq, step_size)
         )
