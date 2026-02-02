@@ -17,10 +17,10 @@ import plot as plotter
 ###### Inputs manual
 # Valon Inputs
 
-RFLevel = 12  # dbm
-totalFreq = 8550  # all frequencies should include the awg frequency so no need to subtract
-StopFreqinput = 8552
-stepsize = 1
+RFLevel = 0  # dbm
+totalFreq = 12037.9  # all frequencies should include the awg frequency so no need to subtract
+StopFreqinput = 12047.9
+stepsize = 0.5
 StepDirection = "up"  # up or down
 # Zaber Inputs
 speedZaber = 0.003  # speed for scanning in mm/s
@@ -30,10 +30,10 @@ awgFreq = 30
 Intensity = 0.2  # intensity of starting cavity position (V)
 gatepos = "18.45E-6"
 # Experiment Inputs
-acqs = 300
+acqs = 15000
 trigRate = 5
 # setup = 'cavity_scan_peak001.set'
-filename = "4MS_8550_8650MHz_11_12_25"
+filename = "4MS_12037.9_12047.9_MHz_1_7_26"
 channel = "CH4"  # oscilloscope channel, doesn't change often but sometimes
 
 

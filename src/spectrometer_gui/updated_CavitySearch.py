@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import threading
-import zaberController, delay_generator_controller, valonController, oscilloscopeController
+import zaber_controller, delay_generator_controller, valon_controller, oscilloscope_controller
 from scipy.signal import find_peaks
 import os
 
@@ -12,22 +12,22 @@ import os
 # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
 
 ## Inputs Manual
-totalFreq = 11865.662
+totalFreq = 16795.7
 StepSize = 0
 StopFreqinput = 0
 
 
-filename = "OCS_11865.662_CW_50mm"
+filename = "16795.7_CW_50mm"
 
 
 def initializeInstruments():
     global valonConnect
     try:
-        oscilloscopeController.initializeScope()
-        SRScontroller.initializeSRS()
-        zaberController.initializeZaber()
-        valonConnect = valonController.initializeValon("COM3")
-        valonController.valonSettings(RFLevel=10)
+        oscilloscope_controller.initializeScope()
+        delay_generator_controller.initializeSRS()
+        zaber_controller.initializeZaber()
+        valonConnect = valon_controller.initializeValon("COM3")
+        valon_controller.valonSettings(RFLevel=1)
     except PermissionError:
         print("ATTN: Permission Error. Make sure Zaber window is closed.")
 
@@ -36,8 +36,8 @@ def DefineParameters():
     global directory, rundirectory, filename, valonFreq, awgFreq, StepSize, stepUpVar, StopFreqVar, StopFreq
     awgFreq = 30
     valonFreq = totalFreq - awgFreq
-    valonController.writeValonCommand(f"Frequency {valonFreq} MHz")
-    # oscilloscopeController.recall_setup('cavity_ch2000001.set')
+    valon_controller.writeValonCommand(f"Frequency {valonFreq} MHz")
+    # oscilloscope_controller.recall_setup('cavity_ch2000001.set')
 
     k = 0
     folderpath = "Cavity Scan"
@@ -62,16 +62,16 @@ def DefineParameters():
         open(f"{directory}/{filename}.csv", "w+")
         print("Sucessfully named file ", f"{directory}/{filename}.csv")
 
-    zaberController.zaberSetSpeed(101204)
-    zaberController.homeZaber()
-    zaberController.zaberDevice.poll_until_idle()
+    zaber_controller.zaberSetSpeed(101204)
+    zaber_controller.homeZaber()
+    zaber_controller.zaberDevice.poll_until_idle()
 
     print("Zaber has arrived at home position 0 mm")
     StopFreq = StopFreqinput - awgFreq
     try:
         StepSize = float(StepSize)
         stepUpVar = True
-        valonController.writeValonCommand(f"FrequencyStep {StepSize} MHz")
+        valon_controller.writeValonCommand(f"FrequencyStep {StepSize} MHz")
     except ValueError:
         stepUpVar = False
         print("Only running single sequence.")
@@ -114,19 +114,19 @@ def CavitySearch():
             except ValueError:
                 print("Invalid integer. The number must be between 0 and 3.5.")
         # homingspeed = 101204
-        SRScontroller.setFreq(300)  # trigger rate for cavity search
-        zaberController.zaberSetSpeed(101204)
-        zaberController.homeZaber()
+        delay_generator_controller.setFreq(300)  # trigger rate for cavity search
+        zaber_controller.zaberSetSpeed(101204)
+        zaber_controller.homeZaber()
 
-        zaberController.zaberDevice.poll_until_idle()
-        currPos = zaberController.zaberDevice.get_position()
+        zaber_controller.zaberDevice.poll_until_idle()
+        currPos = zaber_controller.zaberDevice.get_position()
         currPos = currPos / 220997
         print("Zaber is at position ", currPos)
-        zaberController.zaberSetSpeed(speedZaber)
+        zaber_controller.zaberSetSpeed(speedZaber)
 
         time.sleep(2)
-        oscilloscopeController.calib_start()
-        SRScontroller.startTrig()
+        oscilloscope_controller.calib_start()
+        delay_generator_controller.startTrig()
 
         threadZaber1 = threading.Thread(target=zaberThread)
         threadAcquire1 = threading.Thread(target=acquireThread)
@@ -137,8 +137,8 @@ def CavitySearch():
             threadInstances.start()
         for threadInstances in threads1:
             threadInstances.join()
-        SRScontroller.stopTrig()
-        oscilloscopeController.calib_stop()
+        delay_generator_controller.stopTrig()
+        oscilloscope_controller.calib_stop()
         for maxLists in maxList:
             posArr = np.linspace(startPosZaberMM, endPosZaberMM, len(maxLists))
             print("Length of max: ", len(maxLists))
@@ -181,12 +181,12 @@ def CavitySearch():
 
         print("run #", i + 1, "has been added to: ", f"{directory}/{filename}.csv")
 
-        # SRScontroller.stopTrig()
-        # oscilloscopeController.calib_stop()
+        # delay_generator_controller.stopTrig()
+        # oscilloscope_controller.calib_stop()
         if stepUpVar == True and StopFreqVar == True:
             if NewFreq <= StopFreq:
                 i += 1
-                valonController.valonStepUp()
+                valon_controller.valonStepUp()
 
             else:
                 print(
@@ -199,13 +199,13 @@ def CavitySearch():
             runBool = input("Do you want to run another experiment? (Y/N): ").lower()
             if runBool == "y":
                 i += 1
-                valonController.valonStepUp()
+                valon_controller.valonStepUp()
             if runBool == "n":
                 print(
                     f"Experiment concluded. You will find your data in .csv file: ",
                     f"{directory}/{filename}.csv",
                 )
-                zaberController.homeZaber()
+                zaber_controller.homeZaber()
             break
 
 
@@ -217,11 +217,11 @@ def zaberThread():
     global loopVar
     loopVar = 1
     timeZaberStart = time.perf_counter()
-    totalTime = zaberController.zaberStart(speedZaber)
-    zaberController.zaberDevice.move_abs(endPosZaber)
-    zaberController.zaberDevice.poll_until_idle()
+    totalTime = zaber_controller.zaberStart(speedZaber)
+    zaber_controller.zaberDevice.move_abs(endPosZaber)
+    zaber_controller.zaberDevice.poll_until_idle()
     timeZaberEnd = time.perf_counter()
-    currPos = zaberController.zaberDevice.get_position()
+    currPos = zaber_controller.zaberDevice.get_position()
     print("Zaber is at end position: ", currPos / 20997, " mm")
     totalTimeZaber = timeZaberEnd - timeZaberStart
     print("Zaber move time (s): ", totalTimeZaber)
@@ -237,7 +237,7 @@ def acquireThread():
     while loopVar == 1:
         # currently we are not acquiring based on frequency
         tempMaxList.append(
-            float(oscilloscopeController.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
+            float(oscilloscope_controller.queryOscCmd("MEASUrement:MEAS1:VALUE?"))
         )  # MEAS2 does the number reference the channel
 
     maxList.append(tempMaxList)
