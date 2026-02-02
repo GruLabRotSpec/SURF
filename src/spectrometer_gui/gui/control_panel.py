@@ -1,3 +1,6 @@
+import os
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
@@ -8,6 +11,8 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLineEdit,
     QComboBox,
+    QSlider,
+    QDoubleSpinBox
 )
 
 from gui.spectrometer_controller import SpectrometerController
@@ -39,12 +44,55 @@ class ControlPanel(QWidget):
         zaber_group.setLayout(zaber_form)
 
         zaber_speed_1_label = QLabel("Zaber scanning speed")
-        zaber_speed_1_field = QLineEdit("0.1")
+        zaber_speed_1_field = QDoubleSpinBox()
+        zaber_speed_1_field.setMinimum(0)
+        zaber_speed_1_field.setMaximum(1)
+        zaber_speed_1_field.setSingleStep(.1)
+        zaber_speed_1_field.setSuffix("mm/s")
         zaber_form.addRow(zaber_speed_1_label, zaber_speed_1_field)
 
         zaber_speed_2_label = QLabel("Zaber homing speed")
-        zaber_speed_2_field = QLineEdit("2.0")
+        zaber_speed_2_field = QDoubleSpinBox()
+        zaber_speed_2_field.setMinimum(0)
+        zaber_speed_2_field.setMaximum(5)
+        zaber_speed_2_field.setSingleStep(.25)
+        zaber_speed_2_field.setSuffix("mm/s")
         zaber_form.addRow(zaber_speed_2_label, zaber_speed_2_field)
+
+        zaber_control_widget = QHBoxLayout()
+
+        zaber_home_btn = QPushButton()
+        icon_path = os.path.join(
+            os.path.dirname(__file__), "icons/house.svg"
+        )
+        zaber_home_btn.setIcon(QIcon(icon_path))
+        zaber_home_btn.setToolTip("Home")
+        zaber_home_btn.setFixedSize(30, 30)
+        zaber_control_widget.addWidget(zaber_home_btn)
+
+        zaber_slider = QSlider(Qt.Orientation.Horizontal)
+        zaber_slider.setMinimum(0)
+        zaber_slider.setMaximum(50)
+        zaber_slider.setSingleStep(1)
+        zaber_slider.setEnabled(False)
+        zaber_control_widget.addWidget(zaber_slider)
+
+        zaber_pos_field = QDoubleSpinBox()
+        zaber_pos_field.setMinimum(0)
+        zaber_pos_field.setMaximum(50)
+        zaber_pos_field.setSingleStep(1)
+        zaber_pos_field.setSuffix("mm")
+        zaber_control_widget.addWidget(zaber_pos_field)
+
+        zaber_go_btn = QPushButton()
+        zaber_go_btn.setIcon(QIcon(os.path.join(
+            os.path.dirname(__file__), "icons/crosshair.svg"
+        )))
+        zaber_go_btn.setToolTip("Go to position")
+        zaber_go_btn.setFixedSize(30, 30)
+        zaber_control_widget.addWidget(zaber_go_btn)
+
+        zaber_form.addRow("Manual control", zaber_control_widget)
 
         left_column.addWidget(zaber_group)
 
