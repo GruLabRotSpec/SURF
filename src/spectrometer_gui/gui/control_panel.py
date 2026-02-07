@@ -131,7 +131,9 @@ class ControlPanel(QWidget):
         valon_group.setLayout(valon_form)
 
         rf_label = QLabel("RF level (power)")
-        rf_field = QLineEdit("10")
+        rf_field = QDoubleSpinBox()
+        rf_field.setMinimum(0)
+        rf_field.setMaximum(100)
         valon_form.addRow(rf_label, rf_field)
 
         layout.addWidget(valon_group)
