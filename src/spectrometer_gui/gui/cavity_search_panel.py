@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QDoubleSpinBox
 )
 
 from gui.spectrometer_controller import SpectrometerController
@@ -44,15 +45,26 @@ class CavitySearchPanel(QWidget):
         left_column.addWidget(form_panel)
 
         start_freq_label = QLabel("Starting Frequency")
-        start_freq_field = QLineEdit()
+        start_freq_field = QDoubleSpinBox()
+        start_freq_field.setMinimum(8000)
+        start_freq_field.setMaximum(18000)
+        start_freq_field.setSingleStep(1000)
+        start_freq_field.setSuffix("MHz")
         form.addRow(start_freq_label, start_freq_field)
 
         step_size_label = QLabel("Step Size")
-        self.step_size_field = QLineEdit("0.5")
+        self.step_size_field = QDoubleSpinBox()
+        self.step_size_field.setMinimum(0)
+        self.step_size_field.setValue(0.5)
+        self.step_size_field.setSuffix("MHz")
         form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
-        self.end_freq_field = QLineEdit("9000")
+        self.end_freq_field = QDoubleSpinBox()
+        self.end_freq_field.setMinimum(8000)
+        self.end_freq_field.setMaximum(18000)
+        self.end_freq_field.setValue(9000)
+        self.end_freq_field.setSuffix("MHz")
         form.addRow(end_freq_label, self.end_freq_field)
 
         start_button = QPushButton("Start")

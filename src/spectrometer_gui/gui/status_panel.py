@@ -83,9 +83,10 @@ class StatusPanel(QWidget):
             # Refresh button
             refresh_btn = QPushButton()
             icon_path = os.path.join(
-                os.path.dirname(__file__), "icons/refresh_icon.svg"
+                os.path.dirname(__file__), "icons/refresh-cw.svg"
             )
             refresh_btn.setIcon(QIcon(icon_path))
+            refresh_btn.setToolTip("Refresh device connection")
             refresh_btn.setFixedSize(30, 30)
             refresh_btn.clicked.connect(
                 lambda checked, dev=device_id: self.on_refresh_clicked(dev)
