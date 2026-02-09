@@ -90,7 +90,7 @@ class ControlPanel(QWidget):
         )))
         zaber_go_btn.setToolTip("Go to position")
         zaber_go_btn.setFixedSize(30, 30)
-        zaber_go_btn.clicked.connect(set_zaber_position)
+        zaber_go_btn.clicked.connect(self.set_zaber_position)
         zaber_control_widget.addWidget(zaber_go_btn)
 
         zaber_form.addRow("Manual control", zaber_control_widget)
