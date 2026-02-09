@@ -70,19 +70,19 @@ class ControlPanel(QWidget):
         zaber_home_btn.setFixedSize(30, 30)
         zaber_control_widget.addWidget(zaber_home_btn)
 
-        zaber_slider = QSlider(Qt.Orientation.Horizontal)
-        zaber_slider.setMinimum(0)
-        zaber_slider.setMaximum(50)
-        zaber_slider.setSingleStep(1)
-        zaber_slider.setEnabled(False)
-        zaber_control_widget.addWidget(zaber_slider)
+        self.zaber_slider = QSlider(Qt.Orientation.Horizontal)
+        self.zaber_slider.setMinimum(0)
+        self.zaber_slider.setMaximum(50)
+        self.zaber_slider.setSingleStep(1)
+        self.zaber_slider.setEnabled(False)
+        zaber_control_widget.addWidget(self.zaber_slider)
 
-        zaber_pos_field = QDoubleSpinBox()
-        zaber_pos_field.setMinimum(0)
-        zaber_pos_field.setMaximum(50)
-        zaber_pos_field.setSingleStep(1)
-        zaber_pos_field.setSuffix("mm")
-        zaber_control_widget.addWidget(zaber_pos_field)
+        self.zaber_pos_field = QDoubleSpinBox()
+        self.zaber_pos_field.setMinimum(0)
+        self.zaber_pos_field.setMaximum(50)
+        self.zaber_pos_field.setSingleStep(1)
+        self.zaber_pos_field.setSuffix("mm")
+        zaber_control_widget.addWidget(self.zaber_pos_field)
 
         zaber_go_btn = QPushButton()
         zaber_go_btn.setIcon(QIcon(os.path.join(
@@ -90,6 +90,7 @@ class ControlPanel(QWidget):
         )))
         zaber_go_btn.setToolTip("Go to position")
         zaber_go_btn.setFixedSize(30, 30)
+        zaber_go_btn.clicked.connect(set_zaber_position)
         zaber_control_widget.addWidget(zaber_go_btn)
 
         zaber_form.addRow("Manual control", zaber_control_widget)
@@ -188,6 +189,27 @@ class ControlPanel(QWidget):
 
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
+
+        self.get_zaber_position()
+
+    def get_zaber_position(self):
+        print("Attempting to get Zaber position...")
+        try:
+            pos = self.spectrometer.spectrometer.zaber_controller.get_pos()
+            self.zaber_slider.setValue(pos)
+            self.zaber_pos_field.setValue(pos)
+        except:
+            print("Unable to get Zaber position")
+
+
+    def set_zaber_position(self):
+        if self.spectrometer.current_task:
+            print("Cannot move Zaber during a task")
+        else:
+            print("Attempting to manually more Zaber...")
+            new_pos = self.zaber_pos_field.value
+            self.spectrometer.spectrometer.zaber_controller.move_to(new_pos)
+
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
