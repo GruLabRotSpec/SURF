@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 import tomllib
+import tomli_w
 from pathlib import Path
 from typing import Literal
 
@@ -37,17 +38,20 @@ class Config(BaseModel):
     valon_controller: ValonConfig
     zaber_controller: ZaberConfig
     awg_controller: AWGConfig
-    delay_generator_controller: DelayGeneratorConfig
     oscilloscope_controller: OscilloscopeConfig
+    delay_generator_controller: DelayGeneratorConfig
 
 
-def load_config(config_path) -> Config:
-    toml_path = Path(config_path)
+def load_config(config_path: Path) -> Config:
+    if not config_path.exists():
+        raise FileNotFoundError(f"Config file not found: {config_path}")
 
-    if not toml_path.exists():
-        raise FileNotFoundError(f"Config file not found: {toml_path}")
-
-    with open(toml_path, "rb") as f:
+    with open(config_path, "rb") as f:
         config_dict = tomllib.load(f)
 
     return Config(**config_dict)
+
+
+def save_config(save_path: Path, config: Config):
+    with open(save_path, "wb") as f:
+        tomli_w.dump(config.model_dump(), f)
