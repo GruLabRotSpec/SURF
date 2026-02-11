@@ -17,6 +17,7 @@ dependencies = [
     "pyvisa>=1.15.0",
     "pyvisa-py>=0.8.1",
     "scipy>=1.16.2",
+    "tomli-w>=1.2.0",
     "zaber-motion>=7.13.0",
 ]
 
