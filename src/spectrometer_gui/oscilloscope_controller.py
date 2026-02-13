@@ -2,10 +2,15 @@ import time
 import pyvisa as visa
 import numpy as np
 
+from config import Config
+
 
 class OscilloscopeController:
     # initializing scope
     def __init__(self):
+        self.initialized = False
+
+    def initialize(self, config: Config):
         rm = visa.ResourceManager()
         self.__visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
         self.__oscilloscope = rm.open_resource(
@@ -20,6 +25,21 @@ class OscilloscopeController:
         r = self.__oscilloscope.query("*opc?")  # sync
         print(r)
         self.__oscilloscope.write("*cls")
+
+        self.update_config(config)
+        self.initialized = True
+
+    def is_initialized(self) -> bool:
+        return self.initialized  # TODO: Verify the resource is still open
+
+    def update_config(self, config: Config):
+        oscill_config = config.oscilloscope_controller
+
+        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
+        self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}")
+        self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.window_type}")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}")
+        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
 
     # sends command, ensures no error after
     def write_cmd(self, command):
@@ -144,8 +164,8 @@ class OscilloscopeController:
         self.write_cmd("data:encdg SRPbinary")
         self.write_cmd("data:source MATH4")  # channel
         self.write_cmd("wfmoutpre:byt_nr 4")
-        recordLength = int(self.query_cmd('horizontal:recordlength?'))
-        self.write_cmd('data:stop {}'.format(recordLength)) 
+        recordLength = int(self.query_cmd("horizontal:recordlength?"))
+        self.write_cmd("data:stop {}".format(recordLength))
 
         # acq configuration
         self.write_cmd("acquire:state 0")  # stop
@@ -189,7 +209,7 @@ class OscilloscopeController:
 
     def set_tuning_settings(self, channel):
         self.write_cmd("SELECT:MATH4 0")
-        
+
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({channel})"')
         self.write_cmd("SELECT:MATH3 1")
         self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
@@ -198,9 +218,7 @@ class OscilloscopeController:
         self.write_cmd("HORizontal:MODE:SCAle 500E-9")
         self.write_cmd("MATH3:SPECTral:RESBw 890E3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
-        self.write_cmd(f"MATH3:SPECTral:GATEPOS 600E-9")
+        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")
         self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
 
         self.calib_start()
-
-

@@ -1,16 +1,13 @@
 from PySide6 import QtAsyncio
-from PySide6.QtWidgets import QApplication, QLabel
+from PySide6.QtWidgets import QApplication
 
-from spectrometer import Spectrometer
 from gui.main_window import MainWindow
 
 
 def main():
-    spectrometer = Spectrometer()
-
     app = QApplication()
 
-    window = MainWindow(app, spectrometer)
+    window = MainWindow(app)
     window.show()
 
     QtAsyncio.run()

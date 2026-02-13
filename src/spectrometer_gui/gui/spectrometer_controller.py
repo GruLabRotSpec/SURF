@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal, QObject
 from gui.bottom_bar import BottomBarPanel
 
 from spectrometer import Spectrometer
+from config import Config
 
 
 class DeviceStatus(Enum):
@@ -16,10 +17,10 @@ class DeviceStatus(Enum):
 class SpectrometerController(QObject):
     device_status_changed = Signal(str, object)  # device_id, DeviceStatus
 
-    def __init__(self, spectrometer: Spectrometer, config: {}, bottom_bar: BottomBarPanel):
+    def __init__(self, config: Config, bottom_bar: BottomBarPanel):
         super().__init__()
-        self.spectrometer = spectrometer
-        self.config = config # Used for setting control options
+        self.spectrometer = Spectrometer(config)
+        self.config = config  # Used for setting control options
         self.bottom_bar = bottom_bar
         self.current_task = None
 
@@ -28,6 +29,10 @@ class SpectrometerController(QObject):
         self.current_task = asyncio.create_task(
             self._run_scan_async(start_freq, stop_freq, step_size)
         )
+
+    def set_config(self, config: Config):
+        self.config = config
+        self.spectrometer.update_config(config)
 
     async def _run_scan_async(self, start_freq, stop_freq, step_size):
         # TODO: Actually support proper progress
@@ -66,7 +71,7 @@ class SpectrometerController(QObject):
     async def init_device_async(self, device_name):
         self.device_status_changed.emit(device_name, DeviceStatus.CONNECTING)
         success = await asyncio.to_thread(
-            self.spectrometer.init_device, f"{device_name}_controller"
+            self.spectrometer.init_device, f"{device_name}_controller", self.config
         )
         status = DeviceStatus.ONLINE if success else DeviceStatus.OFFLINE
         self.device_status_changed.emit(device_name, status)
