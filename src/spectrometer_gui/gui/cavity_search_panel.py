@@ -103,7 +103,7 @@ class CavitySearchPanel(QWidget):
 
         # Start search via controller (controller handles async internally)
         self.spectrometer.run_search(
-            int(self.end_freq_field.text()), float(self.step_size_field.text())
+            int(self.end_freq_field.value()), float(self.step_size_field.value())
         )
 
     def cancel_search(self):
