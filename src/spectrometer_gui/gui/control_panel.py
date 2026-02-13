@@ -134,7 +134,8 @@ class ControlPanel(QWidget):
         rf_label = QLabel("RF level (power)")
         rf_field = QDoubleSpinBox()
         rf_field.setMinimum(0)
-        rf_field.setMaximum(100)
+        rf_field.setMaximum(20)
+        rf_field.setSuffix("dBm")
         valon_form.addRow(rf_label, rf_field)
 
         layout.addWidget(valon_group)
@@ -206,8 +207,8 @@ class ControlPanel(QWidget):
         if self.spectrometer.current_task:
             print("Cannot move Zaber during a task")
         else:
-            print("Attempting to manually more Zaber...")
-            new_pos = self.zaber_pos_field.value
+            print("Attempting to manually move Zaber...")
+            new_pos = float(self.zaber_pos_field.value())
             self.spectrometer.spectrometer.zaber_controller.move_to(new_pos)
 
 

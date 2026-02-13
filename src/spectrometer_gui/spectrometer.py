@@ -645,6 +645,8 @@ class Spectrometer:
         self.oscilloscope_controller.update_config(config)
         self.delay_generator_controller.update_config(config)
 
+        print("Config updated")
+
     def __retune_cavity_position(self, start_pos_zaber):
         # Retuning of the cavity position
         self.delay_generator_controller.set_frequency(300)
