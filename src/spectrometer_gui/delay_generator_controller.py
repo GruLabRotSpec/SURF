@@ -1,21 +1,35 @@
 import pyvisa as visa
 
+from config import Config
+
+
 class DelayGeneratorController:
     def __init__(self):
+        self.initialized = False
+
+    def initialize(self, config: Config):
         self.__visa_address = "GPIB0::9::INSTR"
         self.__rm = visa.ResourceManager()
         self.__delay_generator = self.__rm.open_resource(self.__visa_address)
         self.__frequency = 0
         self.__delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
-        print("_______________________________________________________")
-        print("SRS opened successfully... Switching to EXT Triggering.")
-        print("_______________________________________________________")
         self.stop_pulse()
+
         # Turn on external trigger
-        self.__write_cmd("TM 1; TL 1")
+        self._write_cmd("TM 1; TL 1")
+
+        self.update_config(config)
+
+        self.initialized = True
+
+    def is_initialized(self) -> bool:
+        return self.initialized  # TODO: Verify the resource is still open
+
+    def update_config(self, config: Config):
+        self.trigger_rate = config.delay_generator_controller.trigger_rate
 
     # Writes a command to the delay generator and returns the output
-    def __write_cmd(self, command):
+    def _write_cmd(self, command):
         return self.__delay_generator.write(command)
 
     def set_delays(self, new_delays):
@@ -31,24 +45,24 @@ class DelayGeneratorController:
 
     def start_trig(self):
         write_str = "TR 0, " + str(self.__frequency)
-        self.__write_cmd(write_str)
+        self._write_cmd(write_str)
         write_str = "TM 0"
-        self.__write_cmd(write_str)
+        self._write_cmd(write_str)
         print("Activating internal trigger at ", str(self.__frequency))
 
     def stop_trig(self):
         write_string = "TM 1; TL 1"
-        self.__write_cmd(write_string)
+        self._write_cmd(write_string)
 
     def start_pulse(self):
         write_string = "DT 3,2,100E-9"
-        self.__write_cmd(write_string)
+        self._write_cmd(write_string)
 
     def stop_pulse(self):
         write_string = "DT 3,2,0"
-        self.__write_cmd(write_string)
+        self._write_cmd(write_string)
 
     def set_trig(self, freq):
         write_string = "TM 0; TR 0, " + str(freq)
-        self.__write_cmd(write_string)
+        self._write_cmd(write_string)
         print("Activating internal trigger at ", str(freq))

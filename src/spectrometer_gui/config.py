@@ -7,11 +7,13 @@ from typing import Literal
 
 class ValonConfig(BaseModel):
     rf_level: int  # TODO, Figure out if this is actually int only
+    valon_port: str
 
 
 class ZaberConfig(BaseModel):
     zaber_speed: float  # TODO: Limit the speed to the possible range
     zaber_homing_speed: float
+    zaber_port: str
 
 
 class AWGConfig(BaseModel):
@@ -31,7 +33,7 @@ class OscilloscopeConfig(BaseModel):
 
 
 class DelayGeneratorConfig(BaseModel):
-    trigger_rate: str  # This probably needs to be changed
+    trigger_rate: float
 
 
 class Config(BaseModel):

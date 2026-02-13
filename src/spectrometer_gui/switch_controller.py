@@ -4,7 +4,9 @@ import clr
 class SwitchController:
     def __init__(self):
         self.__status = None  # Replace later with a better method
+        self.initialized = False
 
+    def initialize(self, config):
         clr.AddReference("C:\\Windows\\SysWOW64\\mcl_RF_Switch_Controller_NET45.dll")
         from mcl_RF_Switch_Controller_NET45 import USB_RF_SwitchBox
 
@@ -16,6 +18,11 @@ class SwitchController:
 
         self.__conn_status = self.__MyPTE1.GetUSBConnectionStatus()
         print(self.__conn_status)
+
+        self.initialized = True
+
+    def is_initialized(self) -> bool:
+        return self.initialized  # TODO: Verify the connection is still open?
 
     def set_switch_cavity(self):
         self.__status = self.__MyPTE1.Set_Switch("A", 1)
