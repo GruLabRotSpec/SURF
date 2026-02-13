@@ -103,9 +103,9 @@ class FrequencyScanPanel(QWidget):
         self.cancel_button.setEnabled(True)
 
         self.spectrometer.run_scan(
-            int(self.start_freq_field.text()),
-            int(self.end_freq_field.text()),
-            float(self.step_size_field.text()),
+            float(self.start_freq_field.value()),
+            float(self.end_freq_field.value()),
+            float(self.step_size_field.value()),
         )
 
     def cancel_scan(self):
