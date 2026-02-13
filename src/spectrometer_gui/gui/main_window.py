@@ -71,6 +71,11 @@ class MainWindow(QMainWindow):
         # File Menu
         file_menu = self.menu_bar.addMenu("&File")
 
+        open_spectra_action = file_menu.addAction(
+            "Open emission spectra for analysis..."
+        )
+        open_spectra_action.triggered.connect(self.open_spectra)
+
         quit_action = file_menu.addAction("Show Error")
         quit_action.triggered.connect(self.show_error)
 
@@ -124,6 +129,31 @@ class MainWindow(QMainWindow):
 
     def quit_app(self):
         self.app.quit()
+
+    def open_spectra(self):
+        selection = QMessageBox.warning(
+            self,
+            "Warning",
+            "If an emission spectra is already open for analysis, it will be overwritten. Do you want to continue?",
+            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
+        )
+
+        if selection == QMessageBox.StandardButton.Ok:
+            if filename:
+                filename, _ = QFileDialog.getOpenFileName(
+                    self, "Open emission spectra", "C:/", "(*.csv)"
+                )
+                try:
+                    with open(filename) as file:
+                        # Replace later to send data to graph element on analysis panel
+                        print(file.read())
+                except:
+                    QMessageBox.critical(
+                        self,
+                        "File Open Error",
+                        "Unable to open the file.",
+                        QMessageBox.StandardButton.Ok,
+                    )
 
     def show_error(self):
         QMessageBox.critical(
