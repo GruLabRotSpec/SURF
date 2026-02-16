@@ -88,8 +88,8 @@ class FrequencyScanPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        # graph_panel = GraphPanel()
-        # right_column.addWidget(graph_panel)
+        graph_panel = GraphPanel()
+        right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
