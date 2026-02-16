@@ -75,7 +75,6 @@ class Spectrometer:
         # Toggle switch
         self.switch_controller.set_switch_freq()
 
-        global valon_freq, step_up_var, stop_freq_var, time_delay
         stop_freq_input = stop_freq
 
         # Creating directory for output files
@@ -93,15 +92,17 @@ class Spectrometer:
         self.delay_generator_controller.set_trig(
             self.delay_generator_controller.trigger_rate
         )
-        time_delay = self.__acq_rate / self.delay_generator_controller.trigger_rate
+        self._time_delay = (
+            self.__acq_rate / self.delay_generator_controller.trigger_rate
+        )
 
         print(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {time_delay}"
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
         iterations = abs(stop_freq_input - start_freq) / step_size
         total_time = (
-            iterations * time_delay + 14 * iterations
+            iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
         print(f"The estimated time for this scan is at least {total_time} mins")
@@ -116,8 +117,6 @@ class Spectrometer:
         print("All parameters set, moving to run sequence.")
 
         # From old function CalibrateAndRun
-        # TotalFrequency does not appear to be the same as self.__total_freq
-        global new_freq, total_frequency
 
         max_list = []
         max_max_vals = []
@@ -154,7 +153,13 @@ class Spectrometer:
         print(lower_bound)
 
         self.write_data_to_csv(
-            xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
+            xx_values,
+            yy_values,
+            lower_bound,
+            upper_bound,
+            curr_pos,
+            step_direction,
+            total_frequency,
         )
 
         if step_direction == StepDirection.Up and new_freq < stop_freq:
@@ -268,6 +273,7 @@ class Spectrometer:
                 upper_bound,
                 curr_pos,
                 step_direction,
+                total_frequency,
             )
 
             print(
@@ -310,7 +316,6 @@ class Spectrometer:
 
     def cavity_search(self, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
-        global valon_freq, step_up_var, stop_freq_var
         stop_freqinput = stop_freq
 
         valon_freq = stop_freq - self.__awg_freq
@@ -486,17 +491,8 @@ class Spectrometer:
         return data
 
     def __fft_from_scope(self, new_freq):
-        global \
-            time_scale, \
-            time_start, \
-            vertical_scale, \
-            vertical_offset, \
-            vertical_position, \
-            freq_cent, \
-            freq_span
-
         wave_values = self.oscilloscope_controller.acq_ft_curve(
-            self.__oscilloscope_channel, time_delay
+            self.__oscilloscope_channel, self._time_delay
         )
 
         (
@@ -512,16 +508,23 @@ class Spectrometer:
             gate_width,
         ) = self.oscilloscope_controller.grab_param()
         start = freq_cent - freq_span / 2
-        # acquire vals
-        x_values, y_values = self.__scale_fft(wave_values, start, new_freq)
-
-        # plotter.generate_plot(x_values, y_values)
+        x_values, y_values = self.__scale_fft(
+            wave_values, start, new_freq, time_scale, time_start
+        )
 
         return x_values, y_values
 
     def write_data_to_csv(
-        self, xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
+        self,
+        xx_values,
+        yy_values,
+        lower_bound,
+        upper_bound,
+        curr_pos,
+        step_direction,
+        total_frequency,
     ):
+
         (
             timeScale,
             timeStart,
@@ -638,7 +641,7 @@ class Spectrometer:
             "awg": _is_initialized(self.awg_controller),
         }
 
-    def __scale_fft(self, wave_values, start, new_freq):
+    def __scale_fft(self, wave_values, start, new_freq, time_scale, time_start):
         fft_y_values = np.array(wave_values, dtype="float")
         fft_x_values = (
             np.linspace(
