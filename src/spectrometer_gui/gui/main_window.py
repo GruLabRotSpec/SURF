@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QFileDialog,
 )
 
+import pandas as pd
+
 from gui.settings_window import SettingsWindow
 from gui.about_window import AboutWindow
 
@@ -50,14 +52,14 @@ class MainWindow(QMainWindow):
         frequency_scan = FrequencyScanPanel(self.controller)
         cavity_search = CavitySearchPanel(self.controller)
         control_panel = ControlPanel(self.controller)
-        analysis_panel = AnalysisPanel()
+        self.analysis_panel = AnalysisPanel()
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
         self.tab_widget.addTab(cavity_search, "Cavity Search")
         self.tab_widget.addTab(control_panel, "Control")
-        self.tab_widget.addTab(analysis_panel, "Analysis")
+        self.tab_widget.addTab(self.analysis_panel, "Analysis")
 
         layout.addWidget(self.tab_widget)
         layout.addWidget(bottom_bar_panel)
@@ -139,19 +141,20 @@ class MainWindow(QMainWindow):
         )
 
         if selection == QMessageBox.StandardButton.Ok:
+            filename, _ = QFileDialog.getOpenFileName(
+                self, "Open emission spectra", "C:/", "(*.csv)"
+            )
+
             if filename:
-                filename, _ = QFileDialog.getOpenFileName(
-                    self, "Open emission spectra", "C:/", "(*.csv)"
-                )
                 try:
-                    with open(filename) as file:
-                        # Replace later to send data to graph element on analysis panel
-                        print(file.read())
-                except:
+                    df = pd.read_csv(filename)
+                    self.analysis_panel.set_data(df)
+                    print(df)
+                except Exception as e:
                     QMessageBox.critical(
                         self,
                         "File Open Error",
-                        "Unable to open the file.",
+                        f"Unable to open the file: {e}",
                         QMessageBox.StandardButton.Ok,
                     )
 
