@@ -35,11 +35,11 @@ class OscilloscopeController:
     def update_config(self, config: Config):
         oscill_config = config.oscilloscope_controller
 
-        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
+        self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.window_type}")
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}")
-        self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.window_type}")
+        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}")
-        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
+        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")\
 
     # sends command, ensures no error after
     def write_cmd(self, command):

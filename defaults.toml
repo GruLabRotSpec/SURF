@@ -17,7 +17,7 @@ awg_ch_2_output = false
 [oscilloscope_controller]
 resolution = 100000.0
 sample_rate = 500000000.0
-window_type = "Rectangular"
+window_type = "Hanning"
 gate_position = 1.845e-05
 math_averages = 1000000
 
