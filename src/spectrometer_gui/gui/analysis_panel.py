@@ -1,4 +1,5 @@
 from PySide6 import QtCore
+from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
@@ -12,10 +13,13 @@ from PySide6.QtGui import QFont
 
 from gui.graph_panel import GraphPanel
 
+import pandas as pd
 
 class AnalysisPanel(QWidget):
-    def __init__(self):
+    def __init__(self, analysis_data = []):
         super().__init__()
+
+        self.analysis_data = analysis_data
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -48,14 +52,27 @@ class AnalysisPanel(QWidget):
         right_column = QVBoxLayout()
         right_column_panel = QWidget()
         right_column_panel.setLayout(right_column)
-
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        # graph_panel = GraphPanel()
-        # right_column.addWidget(graph_panel)
+        self.graph_panel = GraphPanel()
+        right_column.addWidget(self.graph_panel)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
 
         layout.setStretch(0, 1)
-        layout.setStretch(1, 1)
+        layout.setStretch(1, 3)
+
+    def show_event(self, event):
+        super().showEvent(event)
+
+        self.update_plot()
+
+    def update_plot(self):
+        if not self.analysis_data.empty:
+            print(self.analysis_data)
+            self.graph_panel.graph.axes.plot(self.analysis_data.iloc[:,0], self.analysis_data.iloc[:,1])
+
+    def set_data(self, df):
+        self.analysis_data = df
+        self.update_plot()
