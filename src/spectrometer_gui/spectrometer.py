@@ -2,7 +2,6 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import threading
 import os
 from scipy.signal import find_peaks
 
@@ -118,10 +117,9 @@ class Spectrometer:
 
         # From old function CalibrateAndRun
         # TotalFrequency does not appear to be the same as self.__total_freq
-        global max_list, time_list, new_freq, total_frequency
+        global new_freq, total_frequency
 
         max_list = []
-        time_list = []
         max_max_vals = []
         run_bool = True
         new_freq = valon_freq
@@ -170,7 +168,6 @@ class Spectrometer:
         run_number = 1
         while run_bool:
             max_list = []
-            time_list = []
             max_max_vals = []
 
             curr_pos = self.zaber_controller.get_pos()
@@ -209,18 +206,7 @@ class Spectrometer:
             self.__retune_cavity_position(start_pos_zaber)
             self.delay_generator_controller.start_trig()
 
-            # setting up threading for scanning
-            thread_zaber_1 = threading.Thread(
-                target=self.__zaber_thread, args=[end_pos_zaber]
-            )
-            thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
-
-            threads1 = [thread_zaber_1, thread_acquire_1]
-
-            for thread_instances in threads1:
-                thread_instances.start()
-            for thread_instances in threads1:
-                thread_instances.join()
+            max_list.extend(self.scan_with_acquisition(end_pos_zaber))
 
             self.oscilloscope_controller.calib_stop()
 
@@ -370,9 +356,7 @@ class Spectrometer:
 
         print("All parameters acquired, moving to calibrate and run sequence.")
 
-        global max_list, time_list
         max_list = []
-        time_list = []
         run_bool = True
         i = 0
 
@@ -398,17 +382,7 @@ class Spectrometer:
             self.oscilloscope_controller.calib_start()
             self.delay_generator_controller.start_trig()
 
-            thread_zaber_1 = threading.Thread(
-                target=self.__zaber_thread, args=[end_pos_zaber_mm]
-            )
-            thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
-
-            threads_1 = [thread_zaber_1, thread_acquire_1]
-
-            for thread_instances in threads_1:
-                thread_instances.start()
-            for thread_instances in threads_1:
-                thread_instances.join()
+            max_list.extend(self.scan_with_acquisition(end_pos_zaber_mm))
 
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.calib_stop()
@@ -496,37 +470,20 @@ class Spectrometer:
                     self.zaber_controller.home()
                 break
 
-    def __zaber_thread(self, end_pos_zaber):
-        global loop_var
-        loop_var = True
-        time_zaber_start = time.perf_counter()
+    def scan_with_acquisition(self, end_pos):
+        self.zaber_controller.move_to(end_pos, blocking=False)
 
-        self.zaber_controller.move_to(end_pos_zaber)
-
-        time_zaber_end = time.perf_counter()
-        curr_pos = self.zaber_controller.get_pos()
-
-        print("Zaber is at end position: ", curr_pos, " mm")
-        total_time_zaber = time_zaber_end - time_zaber_start
-        print("Zaber move time (s): ", total_time_zaber)
-
-        loop_var = False
-        time_list.append(total_time_zaber)
-        return
-
-    # Currently doesn't run based on trigFreq, if required then use if/else with time.perfcounter()
-    def __acquire_thread(self):
-        global loop_var
-        temp_max_list = []
-        while loop_var:
-            # Currently we are not acquiring based on frequency
-            temp_max_list.append(
-                float(
-                    self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?")
-                )
+        data = []
+        while not self.zaber_controller.moving():
+            time.sleep(0.05)
+            data.append(
+                self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?")
             )
 
-        max_list.append(temp_max_list)
+        curr_pos = self.zaber_controller.get_pos()
+        print("Zaber moved to: ", curr_pos, " mm")
+
+        return data
 
     def __fft_from_scope(self, new_freq):
         global \
