@@ -2,7 +2,6 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import threading
 import os
 from scipy.signal import find_peaks
 
@@ -76,7 +75,6 @@ class Spectrometer:
         # Toggle switch
         self.switch_controller.set_switch_freq()
 
-        global valon_freq, step_up_var, stop_freq_var, time_delay
         stop_freq_input = stop_freq
 
         # Creating directory for output files
@@ -94,15 +92,17 @@ class Spectrometer:
         self.delay_generator_controller.set_trig(
             self.delay_generator_controller.trigger_rate
         )
-        time_delay = self.__acq_rate / self.delay_generator_controller.trigger_rate
+        self._time_delay = (
+            self.__acq_rate / self.delay_generator_controller.trigger_rate
+        )
 
         print(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {time_delay}"
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
         iterations = abs(stop_freq_input - start_freq) / step_size
         total_time = (
-            iterations * time_delay + 14 * iterations
+            iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
         print(f"The estimated time for this scan is at least {total_time} mins")
@@ -117,11 +117,8 @@ class Spectrometer:
         print("All parameters set, moving to run sequence.")
 
         # From old function CalibrateAndRun
-        # TotalFrequency does not appear to be the same as self.__total_freq
-        global max_list, time_list, new_freq, total_frequency
 
         max_list = []
-        time_list = []
         max_max_vals = []
         run_bool = True
         new_freq = valon_freq
@@ -156,7 +153,13 @@ class Spectrometer:
         print(lower_bound)
 
         self.write_data_to_csv(
-            xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
+            xx_values,
+            yy_values,
+            lower_bound,
+            upper_bound,
+            curr_pos,
+            step_direction,
+            total_frequency,
         )
 
         if step_direction == StepDirection.Up and new_freq < stop_freq:
@@ -170,7 +173,6 @@ class Spectrometer:
         run_number = 1
         while run_bool:
             max_list = []
-            time_list = []
             max_max_vals = []
 
             curr_pos = self.zaber_controller.get_pos()
@@ -209,18 +211,7 @@ class Spectrometer:
             self.__retune_cavity_position(start_pos_zaber)
             self.delay_generator_controller.start_trig()
 
-            # setting up threading for scanning
-            thread_zaber_1 = threading.Thread(
-                target=self.__zaber_thread, args=[end_pos_zaber]
-            )
-            thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
-
-            threads1 = [thread_zaber_1, thread_acquire_1]
-
-            for thread_instances in threads1:
-                thread_instances.start()
-            for thread_instances in threads1:
-                thread_instances.join()
+            max_list.extend(self.scan_with_acquisition(end_pos_zaber))
 
             self.oscilloscope_controller.calib_stop()
 
@@ -282,6 +273,7 @@ class Spectrometer:
                 upper_bound,
                 curr_pos,
                 step_direction,
+                total_frequency,
             )
 
             print(
@@ -324,7 +316,6 @@ class Spectrometer:
 
     def cavity_search(self, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
-        global valon_freq, step_up_var, stop_freq_var
         stop_freqinput = stop_freq
 
         valon_freq = stop_freq - self.__awg_freq
@@ -370,9 +361,7 @@ class Spectrometer:
 
         print("All parameters acquired, moving to calibrate and run sequence.")
 
-        global max_list, time_list
         max_list = []
-        time_list = []
         run_bool = True
         i = 0
 
@@ -398,17 +387,7 @@ class Spectrometer:
             self.oscilloscope_controller.calib_start()
             self.delay_generator_controller.start_trig()
 
-            thread_zaber_1 = threading.Thread(
-                target=self.__zaber_thread, args=[end_pos_zaber_mm]
-            )
-            thread_acquire_1 = threading.Thread(target=self.__acquire_thread)
-
-            threads_1 = [thread_zaber_1, thread_acquire_1]
-
-            for thread_instances in threads_1:
-                thread_instances.start()
-            for thread_instances in threads_1:
-                thread_instances.join()
+            max_list.extend(self.scan_with_acquisition(end_pos_zaber_mm))
 
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.calib_stop()
@@ -496,50 +475,24 @@ class Spectrometer:
                     self.zaber_controller.home()
                 break
 
-    def __zaber_thread(self, end_pos_zaber):
-        global loop_var
-        loop_var = True
-        time_zaber_start = time.perf_counter()
+    def scan_with_acquisition(self, end_pos):
+        self.zaber_controller.move_to(end_pos, blocking=False)
 
-        self.zaber_controller.move_to(end_pos_zaber)
-
-        time_zaber_end = time.perf_counter()
-        curr_pos = self.zaber_controller.get_pos()
-
-        print("Zaber is at end position: ", curr_pos, " mm")
-        total_time_zaber = time_zaber_end - time_zaber_start
-        print("Zaber move time (s): ", total_time_zaber)
-
-        loop_var = False
-        time_list.append(total_time_zaber)
-        return
-
-    # Currently doesn't run based on trigFreq, if required then use if/else with time.perfcounter()
-    def __acquire_thread(self):
-        global loop_var
-        temp_max_list = []
-        while loop_var:
-            # Currently we are not acquiring based on frequency
-            temp_max_list.append(
-                float(
-                    self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?")
-                )
+        data = []
+        while not self.zaber_controller.moving():
+            time.sleep(0.05)
+            data.append(
+                self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?")
             )
 
-        max_list.append(temp_max_list)
+        curr_pos = self.zaber_controller.get_pos()
+        print("Zaber moved to: ", curr_pos, " mm")
+
+        return data
 
     def __fft_from_scope(self, new_freq):
-        global \
-            time_scale, \
-            time_start, \
-            vertical_scale, \
-            vertical_offset, \
-            vertical_position, \
-            freq_cent, \
-            freq_span
-
         wave_values = self.oscilloscope_controller.acq_ft_curve(
-            self.__oscilloscope_channel, time_delay
+            self.__oscilloscope_channel, self._time_delay
         )
 
         (
@@ -555,16 +508,23 @@ class Spectrometer:
             gate_width,
         ) = self.oscilloscope_controller.grab_param()
         start = freq_cent - freq_span / 2
-        # acquire vals
-        x_values, y_values = self.__scale_fft(wave_values, start, new_freq)
-
-        # plotter.generate_plot(x_values, y_values)
+        x_values, y_values = self.__scale_fft(
+            wave_values, start, new_freq, time_scale, time_start
+        )
 
         return x_values, y_values
 
     def write_data_to_csv(
-        self, xx_values, yy_values, lower_bound, upper_bound, curr_pos, step_direction
+        self,
+        xx_values,
+        yy_values,
+        lower_bound,
+        upper_bound,
+        curr_pos,
+        step_direction,
+        total_frequency,
     ):
+
         (
             timeScale,
             timeStart,
@@ -681,7 +641,7 @@ class Spectrometer:
             "awg": _is_initialized(self.awg_controller),
         }
 
-    def __scale_fft(self, wave_values, start, new_freq):
+    def __scale_fft(self, wave_values, start, new_freq, time_scale, time_start):
         fft_y_values = np.array(wave_values, dtype="float")
         fft_x_values = (
             np.linspace(
