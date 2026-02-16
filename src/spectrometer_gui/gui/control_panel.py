@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QComboBox,
     QSlider,
+    QSpinBox,
     QDoubleSpinBox
 )
 
@@ -138,34 +139,7 @@ class ControlPanel(QWidget):
         rf_field.setSuffix("dBm")
         valon_form.addRow(rf_label, rf_field)
 
-        layout.addWidget(valon_group)
-
-        oscilloscope_group = QGroupBox("Oscilloscope")
-
-        oscilloscope_form = QFormLayout()
-        oscilloscope_group.setLayout(oscilloscope_form)
-
-        resolution_label = QLabel("Resolution")
-        resolution_field = QLineEdit("")
-        oscilloscope_form.addRow(resolution_label, resolution_field)
-
-        sample_rate_label = QLabel("Sample rate")
-        sample_rate_field = QLineEdit("")
-        oscilloscope_form.addRow(sample_rate_label, sample_rate_field)
-
-        window_type_label = QLabel("Window type")
-        window_type_field = QLineEdit()
-        oscilloscope_form.addRow(window_type_label, window_type_field)
-
-        gate_position_label = QLabel("Gate position")
-        gate_position_field = QLineEdit()
-        oscilloscope_form.addRow(gate_position_label, gate_position_field)
-
-        math_avg_label = QLabel("Math averages")
-        math_avg_field = QLineEdit()
-        oscilloscope_form.addRow(math_avg_label, math_avg_field)
-
-        left_column.addWidget(oscilloscope_group)
+        left_column.addWidget(valon_group)
 
         # Right Column
         right_column = QVBoxLayout()
@@ -174,13 +148,56 @@ class ControlPanel(QWidget):
 
         right_column.addStretch(1)
 
+        oscilloscope_group = QGroupBox("Oscilloscope")
+
+        oscilloscope_form = QFormLayout()
+        oscilloscope_group.setLayout(oscilloscope_form)
+
+        resolution_label = QLabel("Resolution")
+        resolution_field = QSpinBox()
+        resolution_field.setMinimum(0)
+        resolution_field.setMaximum(1000000)
+        resolution_field.setSuffix("kHz")
+        oscilloscope_form.addRow(resolution_label, resolution_field)
+
+        sample_rate_label = QLabel("Sample rate")
+        sample_rate_field = QSpinBox()
+        sample_rate_field.setMinimum(0)
+        sample_rate_field.setSingleStep(100)
+        sample_rate_field.setMaximum(1000000)
+        sample_rate_field.setSuffix("MS/s")
+        oscilloscope_form.addRow(sample_rate_label, sample_rate_field)
+
+        window_type_label = QLabel("Window type")
+        window_type_field = QComboBox()
+        window_type_field.addItems(["Rectangular", "Hamming", "Hanning", "Blackman"])
+        oscilloscope_form.addRow(window_type_label, window_type_field)
+
+        gate_position_label = QLabel("Gate position")
+        gate_position_field = QSpinBox()
+        gate_position_field.setMinimum(0)
+        gate_position_field.setMaximum(1000)
+        gate_position_field.setSuffix("μs")
+        oscilloscope_form.addRow(gate_position_label, gate_position_field)
+
+        math_avg_label = QLabel("Math averages")
+        math_avg_field = QSpinBox()
+        math_avg_field.setMinimum(0)
+        math_avg_field.setMaximum(1000)
+        oscilloscope_form.addRow(math_avg_label, math_avg_field)
+
+        right_column.addWidget(oscilloscope_group)
+
+
         timing_group = QGroupBox("Delay generator")
 
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
 
         delay_gas_label = QLabel("Delay gas - MW")
-        delay_gas_field = QLineEdit()
+        delay_gas_field = QDoubleSpinBox()
+        delay_gas_field.setMinimum(0)
+        delay_gas_field.setSuffix("μs")
         timing_form.addRow(delay_gas_label, delay_gas_field)
 
         right_column.addWidget(timing_group)
