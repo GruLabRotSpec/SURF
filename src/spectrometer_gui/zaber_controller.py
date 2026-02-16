@@ -10,7 +10,7 @@ class ZaberController:
 
     def initialize(self, config: Config):
         port = Connection.open_serial_port(config.zaber_controller.zaber_port)
-        port.detect_devices() # Requires Internet connection on first run, then caches
+        port.detect_devices()  # Requires Internet connection on first run, then caches
         self.device = port.get_device(1)
         self.axis = self.device.get_axis(1)
 
@@ -25,13 +25,17 @@ class ZaberController:
         self.move_speed = zaber_config.zaber_speed
         self.homing_speed = zaber_config.zaber_homing_speed
 
-    def move_to(self, pos):
+    def move_to(self, pos, blocking=True):
         self.axis.move_absolute(
             pos,
             Units.LENGTH_MILLIMETRES,
+            wait_until_idle=blocking,
             velocity=self.move_speed,
             velocity_unit=Units.VELOCITY_MILLIMETRES_PER_SECOND,
         )
+
+    def moving(self) -> bool:
+        return self.axis.is_busy()
 
     def get_pos(self) -> float:
         return self.axis.get_position(Units.LENGTH_MILLIMETRES)
