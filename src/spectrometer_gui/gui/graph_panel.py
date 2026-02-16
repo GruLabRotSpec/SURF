@@ -4,15 +4,18 @@ from matplotlib.backends.backend_qt import NavigationToolbar2QT as NaviToolbar
 
 from gui.graph_canvas import GraphCanvas
 
+import pandas as pd
 
 class GraphPanel(QWidget):
     def __init__(self):
         super().__init__()
 
         layout = QVBoxLayout()
+        self.setLayout(layout)
 
-        graph = GraphCanvas()
-        layout.addWidget(graph)
+        self.graph = GraphCanvas()
+        layout.addWidget(self.graph)
 
-        toolbar = NaviToolbar(graph, self)
+        toolbar = NaviToolbar(self.graph, self)
         layout.addWidget(toolbar)
+
