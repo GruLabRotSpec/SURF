@@ -24,14 +24,8 @@ class StepDirection(Enum):
 
 class Spectrometer:
     def __init__(self, config: Config):
-        # Instrument settings (infrequently changed)
-        self.__oscilloscope_channel = "CH4"
-
         # Experiment settings (infrequently changed)
         self.__acq_rate = 300
-        self.__gate_pos = "18.45E-6"
-        self.__intensity = 0.2  # Intensity of starting cavity position (V)
-        self.__awg_freq = 30  # Frequency for the arbitrary waveform generator
 
         # Config
         self.config = config
@@ -127,9 +121,7 @@ class Spectrometer:
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber is at position", curr_pos)
 
-        self.oscilloscope_controller.set_settings(
-            self.__oscilloscope_channel, self.__gate_pos
-        )
+        self.oscilloscope_controller.set_settings()
         self.oscilloscope_controller.acquire_fft_data_at_max()
 
         self.delay_generator_controller.start_pulse()
@@ -145,7 +137,7 @@ class Spectrometer:
         self.delay_generator_controller.stop_pulse()
 
         # For exporting
-        total_frequency = new_freq + self.__awg_freq
+        total_frequency = new_freq + self.awg_controller.awg_freq
         upper_bound = total_frequency + step_size / 2
         lower_bound = total_frequency - step_size / 2
 
@@ -177,9 +169,7 @@ class Spectrometer:
 
             curr_pos = self.zaber_controller.get_pos()
 
-            self.oscilloscope_controller.set_tuning_settings(
-                self.__oscilloscope_channel
-            )
+            self.oscilloscope_controller.set_tuning_settings()
             time.sleep(10)  # TODO: Figure out how to remove this
             self.oscilloscope_controller.calib_stop()
 
@@ -194,7 +184,7 @@ class Spectrometer:
             else:
                 raise ValueError("Invalid step direction", step_direction)
 
-            total_frequency = new_freq + self.__awg_freq
+            total_frequency = new_freq + self.awg_controller.awg_freq
             print(f"the new center freq is: {total_frequency}")
             print(f"The new Valon Frequency is: {new_freq}")
             curr_pos = self.zaber_controller.get_pos()
@@ -252,9 +242,7 @@ class Spectrometer:
                 self.delay_generator_controller.trigger_rate
             )
 
-            self.oscilloscope_controller.set_settings(
-                self.__oscilloscope_channel, self.__gate_pos
-            )
+            self.oscilloscope_controller.set_settings()
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
@@ -318,14 +306,14 @@ class Spectrometer:
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
         stop_freqinput = stop_freq
 
-        valon_freq = stop_freq - self.__awg_freq
+        valon_freq = stop_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
 
         # Toggle switch
         self.switch_controller.set_switch_cavity()
 
         # Set tuning settings
-        self.oscilloscope_controller.set_tuning_settings(self.__oscilloscope_channel)
+        self.oscilloscope_controller.set_tuning_settings()
 
         self.__directory = ""
         self.__folder_name = "Cavity Scan"
@@ -366,7 +354,7 @@ class Spectrometer:
         i = 0
 
         while run_bool:
-            new_freq = valon_freq + step_size * i + self.__awg_freq
+            new_freq = valon_freq + step_size * i + self.awg_controller.awg_freq
             print(f"The new Valon Frequency is: {new_freq}")
 
             start_pos_zaber_mm = 0
@@ -569,7 +557,6 @@ class Spectrometer:
             {
                 "Center Freq": [total_frequency],
                 "Cavity Position": [curr_pos],
-                "Intensity of Cavity": [self.__intensity],
             }
         )
 
