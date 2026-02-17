@@ -39,7 +39,10 @@ class OscilloscopeController:
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}")
         self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}")
-        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")\
+        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
+
+        self.channel = oscill_config.channel
+        self.gate_pos = oscill_config.gate_position
 
     # sends command, ensures no error after
     def write_cmd(self, command):
@@ -187,10 +190,9 @@ class OscilloscopeController:
 
         return new_bin_wave
 
-    def set_settings(self, channel, gate_pos):
-
+    def set_settings(self):
         self.write_cmd("SELECT:MATH3 0")
-        self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({channel}))"')
+        self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({self.channel}))"')
         self.write_cmd("SELECT:MATH4 1")
         self.write_cmd("MATH4:NUMAvg 1000000")
         self.write_cmd("MATH4:VERTical:POSition -4")
@@ -200,17 +202,17 @@ class OscilloscopeController:
         self.write_cmd("MATH4:SPECTral:RESBw 100E3")
         self.write_cmd("MATH4:SPECTral:CENTER 30E6")
         self.write_cmd("MATH4:SPECTral:SPAN 20E6")
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {gate_pos}")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")
         self.write_cmd(
             "MATH4:VERTICAL:SCALE 500E-6"
         )  # sets math channel vertical scale
         time.sleep(2)
-        self.write_cmd(f"{channel}:SCAle 1")
+        self.write_cmd(f"{self.channel}:SCAle 1")
 
-    def set_tuning_settings(self, channel):
+    def set_tuning_settings(self):
         self.write_cmd("SELECT:MATH4 0")
 
-        self.write_cmd(f'MATH3:DEFINE "SpectralMag({channel})"')
+        self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
         self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
         self.write_cmd("MATH3:VERTical:POSition -4")
