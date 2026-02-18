@@ -10,7 +10,6 @@ from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController
 from oscilloscope_controller import OscilloscopeController
 import Cavity
-import plot as plotter
 
 
 ####################This version of the code is for the GUI or when not wanting code prompted inputs
@@ -18,7 +17,9 @@ import plot as plotter
 # Valon Inputs
 
 RFLevel = 0  # dbm
-totalFreq = 12037.9  # all frequencies should include the awg frequency so no need to subtract
+totalFreq = (
+    12037.9  # all frequencies should include the awg frequency so no need to subtract
+)
 StopFreqinput = 12047.9
 stepsize = 0.5
 StepDirection = "up"  # up or down
@@ -340,7 +341,7 @@ def CalibrateAndRun():
             print(max(maxLists))
 
             # Plot position vs intensity
-            plotter.plot_position_vs_intensity(posArr1, maxLists)
+            plot_position_vs_intensity(posArr1, maxLists)
 
         for items in maxList:
             print("len: ", len(items))
@@ -503,7 +504,7 @@ def fftFromScope():
     # acquire vals
     xValues, yValues = scaleFFT(waveValues, Start)
 
-    plotter.generate_plot(xValues, yValues)
+    generate_plot(xValues, yValues)
 
     return xValues, yValues
 
@@ -527,6 +528,27 @@ def scaleFFT(waveValues, Start):
     newfftXValues = fftXValues[3:]
     newfftYValues = fftYValues[3:]
     return newfftXValues, newfftYValues
+
+
+def plot_position_vs_intensity(pos_arr, max_lists):
+    plt.plot(pos_arr, max_lists)
+    plt.title("Zaber Position vs. Intensity")
+    plt.xlabel("Zaber Position (mm)")
+    plt.ylabel("Intensity (Volts)")
+    plt.show(block=False)
+    plt.pause(3)
+    plt.close()
+
+
+def generate_plot(x_wave, y_wave):
+    plt.plot(x_wave, y_wave)
+    plt.title("Data")
+    plt.xlabel("Frequency")
+    plt.ylabel("Relative Intensity")
+    plt.show(block=False)
+    plt.pause(3)
+    plt.close()
+    return
 
 
 def main():
