@@ -162,7 +162,7 @@ class OscilloscopeController:
         self.write_cmd(f'RECALL:SETUP "{setup}"')
         time.sleep(7)
 
-    def acq_ft_curve(self, channel, acqtime):  # this is for actually pulling the data
+    def acq_ft_curve(self, acqtime):  # this is for actually pulling the data
         self.write_cmd("header 0")
         self.write_cmd("data:encdg SRPbinary")
         self.write_cmd("data:source MATH4")  # channel
@@ -175,7 +175,7 @@ class OscilloscopeController:
         self.write_cmd("acquire:STOPAfter RUNSTop")  # cont acq
         self.write_cmd("curvestream?")
         self.write_cmd("acquire:state 1")  # run
-        self.write_cmd(f"{channel}:SCAle 0.9")
+        self.write_cmd(f"{self.channel}:SCAle 0.9")
 
         # data query
         time.sleep(acqtime)
