@@ -1,6 +1,6 @@
 import os
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
@@ -13,7 +13,9 @@ from PySide6.QtWidgets import (
     QComboBox,
     QSlider,
     QSpinBox,
-    QDoubleSpinBox
+    QDoubleSpinBox,
+    QRadioButton,
+    QButtonGroup
 )
 
 from gui.spectrometer_controller import SpectrometerController
@@ -45,20 +47,20 @@ class ControlPanel(QWidget):
         zaber_group.setLayout(zaber_form)
 
         zaber_speed_1_label = QLabel("Zaber scanning speed")
-        zaber_speed_1_field = QDoubleSpinBox()
-        zaber_speed_1_field.setMinimum(0)
-        zaber_speed_1_field.setMaximum(1)
-        zaber_speed_1_field.setSingleStep(.1)
-        zaber_speed_1_field.setSuffix("mm/s")
-        zaber_form.addRow(zaber_speed_1_label, zaber_speed_1_field)
+        self.zaber_speed_1_field = QDoubleSpinBox()
+        self.zaber_speed_1_field.setMinimum(0)
+        self.zaber_speed_1_field.setMaximum(1)
+        self.zaber_speed_1_field.setSingleStep(.1)
+        self.zaber_speed_1_field.setSuffix("mm/s")
+        zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
         zaber_speed_2_label = QLabel("Zaber homing speed")
-        zaber_speed_2_field = QDoubleSpinBox()
-        zaber_speed_2_field.setMinimum(0)
-        zaber_speed_2_field.setMaximum(5)
-        zaber_speed_2_field.setSingleStep(.25)
-        zaber_speed_2_field.setSuffix("mm/s")
-        zaber_form.addRow(zaber_speed_2_label, zaber_speed_2_field)
+        self.zaber_speed_2_field = QDoubleSpinBox()
+        self.zaber_speed_2_field.setMinimum(0)
+        self.zaber_speed_2_field.setMaximum(5)
+        self.zaber_speed_2_field.setSingleStep(.25)
+        self.zaber_speed_2_field.setSuffix("mm/s")
+        zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
         zaber_control_widget = QHBoxLayout()
 
@@ -69,6 +71,7 @@ class ControlPanel(QWidget):
         zaber_home_btn.setIcon(QIcon(icon_path))
         zaber_home_btn.setToolTip("Home")
         zaber_home_btn.setFixedSize(30, 30)
+        zaber_home_btn.clicked.connect(lambda: self.set_zaber_position(True))
         zaber_control_widget.addWidget(zaber_home_btn)
 
         self.zaber_slider = QSlider(Qt.Orientation.Horizontal)
@@ -103,27 +106,60 @@ class ControlPanel(QWidget):
         awg_form = QFormLayout()
         awg_group.setLayout(awg_form)
 
+        self.awg_on_btn = QRadioButton("Run")
+        self.awg_off_btn = QRadioButton("Stop")
+        self.awg_off_btn.setChecked(True)
+
+        self.awg_run_group = QButtonGroup()
+        self.awg_run_group.addButton(self.awg_on_btn)
+        self.awg_run_group.addButton(self.awg_off_btn)
+
+        awg_run_group_widget = QHBoxLayout()
+        awg_run_group_widget.addWidget(self.awg_on_btn)
+        awg_run_group_widget.addWidget(self.awg_off_btn)
+
         status_label = QLabel("Status")
-        on_btn = QPushButton("Run")
-        off_btn = QPushButton("Stop")
-        awg_form.addRow(status_label, on_btn)
-        awg_form.addRow(status_label, off_btn)
+        awg_form.addRow(status_label, awg_run_group_widget)
 
         run_mode_label = QLabel("Run mode")
-        run_mode_field = QComboBox()
-        run_mode_field.addItems(["Continuous", "Triggered"])
+        self.run_mode_field = QComboBox()
+        self.run_mode_field.addItems(["Continuous", "Triggered"])
+        awg_form.addRow(run_mode_label, self.run_mode_field)
 
-        ch_1_label = QLabel("Channel 1")
-        ch_1_on_btn = QPushButton("On")
-        ch_1_off_btn = QPushButton("Off")
-        awg_form.addRow(ch_1_label, ch_1_on_btn)
-        awg_form.addRow(ch_1_label, ch_1_off_btn)
+        awg_freq_label = QLabel("Frequency")
+        self.awg_freq_field = QDoubleSpinBox()
+        self.awg_freq_field.setSuffix("MHz")
+        awg_form.addRow(awg_freq_label, self.awg_freq_field)
 
-        ch_2_label = QLabel("Channel 2")
-        ch_2_on_btn = QPushButton("On")
-        ch_2_off_btn = QPushButton("Off")
-        awg_form.addRow(ch_2_label, ch_2_on_btn)
-        awg_form.addRow(ch_2_label, ch_2_off_btn)
+        self.awg_ch_1_output_on_btn = QRadioButton("On")
+        self.awg_ch_1_output_off_btn = QRadioButton("Off")
+        self.awg_ch_1_output_off_btn.setChecked(True)
+
+        self.awg_ch_1_output_group = QButtonGroup()
+        self.awg_ch_1_output_group.addButton(self.awg_ch_1_output_on_btn)
+        self.awg_ch_1_output_group.addButton(self.awg_ch_1_output_off_btn)
+
+        awg_ch_1_output_group_widget = QHBoxLayout()
+        awg_ch_1_output_group_widget.addWidget(self.awg_ch_1_output_on_btn)
+        awg_ch_1_output_group_widget.addWidget(self.awg_ch_1_output_off_btn)
+
+        ch_1_label = QLabel("Channel 1 output")
+        awg_form.addRow(ch_1_label, awg_ch_1_output_group_widget)
+
+        self.awg_ch_2_output_on_btn = QRadioButton("On")
+        self.awg_ch_2_output_off_btn = QRadioButton("Off")
+        self.awg_ch_2_output_off_btn.setChecked(True)
+
+        self.awg_ch_2_output_group = QButtonGroup()
+        self.awg_ch_2_output_group.addButton(self.awg_ch_2_output_on_btn)
+        self.awg_ch_2_output_group.addButton(self.awg_ch_2_output_off_btn)
+
+        awg_ch_2_output_group_widget = QHBoxLayout()
+        awg_ch_2_output_group_widget.addWidget(self.awg_ch_2_output_on_btn)
+        awg_ch_2_output_group_widget.addWidget(self.awg_ch_2_output_off_btn)
+
+        ch_2_label = QLabel("Channel 2 output")
+        awg_form.addRow(ch_2_label, awg_ch_2_output_group_widget)
 
         left_column.addWidget(awg_group)
 
@@ -133,11 +169,11 @@ class ControlPanel(QWidget):
         valon_group.setLayout(valon_form)
 
         rf_label = QLabel("RF level (power)")
-        rf_field = QDoubleSpinBox()
-        rf_field.setMinimum(0)
-        rf_field.setMaximum(20)
-        rf_field.setSuffix("dBm")
-        valon_form.addRow(rf_label, rf_field)
+        self.rf_field = QDoubleSpinBox()
+        self.rf_field.setMinimum(0)
+        self.rf_field.setMaximum(20)
+        self.rf_field.setSuffix("dBm")
+        valon_form.addRow(rf_label, self.rf_field)
 
         left_column.addWidget(valon_group)
 
@@ -154,37 +190,37 @@ class ControlPanel(QWidget):
         oscilloscope_group.setLayout(oscilloscope_form)
 
         resolution_label = QLabel("Resolution")
-        resolution_field = QSpinBox()
-        resolution_field.setMinimum(0)
-        resolution_field.setMaximum(1000000)
-        resolution_field.setSuffix("kHz")
-        oscilloscope_form.addRow(resolution_label, resolution_field)
+        self.resolution_field = QSpinBox()
+        self.resolution_field.setMinimum(0)
+        self.resolution_field.setMaximum(1000000)
+        self.resolution_field.setSuffix("kHz")
+        oscilloscope_form.addRow(resolution_label, self.resolution_field)
 
         sample_rate_label = QLabel("Sample rate")
-        sample_rate_field = QSpinBox()
-        sample_rate_field.setMinimum(0)
-        sample_rate_field.setSingleStep(100)
-        sample_rate_field.setMaximum(1000000)
-        sample_rate_field.setSuffix("MS/s")
-        oscilloscope_form.addRow(sample_rate_label, sample_rate_field)
+        self.sample_rate_field = QSpinBox()
+        self.sample_rate_field.setMinimum(0)
+        self.sample_rate_field.setSingleStep(100)
+        self.sample_rate_field.setMaximum(1000000)
+        self.sample_rate_field.setSuffix("MS/s")
+        oscilloscope_form.addRow(sample_rate_label, self.sample_rate_field)
 
         window_type_label = QLabel("Window type")
-        window_type_field = QComboBox()
-        window_type_field.addItems(["Rectangular", "Hamming", "Hanning", "Blackman"])
-        oscilloscope_form.addRow(window_type_label, window_type_field)
+        self.window_type_field = QComboBox()
+        self.window_type_field.addItems(["Rectangular", "Hamming", "Hanning", "Blackman"])
+        oscilloscope_form.addRow(window_type_label, self.window_type_field)
 
         gate_position_label = QLabel("Gate position")
-        gate_position_field = QSpinBox()
-        gate_position_field.setMinimum(0)
-        gate_position_field.setMaximum(1000)
-        gate_position_field.setSuffix("μs")
-        oscilloscope_form.addRow(gate_position_label, gate_position_field)
+        self.gate_position_field = QSpinBox()
+        self.gate_position_field.setMinimum(0)
+        self.gate_position_field.setMaximum(1000)
+        self.gate_position_field.setSuffix("μs")
+        oscilloscope_form.addRow(gate_position_label, self.gate_position_field)
 
         math_avg_label = QLabel("Math averages")
-        math_avg_field = QSpinBox()
-        math_avg_field.setMinimum(0)
-        math_avg_field.setMaximum(1000)
-        oscilloscope_form.addRow(math_avg_label, math_avg_field)
+        self.math_avg_field = QSpinBox()
+        self.math_avg_field.setMinimum(0)
+        self.math_avg_field.setMaximum(1000)
+        oscilloscope_form.addRow(math_avg_label, self.math_avg_field)
 
         right_column.addWidget(oscilloscope_group)
 
@@ -195,10 +231,10 @@ class ControlPanel(QWidget):
         timing_group.setLayout(timing_form)
 
         delay_gas_label = QLabel("Delay gas - MW")
-        delay_gas_field = QDoubleSpinBox()
-        delay_gas_field.setMinimum(0)
-        delay_gas_field.setSuffix("μs")
-        timing_form.addRow(delay_gas_label, delay_gas_field)
+        self.delay_gas_field = QDoubleSpinBox()
+        self.delay_gas_field.setMinimum(0)
+        self.delay_gas_field.setSuffix("μs")
+        timing_form.addRow(delay_gas_label, self.delay_gas_field)
 
         right_column.addWidget(timing_group)
 
@@ -220,15 +256,49 @@ class ControlPanel(QWidget):
             print("Unable to get Zaber position")
 
 
-    def set_zaber_position(self):
+    def set_zaber_position(self, home=False):
         if self.spectrometer.current_task:
             print("Cannot move Zaber during a task")
         else:
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
-            self.spectrometer.spectrometer.zaber_controller.move_to(new_pos)
+            if home:
+                self.spectrometer.spectrometer.zaber_controller.move_to("0")
+            else:
+                self.spectrometer.spectrometer.zaber_controller.move_to(new_pos)
 
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
         self.settings_window.show()
+
+    def showEvent(self, event: QShowEvent):
+        super().showEvent(event)
+        self.__set_values_in_control_panel()
+
+    def __set_values_in_control_panel(self):
+        print(self.spectrometer.config)
+
+        # Zaber
+        self.zaber_speed_1_field.setValue(self.spectrometer.config.zaber_controller.zaber_speed)
+        self.zaber_speed_2_field.setValue(self.spectrometer.config.zaber_controller.zaber_homing_speed)
+
+        # AWG
+        self.awg_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_status else False)
+        self.run_mode_field.setCurrentText(self.spectrometer.config.awg_controller.awg_run_mode)
+        self.awg_freq_field.setValue(self.spectrometer.config.awg_controller.awg_freq)
+        self.awg_ch_1_output_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_ch_1_output else False)
+        self.awg_ch_2_output_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_ch_2_output else False)
+
+        # Valon
+        self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
+
+        # Oscilloscope
+        self.resolution_field.setValue(self.spectrometer.config.oscilloscope_controller.resolution)
+        self.sample_rate_field.setValue(self.spectrometer.config.oscilloscope_controller.sample_rate)
+        self.window_type_field.setCurrentText(self.spectrometer.config.oscilloscope_controller.window_type)
+        self.gate_position_field.setValue(self.spectrometer.config.oscilloscope_controller.gate_position)
+        self.math_avg_field.setValue(self.spectrometer.config.oscilloscope_controller.math_averages)
+
+        # Delay generator
+        self.delay_gas_field.setValue(self.spectrometer.config.delay_generator_controller.trigger_rate)
