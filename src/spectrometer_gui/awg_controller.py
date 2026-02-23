@@ -15,7 +15,7 @@ class AWGController:
         self.initialized = False
 
     def initialize(self, config: Config):
-        self.__visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+        self.__visa_address = "GPIB1::2::INSTR"
         self.__rm = visa.ResourceManager()
         self.__awg = self.__rm.open_resource(self.__visa_address)
         self.update_config(config)
@@ -27,17 +27,11 @@ class AWGController:
     def update_config(self, config: Config):
         awg_config = config.awg_controller
 
-        if awg_config.awg_status:
-            self.run()
+        if awg_config.awg_run_mode is not None:
+            self.set_run_mode(awg_config.awg_run_mode)
 
-            if awg_config.awg_run_mode is not None:
-                self.set_run_mode(awg_config.awg_run_mode)
-
-            self.set_channel_output(1, awg_config.awg_ch_1_output)
-            self.set_channel_output(2, awg_config.awg_ch_2_output)
-
-        else:
-            self.stop()
+        self.set_channel_output(1, awg_config.awg_ch_1_output)
+        self.set_channel_output(2, awg_config.awg_ch_2_output)
 
         self.awg_freq = awg_config.awg_freq
 
@@ -51,7 +45,7 @@ class AWGController:
         self.__write_cmd("AWGControl:STOP")
 
     def get_status(self):
-        return print(self.__write_cmd("AWGCONTROL:RSTATe?"))
+        return self.__write_cmd("AWGCONTROL:RSTATe?")
 
     def get_run_mode(self):
         return self.__write_cmd("AWGControl:RMODe?")
