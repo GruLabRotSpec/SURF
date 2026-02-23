@@ -15,6 +15,7 @@ awg_ch_1_output = false
 awg_ch_2_output = false
 
 [oscilloscope_controller]
+channel = "CH4"
 resolution = 100000.0
 sample_rate = 500000000.0
 window_type = "Rectangular"

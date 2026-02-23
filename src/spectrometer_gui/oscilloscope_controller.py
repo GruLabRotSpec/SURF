@@ -35,11 +35,14 @@ class OscilloscopeController:
     def update_config(self, config: Config):
         oscill_config = config.oscilloscope_controller
 
-        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
+        self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.window_type}")
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}")
-        self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.window_type}")
+        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}")
         self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
+
+        self.channel = oscill_config.channel
+        self.gate_pos = oscill_config.gate_position
 
     # sends command, ensures no error after
     def write_cmd(self, command):
@@ -159,7 +162,7 @@ class OscilloscopeController:
         self.write_cmd(f'RECALL:SETUP "{setup}"')
         time.sleep(7)
 
-    def acq_ft_curve(self, channel, acqtime):  # this is for actually pulling the data
+    def acq_ft_curve(self, acqtime):  # this is for actually pulling the data
         self.write_cmd("header 0")
         self.write_cmd("data:encdg SRPbinary")
         self.write_cmd("data:source MATH4")  # channel
@@ -172,7 +175,7 @@ class OscilloscopeController:
         self.write_cmd("acquire:STOPAfter RUNSTop")  # cont acq
         self.write_cmd("curvestream?")
         self.write_cmd("acquire:state 1")  # run
-        self.write_cmd(f"{channel}:SCAle 0.9")
+        self.write_cmd(f"{self.channel}:SCAle 0.9")
 
         # data query
         time.sleep(acqtime)
@@ -187,10 +190,9 @@ class OscilloscopeController:
 
         return new_bin_wave
 
-    def set_settings(self, channel, gate_pos):
-
+    def set_settings(self):
         self.write_cmd("SELECT:MATH3 0")
-        self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({channel}))"')
+        self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({self.channel}))"')
         self.write_cmd("SELECT:MATH4 1")
         self.write_cmd("MATH4:NUMAvg 1000000")
         self.write_cmd("MATH4:VERTical:POSition -4")
@@ -200,17 +202,17 @@ class OscilloscopeController:
         self.write_cmd("MATH4:SPECTral:RESBw 100E3")
         self.write_cmd("MATH4:SPECTral:CENTER 30E6")
         self.write_cmd("MATH4:SPECTral:SPAN 20E6")
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {gate_pos}")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")
         self.write_cmd(
             "MATH4:VERTICAL:SCALE 500E-6"
         )  # sets math channel vertical scale
         time.sleep(2)
-        self.write_cmd(f"{channel}:SCAle 1")
+        self.write_cmd(f"{self.channel}:SCAle 1")
 
-    def set_tuning_settings(self, channel):
+    def set_tuning_settings(self):
         self.write_cmd("SELECT:MATH4 0")
 
-        self.write_cmd(f'MATH3:DEFINE "SpectralMag({channel})"')
+        self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
         self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
         self.write_cmd("MATH3:VERTical:POSition -4")

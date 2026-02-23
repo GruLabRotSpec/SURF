@@ -25,6 +25,7 @@ class AWGConfig(BaseModel):
 
 
 class OscilloscopeConfig(BaseModel):
+    channel: str
     resolution: float
     sample_rate: float
     window_type: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
