@@ -26,6 +26,7 @@ class Spectrometer:
     def __init__(self, config: Config):
         # Experiment settings (infrequently changed)
         self.__acq_rate = 300
+        self.step_size = 0.004
 
         # Config
         self.config = config
@@ -171,12 +172,12 @@ class Spectrometer:
 
             if step_direction == StepDirection.Up:
                 new_freq = valon_freq + step_size * run_number
-                start_pos_zaber = curr_pos - 0.01
-                end_pos_zaber = curr_pos + 0.03
+                start_pos_zaber = curr_pos
+                end_pos_zaber = curr_pos + self.step_size
             elif step_direction == StepDirection.Down:
                 new_freq = valon_freq - step_size * run_number
                 start_pos_zaber = curr_pos
-                end_pos_zaber = curr_pos - 0.06
+                end_pos_zaber = curr_pos - self.step_size
             else:
                 raise ValueError("Invalid step direction", step_direction)
 
@@ -214,6 +215,8 @@ class Spectrometer:
             pos_array = np.linspace(start_pos_zaber, end_pos_zaber, len(max_list))
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
+
+            # plot_position_vs_intensity(posArr1, max_lists)
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(self.zaber_controller.homing_speed)
