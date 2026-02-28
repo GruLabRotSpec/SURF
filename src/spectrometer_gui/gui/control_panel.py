@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (
 
 from gui.spectrometer_controller import SpectrometerController
 from gui.settings_window import SettingsWindow
-
+from gui.custom_toolbar import CustomToolbar
 
 class ControlPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
@@ -28,18 +28,25 @@ class ControlPanel(QWidget):
 
         self.spectrometer = spectrometer
 
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
+
+        toolbar = CustomToolbar()
+        toolbar.update_action.triggered.connect(self.__apply_values_in_control_panel)
+        layout.addWidget(toolbar)
+
+        # Bottom columns
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        bottom_panel = QWidget()
+        bottom_panel.setLayout(bottom_layout)
 
         # Left Column
         left_column = QVBoxLayout()
         left_column_panel = QWidget()
         left_column_panel.setLayout(left_column)
 
-        left_column.addStretch(1)
-
-        label = QLabel("Control")
-        left_column.addWidget(label)
+        # left_column.addStretch(1)
 
         zaber_group = QGroupBox("Zaber")
 
@@ -182,7 +189,7 @@ class ControlPanel(QWidget):
         right_column_panel = QWidget()
         right_column_panel.setLayout(right_column)
 
-        right_column.addStretch(1)
+        # right_column.addStretch(1)
 
         oscilloscope_group = QGroupBox("Oscilloscope")
 
@@ -237,12 +244,15 @@ class ControlPanel(QWidget):
         timing_form.addRow(delay_gas_label, self.delay_gas_field)
 
         right_column.addWidget(timing_group)
+       
+        bottom_layout.addWidget(left_column_panel)
+        bottom_layout.addWidget(right_column_panel)
 
-        layout.addWidget(left_column_panel)
-        layout.addWidget(right_column_panel)
+        bottom_layout.setStretch(0, 1)
+        bottom_layout.setStretch(1, 1)
 
-        layout.setStretch(0, 1)
-        layout.setStretch(1, 1)
+        layout.addWidget(bottom_panel)
+        layout.addStretch()
 
         self.get_zaber_position()
 
@@ -302,3 +312,32 @@ class ControlPanel(QWidget):
 
         # Delay generator
         self.delay_gas_field.setValue(self.spectrometer.config.delay_generator_controller.trigger_rate)
+
+    def __apply_values_in_control_panel(self):
+        if not self.spectrometer.current_task:
+            # Zaber
+            self.spectrometer.config.zaber_controller.zaber_speed = self.zaber_speed_1_field.value()
+            self.spectrometer.config.zaber_controller.zaber_homing_speed = self.zaber_speed_2_field.value()
+            
+            # AWG
+            self.spectrometer.config.awg_controller.awg_status = True if self.awg_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_run_mode = self.run_mode_field.currentText()
+            self.spectrometer.config.awg_controller.awg_freq = self.awg_freq_field.value()
+            self.spectrometer.config.awg_controller.awg_ch_1_output = True if self.awg_ch_1_output_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_ch_2_output = True if self.awg_ch_2_output_on_btn.isChecked() else False
+
+            # Valon
+            self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
+
+            # Oscilloscope
+            self.spectrometer.config.oscilloscope_controller.resolution = self.resolution_field.value()
+            self.spectrometer.config.oscilloscope_controller.sample_rate = self.sample_rate_field.value()
+            self.spectrometer.config.oscilloscope_controller.window_type = self.window_type_field.currentText()
+            self.spectrometer.config.oscilloscope_controller.gate_position = self.gate_position_field.value()
+            self.spectrometer.config.oscilloscope_controller.math_averages = self.math_avg_field.value()
+            
+            # Delay generator
+            self.spectrometer.config.delay_generator_controller.trigger_rate = self.delay_gas_field.value()
+
+        else:
+            print("Cannot update control options during a task")
