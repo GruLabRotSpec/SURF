@@ -23,7 +23,7 @@ from gui.status_panel import StatusPanel
 from gui.bottom_bar import BottomBarPanel
 from gui.spectrometer_controller import SpectrometerController
 
-from config import load_config
+from config import load_config, save_config
 
 
 class MainWindow(QMainWindow):
@@ -127,7 +127,24 @@ class MainWindow(QMainWindow):
             )
 
     def save_config(self):
-        return
+        dialog = QFileDialog()
+
+        filename, _ = dialog.getSaveFileName(
+            self,
+            "Save Control Options to File",
+            "",
+            "GruGUI control options file (*.toml)",
+        )
+
+        if filename:
+            save_config(Path(filename), self.controller.config)
+        else:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Please select a valid filename to save the control options file.",
+                QMessageBox.StandardButton.Ok,
+            )
 
     def quit_app(self):
         self.app.quit()
