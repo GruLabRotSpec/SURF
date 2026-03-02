@@ -58,7 +58,7 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, callback, start_freq, stop_freq, step_size=0.5):
+    def scan_frequency(self, async_loop, callback, start_freq, stop_freq, step_size=0.5):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -99,7 +99,7 @@ class Spectrometer:
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
-        print(f"The estimated time for this scan is at least {total_time} mins")
+        print(f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans")
 
         valon_freq = start_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
@@ -140,8 +140,7 @@ class Spectrometer:
         upper_bound = total_frequency + step_size / 2
         lower_bound = total_frequency - step_size / 2
 
-        print(upper_bound)
-        print(lower_bound)
+        print(f"Freq Bounds: {lower_bound} to {upper_bound}")
 
         self.write_data_to_csv(
             xx_values,
@@ -280,7 +279,7 @@ class Spectrometer:
 
             run_number += 1
 
-            callback(run_number / iterations)
+            async_loop.call_soon_threadsafe(callback, run_number / iterations)
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
@@ -454,10 +453,11 @@ class Spectrometer:
         self.zaber_controller.move_to(end_pos, blocking=False)
 
         data = []
-        while not self.zaber_controller.moving():
+        while self.zaber_controller.moving():
             data.append(
-                self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?")
+                float(self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?"))
             )
+            print("Data Collected")
 
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
