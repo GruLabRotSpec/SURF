@@ -10,10 +10,10 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QDoubleSpinBox
+    QDoubleSpinBox,
 )
 
-from gui.spectrometer_controller import SpectrometerController
+from gui.spectrometer_controller import SpectrometerController, ScanType
 from gui.graph_panel import GraphPanel
 
 
@@ -22,6 +22,7 @@ class CavitySearchPanel(QWidget):
         super().__init__()
 
         self.spectrometer = spectrometer
+        self.spectrometer.scanning.connect(self.on_scanning)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -38,11 +39,11 @@ class CavitySearchPanel(QWidget):
         left_column.addWidget(left_label)
 
         # Form
-        form_panel = QWidget()
+        self.form_panel = QWidget()
         form = QFormLayout()
-        form_panel.setLayout(form)
+        self.form_panel.setLayout(form)
 
-        left_column.addWidget(form_panel)
+        left_column.addWidget(self.form_panel)
 
         start_freq_label = QLabel("Starting Frequency")
         start_freq_field = QDoubleSpinBox()
@@ -97,10 +98,6 @@ class CavitySearchPanel(QWidget):
         layout.setStretch(1, 1)
 
     def start_search(self):
-        self.setEnabled(False)
-        self.start_button.setEnabled(False)
-        self.cancel_button.setEnabled(True)
-
         # Start search via controller (controller handles async internally)
         self.spectrometer.run_search(
             int(self.end_freq_field.value()), float(self.step_size_field.value())
@@ -108,6 +105,17 @@ class CavitySearchPanel(QWidget):
 
     def cancel_search(self):
         self.spectrometer.cancel_operation()
-        self.setEnabled(True)
-        self.start_button.setEnabled(True)
-        self.cancel_button.setEnabled(False)
+
+    def on_scanning(self, scanning: bool, scan_type: ScanType):
+        if scanning:
+            self.start_button.setEnabled(False)
+            self.form_panel.setEnabled(False)
+
+            if scan_type == ScanType.CAVITY:
+                self.cancel_button.setEnabled(True)
+            else:
+                self.cancel_button.setEnabled(False)
+        else:
+            self.start_button.setEnabled(True)
+            self.form_panel.setEnabled(True)
+            self.cancel_button.setEnabled(False)

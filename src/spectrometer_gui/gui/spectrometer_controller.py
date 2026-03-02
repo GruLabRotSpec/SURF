@@ -14,25 +14,36 @@ class DeviceStatus(Enum):
     OFFLINE = "offline"
 
 
+class ScanType(Enum):
+    NONE = 0
+    FREQUENCY = 1
+    CAVITY = 2
+
+
 class SpectrometerController(QObject):
-    device_status_changed = Signal(str, object)  # device_id, DeviceStatus
+    device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
+    scanning = Signal(bool, ScanType)
 
     def __init__(self, config: Config, bottom_bar: BottomBarPanel):
         super().__init__()
         self.spectrometer = Spectrometer(config)
-        self.config = config  # Used for setting control options
+        self.config = config
         self.bottom_bar = bottom_bar
         self.current_task = None
-
-    def run_scan(self, start_freq=None, stop_freq=11200, step_size=0.5):
-        self.bottom_bar.set_status_elements(-1, "Starting scan...")
-        self.current_task = asyncio.create_task(
-            self._run_scan_async(start_freq, stop_freq, step_size)
-        )
 
     def set_config(self, config: Config):
         self.config = config
         self.spectrometer.update_config(config)
+
+    def run_scan(self, start_freq=None, stop_freq=11200.0, step_size=0.5):
+        self.bottom_bar.set_status_elements(-1, "Starting scan...")
+        self.scanning.emit(True, ScanType.FREQUENCY)
+        self.current_task = asyncio.create_task(
+            self._run_scan_async(start_freq, stop_freq, step_size)
+        )
+
+    def scan_callback(self, progress: float):
+        self.bottom_bar.set_status_elements(progress, "Scanning...")
 
     async def _run_scan_async(self, start_freq, stop_freq, step_size):
         # TODO: Actually support proper progress
@@ -43,21 +54,29 @@ class SpectrometerController(QObject):
             self.bottom_bar.set_status_elements(1, "Scan completed")
         except asyncio.CancelledError:
             self.bottom_bar.set_status_elements(1, "Scan cancelled")
+        except Exception as e:
+            self.bottom_bar.set_status_elements(1, "Scan failed")
+            print(f"Search Failed: {e}")
         finally:
+            self.scanning.emit(False, ScanType.NONE)
             self.current_task = None
 
     def run_search(self, freq=9000, step_size=0.5):
         self.bottom_bar.set_status_elements(0, "Starting search...")
+        self.scanning.emit(True, ScanType.CAVITY)
         self.current_task = asyncio.create_task(self._run_search_async(freq, step_size))
 
     async def _run_search_async(self, freq, step_size):
-        # TODO:  Actually support proper progress
         try:
             await asyncio.to_thread(self.spectrometer.cavity_search, freq, step_size)
             self.bottom_bar.set_status_elements(1, "Search completed")
         except asyncio.CancelledError:
             self.bottom_bar.set_status_elements(1, "Search cancelled")
+        except Exception as e:
+            self.bottom_bar.set_status_elements(1, "Search failed")
+            print(f"Search Failed: {e}")
         finally:
+            self.scanning.emit(False, ScanType.NONE)
             self.current_task = None
 
     def cancel_operation(self):

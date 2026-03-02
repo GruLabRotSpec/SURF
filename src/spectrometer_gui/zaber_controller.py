@@ -14,6 +14,8 @@ class ZaberController:
         self.device = port.get_device(1)
         self.axis = self.device.get_axis(1)
 
+        self.update_config(config)
+
         self.initialized = True
 
     def is_initialized(self) -> bool:
@@ -24,6 +26,7 @@ class ZaberController:
 
         self.move_speed = zaber_config.zaber_speed
         self.homing_speed = zaber_config.zaber_homing_speed
+        self.step_size = zaber_config.zaber_step_size
 
     def move_to(self, pos, blocking=True):
         self.axis.move_absolute(
