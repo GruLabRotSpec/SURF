@@ -273,9 +273,9 @@ class ControlPanel(QWidget):
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
             if home:
-                self.spectrometer.spectrometer.zaber_controller.move_to("0")
+                self.spectrometer.spectrometer.zaber_controller.move_to("0", False)
             else:
-                self.spectrometer.spectrometer.zaber_controller.move_to(new_pos)
+                self.spectrometer.spectrometer.zaber_controller.move_to(new_pos, False)
 
 
     def show_more_settings(self):
@@ -339,5 +339,6 @@ class ControlPanel(QWidget):
             # Delay generator
             self.spectrometer.config.delay_generator_controller.trigger_rate = self.delay_gas_field.value()
 
+            self.spectrometer.set_config(self.spectrometer.config)
         else:
             print("Cannot update control options during a task")

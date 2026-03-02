@@ -43,20 +43,22 @@ class SpectrometerController(QObject):
         )
 
     def scan_callback(self, progress: float):
+        print(f"Progress Updated: {progress}")
         self.bottom_bar.set_status_elements(progress, "Scanning...")
 
-    async def _run_scan_async(self, start_freq, stop_freq, step_size):
+    async def _run_scan_async(self, loop, start_freq, stop_freq, step_size):
         # TODO: Actually support proper progress
+        loop = asyncio.get_running_loop()
         try:
             await asyncio.to_thread(
-                self.spectrometer.scan_frequency, start_freq, stop_freq, step_size
+                self.spectrometer.scan_frequency, loop, self.scan_callback, start_freq, stop_freq, step_size
             )
             self.bottom_bar.set_status_elements(1, "Scan completed")
         except asyncio.CancelledError:
             self.bottom_bar.set_status_elements(1, "Scan cancelled")
         except Exception as e:
             self.bottom_bar.set_status_elements(1, "Scan failed")
-            print(f"Search Failed: {e}")
+            print(f"Scan Failed: {e}")
         finally:
             self.scanning.emit(False, ScanType.NONE)
             self.current_task = None
