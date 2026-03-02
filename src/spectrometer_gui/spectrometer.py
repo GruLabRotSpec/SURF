@@ -26,7 +26,6 @@ class Spectrometer:
     def __init__(self, config: Config):
         # Experiment settings (infrequently changed)
         self.__acq_rate = 300
-        self.step_size = 0.004
 
         # Config
         self.config = config
@@ -59,7 +58,7 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, start_freq, stop_freq, step_size=0.5):
+    def scan_frequency(self, callback, start_freq, stop_freq, step_size=0.5):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -173,11 +172,11 @@ class Spectrometer:
             if step_direction == StepDirection.Up:
                 new_freq = valon_freq + step_size * run_number
                 start_pos_zaber = curr_pos
-                end_pos_zaber = curr_pos + self.step_size
+                end_pos_zaber = curr_pos + self.zaber_controller.step_size
             elif step_direction == StepDirection.Down:
                 new_freq = valon_freq - step_size * run_number
                 start_pos_zaber = curr_pos
-                end_pos_zaber = curr_pos - self.step_size
+                end_pos_zaber = curr_pos - self.zaber_controller.step_size
             else:
                 raise ValueError("Invalid step direction", step_direction)
 
@@ -280,6 +279,8 @@ class Spectrometer:
                 self.valon_controller.step_down()
 
             run_number += 1
+
+            callback(run_number / iterations)
 
         # Cleanup
         self.delay_generator_controller.stop_trig()

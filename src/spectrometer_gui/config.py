@@ -13,6 +13,7 @@ class ValonConfig(BaseModel):
 class ZaberConfig(BaseModel):
     zaber_speed: float  # TODO: Limit the speed to the possible range
     zaber_homing_speed: float
+    zaber_step_size: float
     zaber_port: str
 
 
