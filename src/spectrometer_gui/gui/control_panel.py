@@ -54,10 +54,10 @@ class ControlPanel(QWidget):
         zaber_group.setLayout(zaber_form)
 
         zaber_speed_1_label = QLabel("Zaber scanning speed")
-        self.zaber_speed_1_field = QDoubleSpinBox()
+        self.zaber_speed_1_field = QDoubleSpinBox(decimals=3)
         self.zaber_speed_1_field.setMinimum(0)
         self.zaber_speed_1_field.setMaximum(1)
-        self.zaber_speed_1_field.setSingleStep(.1)
+        self.zaber_speed_1_field.setSingleStep(.001)
         self.zaber_speed_1_field.setSuffix("mm/s")
         zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
@@ -197,9 +197,9 @@ class ControlPanel(QWidget):
         oscilloscope_group.setLayout(oscilloscope_form)
 
         resolution_label = QLabel("Resolution")
-        self.resolution_field = QSpinBox()
+        self.resolution_field = QDoubleSpinBox()
         self.resolution_field.setMinimum(0)
-        self.resolution_field.setMaximum(1000000)
+        self.resolution_field.setMaximum(100000)
         self.resolution_field.setSuffix("kHz")
         oscilloscope_form.addRow(resolution_label, self.resolution_field)
 
@@ -207,7 +207,7 @@ class ControlPanel(QWidget):
         self.sample_rate_field = QSpinBox()
         self.sample_rate_field.setMinimum(0)
         self.sample_rate_field.setSingleStep(100)
-        self.sample_rate_field.setMaximum(1000000)
+        self.sample_rate_field.setMaximum(1000)
         self.sample_rate_field.setSuffix("MS/s")
         oscilloscope_form.addRow(sample_rate_label, self.sample_rate_field)
 
@@ -217,16 +217,14 @@ class ControlPanel(QWidget):
         oscilloscope_form.addRow(window_type_label, self.window_type_field)
 
         gate_position_label = QLabel("Gate position")
-        self.gate_position_field = QSpinBox()
-        self.gate_position_field.setMinimum(0)
-        self.gate_position_field.setMaximum(1000)
+        self.gate_position_field = QDoubleSpinBox()
         self.gate_position_field.setSuffix("μs")
         oscilloscope_form.addRow(gate_position_label, self.gate_position_field)
 
         math_avg_label = QLabel("Math averages")
         self.math_avg_field = QSpinBox()
-        self.math_avg_field.setMinimum(0)
-        self.math_avg_field.setMaximum(1000)
+        self.math_avg_field.setMinimum(2)
+        self.math_avg_field.setMaximum(1000000)
         oscilloscope_form.addRow(math_avg_label, self.math_avg_field)
 
         right_column.addWidget(oscilloscope_group)
