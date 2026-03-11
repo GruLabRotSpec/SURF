@@ -22,6 +22,7 @@ class ZaberController:
         self.update_config(config)
 
         if not self.axis.is_homed():
+            print("Zaber not Homed, Homing")
             self.home(False)
 
         self.initialized = True
