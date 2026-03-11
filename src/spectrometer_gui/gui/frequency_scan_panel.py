@@ -1,12 +1,9 @@
-import asyncio
-
-from PySide6 import QtCore, QtAsyncio
-from PySide6.QtGui import QFont, QPixmap
+from PySide6 import QtCore
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -23,7 +20,7 @@ class FrequencyScanPanel(QWidget):
 
         self.spectrometer = spectrometer
 
-        self.spectrometer.scanning.connect(self.on_scanning)
+        self.spectrometer.signal.scanning.connect(self.on_scanning)
 
         layout = QHBoxLayout()
         self.setLayout(layout)

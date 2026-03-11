@@ -26,7 +26,7 @@ class StatusPanel(QWidget):
         self.setup_ui()
 
         # Signals
-        self.spectrometer.device_status_changed.connect(self.on_device_status_changed)
+        self.spectrometer.signal.device_status_changed.connect(self.on_device_status_changed)
 
     def setup_ui(self):
         layout = QHBoxLayout()

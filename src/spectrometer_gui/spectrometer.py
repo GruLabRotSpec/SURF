@@ -1,9 +1,11 @@
+from __future__ import annotations
 import time
 import numpy as np
 import pandas as pd
 import os
 import concurrent
 import threading
+import typing
 from scipy.signal import find_peaks
 
 from enum import Enum
@@ -16,6 +18,9 @@ from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
 from switch_controller import SwitchController
 from awg_controller import AWGController
+
+if typing.TYPE_CHECKING:
+    from gui.spectrometer_controller import ScanSignals
 
 
 class StepDirection(Enum):
@@ -59,7 +64,7 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, start_freq, stop_freq, step_size=0.5):
+    def scan_frequency(self, signals: ScanSignals, start_freq: float, stop_freq: float, step_size: float = 0.5):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -282,7 +287,7 @@ class Spectrometer:
 
             run_number += 1
 
-            # async_loop.call_soon_threadsafe(callback, run_number / iterations)
+            signals.progress.emit(run_number / iterations, f"{run_number} / {int(iterations)} Scans")
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
@@ -455,6 +460,8 @@ class Spectrometer:
     def scan_with_acquisition(self, end_pos):
         # I don't like this, but axis.is_busy() is too slow
         # and I can't find anything better 
+
+        # Maybe try fastframe?
         def _gather_data(stop_event):
             data = []
             while not stop_event.is_set():
