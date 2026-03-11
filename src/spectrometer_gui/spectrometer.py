@@ -1,9 +1,9 @@
 import time
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
-import asyncio
+import concurrent
+import threading
 from scipy.signal import find_peaks
 
 from enum import Enum
@@ -100,7 +100,9 @@ class Spectrometer:
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
-        print(f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans")
+        print(
+            f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans"
+        )
 
         valon_freq = start_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
@@ -451,33 +453,30 @@ class Spectrometer:
                 break
 
     def scan_with_acquisition(self, end_pos):
-        data = []
-
         # I don't like this, but axis.is_busy() is too slow
-        # and I can't find anything better
-        async def _run_loop():
-            async def _gather_data():
-                while True:
-                    data.append(
-                        float(self.oscilloscope_controller.query_cmd(
+        # and I can't find anything better 
+        def _gather_data(stop_event):
+            data = []
+            while not stop_event.is_set():
+                data.append(
+                    float(
+                        self.oscilloscope_controller.query_cmd(
                             "MEASUrement:MEAS1:VALUE?"
-                        ))
+                        )
                     )
-                    await asyncio.sleep(0)
+                )
+            return data
 
-            self.zaber_controller.move_to(end_pos, blocking=False)
-
-            loop_task = asyncio.to_thread(_gather_data())
-            await self.zaber_controller.axis.wait_until_idle_async()
-            loop_task.close()
+        stop_event = threading.Event()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(_gather_data, stop_event)
+            self.zaber_controller.move_to(end_pos, blocking=True)
+            stop_event.set()
         
-        asyncio.run(_run_loop())
-
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
 
-        return data
-
+        return future.result()
 
     def __fft_from_scope(self, new_freq):
         wave_values = self.oscilloscope_controller.acq_ft_curve(self._time_delay)
