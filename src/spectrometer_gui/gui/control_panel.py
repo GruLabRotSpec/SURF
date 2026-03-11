@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QGroupBox,
     QFormLayout,
-    QLineEdit,
     QComboBox,
     QSlider,
     QSpinBox,
@@ -260,7 +259,7 @@ class ControlPanel(QWidget):
             pos = self.spectrometer.spectrometer.zaber_controller.get_pos()
             self.zaber_slider.setValue(pos)
             self.zaber_pos_field.setValue(pos)
-        except:
+        except Exception:
             print("Unable to get Zaber position")
 
 
