@@ -1,8 +1,11 @@
+from __future__ import annotations
 import time
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
+import concurrent
+import threading
+import typing
 from scipy.signal import find_peaks
 
 from enum import Enum
@@ -10,11 +13,14 @@ from enum import Enum
 from config import Config
 
 from delay_generator_controller import DelayGeneratorController
-from zaber_controller import ZaberController
+from zaber_controller import ZaberController, ZaberSpeed
 from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
 from switch_controller import SwitchController
 from awg_controller import AWGController
+
+if typing.TYPE_CHECKING:
+    from gui.spectrometer_controller import ScanSignals
 
 
 class StepDirection(Enum):
@@ -58,7 +64,7 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, async_loop, callback, start_freq, stop_freq, step_size=0.5):
+    def scan_frequency(self, signals: ScanSignals, start_freq: float, stop_freq: float, step_size: float = 0.5):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -99,7 +105,9 @@ class Spectrometer:
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
-        print(f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans")
+        print(
+            f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans"
+        )
 
         valon_freq = start_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
@@ -197,10 +205,10 @@ class Spectrometer:
 
             print(f"Moving Zaber to {start_pos_zaber}")
 
-            self.zaber_controller.set_speed(self.zaber_controller.homing_speed)
+            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.move_to(start_pos_zaber)
 
-            self.zaber_controller.set_speed(self.zaber_controller.move_speed)
+            self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
             self.oscilloscope_controller.calib_start()
             self.delay_generator_controller.start_trig()
@@ -217,7 +225,7 @@ class Spectrometer:
             # plot_position_vs_intensity(posArr1, max_lists)
 
             print("Moving to maximum position at: ", max_pos, " mm")
-            self.zaber_controller.set_speed(self.zaber_controller.homing_speed)
+            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.move_to(max_pos)
             curr_pos = self.zaber_controller.get_pos()
             print("Running scan... Zaber is at position: ", curr_pos)
@@ -279,7 +287,7 @@ class Spectrometer:
 
             run_number += 1
 
-            async_loop.call_soon_threadsafe(callback, run_number / iterations)
+            signals.progress.emit(run_number / iterations, f"{run_number} / {int(iterations)} Scans")
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
@@ -314,7 +322,7 @@ class Spectrometer:
                 "Sucessfully named file ", f"{self.__directory}/{self.__filename}.csv"
             )
 
-        self.zaber_controller.set_speed(self.zaber_controller.homing_speed)
+        self.zaber_controller.set_speed(ZaberSpeed.HOMING)
         self.zaber_controller.home()
 
         print("Zaber has arrived at home position 0 mm")
@@ -349,13 +357,13 @@ class Spectrometer:
             self.delay_generator_controller.set_frequency(
                 300
             )  # Trigger rate for cavity search
-            self.zaber_controller.set_speed(self.zaber_controller.homing_speed)
+            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.home()
 
             curr_pos = self.zaber_controller.get_pos()
 
             print("Zaber is at position ", curr_pos)
-            self.zaber_controller.set_speed(self.zaber_controller.move_speed)
+            self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
             time.sleep(2)
             self.oscilloscope_controller.calib_start()
@@ -450,19 +458,32 @@ class Spectrometer:
                 break
 
     def scan_with_acquisition(self, end_pos):
-        self.zaber_controller.move_to(end_pos, blocking=False)
+        # I don't like this, but axis.is_busy() is too slow
+        # and I can't find anything better 
 
-        data = []
-        while self.zaber_controller.moving():
-            data.append(
-                float(self.oscilloscope_controller.query_cmd("MEASUrement:MEAS1:VALUE?"))
-            )
-            print("Data Collected")
+        # Maybe try fastframe?
+        def _gather_data(stop_event):
+            data = []
+            while not stop_event.is_set():
+                data.append(
+                    float(
+                        self.oscilloscope_controller.query_cmd(
+                            "MEASUrement:MEAS1:VALUE?"
+                        )
+                    )
+                )
+            return data
 
+        stop_event = threading.Event()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(_gather_data, stop_event)
+            self.zaber_controller.move_to(end_pos, blocking=True)
+            stop_event.set()
+        
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
 
-        return data
+        return future.result()
 
     def __fft_from_scope(self, new_freq):
         wave_values = self.oscilloscope_controller.acq_ft_curve(self._time_delay)

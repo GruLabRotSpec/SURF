@@ -44,15 +44,16 @@ class MainWindow(QMainWindow):
         self.menu_bar = self.menuBar()
         self.setup_menu_bar()
 
-        bottom_bar_panel = BottomBarPanel()
+        self.controller = SpectrometerController(self.config)
 
-        self.controller = SpectrometerController(self.config, bottom_bar_panel)
-
+        bottom_bar_panel = BottomBarPanel(self.controller)
         status_panel = StatusPanel(self.controller)
         frequency_scan = FrequencyScanPanel(self.controller)
         cavity_search = CavitySearchPanel(self.controller)
         control_panel = ControlPanel(self.controller)
         self.analysis_panel = AnalysisPanel()
+
+        self.controller.set_bottom_bar(bottom_bar_panel)
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
