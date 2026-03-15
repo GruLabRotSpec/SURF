@@ -1,5 +1,6 @@
 import asyncio
 from enum import Enum
+import traceback
 from PySide6.QtCore import Signal, QObject
 
 from gui.bottom_bar import BottomBarPanel
@@ -19,17 +20,22 @@ class ScanType(Enum):
     FREQUENCY = 1
     CAVITY = 2
 
-
-class SpectrometerController(QObject):
+class ScanSignals(QObject):
     device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
+    progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
 
-    def __init__(self, config: Config, bottom_bar: BottomBarPanel):
+class SpectrometerController(QObject):
+    def __init__(self, config: Config):
         super().__init__()
         self.spectrometer = Spectrometer(config)
         self.config = config
-        self.bottom_bar = bottom_bar
+        self.bottom_bar = None
+        self.signal: ScanSignals = ScanSignals()
         self.current_task = None
+    
+    def set_bottom_bar(self, bottom_bar: BottomBarPanel):
+        self.bottom_bar = bottom_bar
 
     def set_config(self, config: Config):
         self.config = config
@@ -37,21 +43,16 @@ class SpectrometerController(QObject):
 
     def run_scan(self, start_freq=None, stop_freq=11200.0, step_size=0.5):
         self.bottom_bar.set_status_elements(-1, "Starting scan...")
-        self.scanning.emit(True, ScanType.FREQUENCY)
+        self.signal.scanning.emit(True, ScanType.FREQUENCY)
         self.current_task = asyncio.create_task(
             self._run_scan_async(start_freq, stop_freq, step_size)
         )
 
-    def scan_callback(self, progress: float):
-        print(f"Progress Updated: {progress}")
-        self.bottom_bar.set_status_elements(progress, "Scanning...")
-
-    async def _run_scan_async(self, loop, start_freq, stop_freq, step_size):
+    async def _run_scan_async(self, start_freq, stop_freq, step_size):
         # TODO: Actually support proper progress
-        loop = asyncio.get_running_loop()
         try:
             await asyncio.to_thread(
-                self.spectrometer.scan_frequency, loop, self.scan_callback, start_freq, stop_freq, step_size
+                self.spectrometer.scan_frequency, self.signal, start_freq, stop_freq, step_size
             )
             self.bottom_bar.set_status_elements(1, "Scan completed")
         except asyncio.CancelledError:
@@ -59,13 +60,14 @@ class SpectrometerController(QObject):
         except Exception as e:
             self.bottom_bar.set_status_elements(1, "Scan failed")
             print(f"Scan Failed: {e}")
+            traceback.print_exc()
         finally:
-            self.scanning.emit(False, ScanType.NONE)
+            self.signal.scanning.emit(False, ScanType.NONE)
             self.current_task = None
 
     def run_search(self, freq=9000, step_size=0.5):
         self.bottom_bar.set_status_elements(0, "Starting search...")
-        self.scanning.emit(True, ScanType.CAVITY)
+        self.signal.scanning.emit(True, ScanType.CAVITY)
         self.current_task = asyncio.create_task(self._run_search_async(freq, step_size))
 
     async def _run_search_async(self, freq, step_size):
@@ -77,8 +79,9 @@ class SpectrometerController(QObject):
         except Exception as e:
             self.bottom_bar.set_status_elements(1, "Search failed")
             print(f"Search Failed: {e}")
+            traceback.print_exc()
         finally:
-            self.scanning.emit(False, ScanType.NONE)
+            self.signal.scanning.emit(False, ScanType.NONE)
             self.current_task = None
 
     def cancel_operation(self):
@@ -90,12 +93,12 @@ class SpectrometerController(QObject):
         return success
 
     async def init_device_async(self, device_name):
-        self.device_status_changed.emit(device_name, DeviceStatus.CONNECTING)
+        self.signal.device_status_changed.emit(device_name, DeviceStatus.CONNECTING)
         success = await asyncio.to_thread(
             self.spectrometer.init_device, f"{device_name}_controller", self.config
         )
         status = DeviceStatus.ONLINE if success else DeviceStatus.OFFLINE
-        self.device_status_changed.emit(device_name, status)
+        self.signal.device_status_changed.emit(device_name, status)
         return success
 
     async def initialize_all_devices(self):
