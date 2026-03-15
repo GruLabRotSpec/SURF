@@ -175,12 +175,53 @@ class ControlPanel(QWidget):
         valon_form = QFormLayout()
         valon_group.setLayout(valon_form)
 
+        self.rf_output_on_btn = QRadioButton("On")
+        self.rf_output_off_btn = QRadioButton("Off")
+        self.rf_output_on_btn.setChecked(True)
+
+        self.rf_output_group = QButtonGroup()
+        self.rf_output_group.addButton(self.rf_output_on_btn)
+        self.rf_output_group.addButton(self.rf_output_off_btn)
+
+        rf_output_group_widget = QHBoxLayout()
+        rf_output_group_widget.addWidget(self.rf_output_on_btn)
+        rf_output_group_widget.addWidget(self.rf_output_off_btn)
+
+        rf_output_label = QLabel("RF output")
+        valon_form.addRow(rf_output_label, rf_output_group_widget)
+
         rf_label = QLabel("RF level (power)")
         self.rf_field = QDoubleSpinBox()
         self.rf_field.setMinimum(0)
         self.rf_field.setMaximum(20)
         self.rf_field.setSuffix("dBm")
         valon_form.addRow(rf_label, self.rf_field)
+
+        self.synth_power_on_btn = QRadioButton("On")
+        self.synth_power_off_btn = QRadioButton("Off")
+        self.synth_power_on_btn.setChecked(True)
+
+        self.synth_power_group = QButtonGroup()
+        self.synth_power_group.addButton(self.synth_power_on_btn)
+        self.synth_power_group.addButton(self.synth_power_off_btn)
+
+        synth_power_group_widget = QHBoxLayout()
+        synth_power_group_widget.addWidget(self.synth_power_on_btn)
+        synth_power_group_widget.addWidget(self.synth_power_off_btn)
+
+        synth_power_label = QLabel("Synth power")
+        valon_form.addRow(synth_power_label, synth_power_group_widget)
+
+        ref_source_label = QLabel("Reference source")
+        self.ref_source_field = QComboBox()
+        self.ref_source_field.addItems(["Internal","External"])
+        valon_form.addRow(ref_source_label, self.ref_source_field)
+
+        ref_freq_label = QLabel("Reference frequency")
+        self.ref_freq_field = QDoubleSpinBox()
+        self.ref_freq_field.setValue(10)
+        self.ref_freq_field.setSuffix("MHz")
+        valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
         left_column.addWidget(valon_group)
 
