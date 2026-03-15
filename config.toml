@@ -3,7 +3,7 @@ rf_level = 10
 valon_port = "COM3"
 
 [zaber_controller]
-zaber_speed = 0.1
+zaber_speed = 0.003
 zaber_homing_speed = 2.0
 zaber_step_size = 0.004
 zaber_port = "COM5"
@@ -17,10 +17,10 @@ awg_ch_2_output = false
 
 [oscilloscope_controller]
 channel = "CH4"
-resolution = 100000.0
-sample_rate = 500000000.0
+resolution = 100.0
+sample_rate = 500.0
 window_type = "Rectangular"
-gate_position = 1.845e-05
+gate_position = 18.45
 math_averages = 1000000
 
 [delay_generator_controller]
