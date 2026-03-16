@@ -1,7 +1,7 @@
 [output]
-location = null
-filename = 
+location = "~/Documents/"
+filename = "my_scan"
 
 [logging]
-enabled = false
-location = null
+enabled = true
+location = "./testing/"

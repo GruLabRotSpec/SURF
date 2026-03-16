@@ -7,6 +7,7 @@ from scipy.signal import find_peaks
 
 from enum import Enum
 
+from settings import Settings
 from config import Config
 
 from delay_generator_controller import DelayGeneratorController
@@ -23,10 +24,13 @@ class StepDirection(Enum):
 
 
 class Spectrometer:
-    def __init__(self, config: Config):
+    def __init__(self, settings: Settings, config: Config):
         # Experiment settings (infrequently changed)
         self.__acq_rate = 300
         self.step_size = 0.004
+
+        # Settings
+        self.settings = settings
 
         # Config
         self.config = config
@@ -566,6 +570,9 @@ class Spectrometer:
         pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
             f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
         )  # appended main file with filtered data
+
+    def update_settings(self, settings: Settings):
+        self.settings = settings
 
     def update_config(self, config: Config):
         self.config = config
