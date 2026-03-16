@@ -23,6 +23,7 @@ from gui.status_panel import StatusPanel
 from gui.bottom_bar import BottomBarPanel
 from gui.spectrometer_controller import SpectrometerController
 
+from settings import load_settings, save_settings
 from config import load_config, save_config
 
 
@@ -31,6 +32,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.app = app
+        self.settings = load_settings(Path("./settings.toml")) # Change path later
         self.config = load_config(Path("./defaults.toml"))
 
         self.setWindowTitle("Gru GUI")
@@ -46,7 +48,7 @@ class MainWindow(QMainWindow):
 
         bottom_bar_panel = BottomBarPanel()
 
-        self.controller = SpectrometerController(self.config, bottom_bar_panel)
+        self.controller = SpectrometerController(self.settings, self.config, bottom_bar_panel)
 
         status_panel = StatusPanel(self.controller)
         frequency_scan = FrequencyScanPanel(self.controller)
@@ -184,7 +186,7 @@ class MainWindow(QMainWindow):
         )
 
     def show_settings(self):
-        self.settings_window = SettingsWindow()
+        self.settings_window = SettingsWindow(self.settings)
         self.settings_window.show()
 
     def show_about(self):

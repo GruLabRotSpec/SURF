@@ -5,6 +5,7 @@ from PySide6.QtCore import Signal, QObject
 from gui.bottom_bar import BottomBarPanel
 
 from spectrometer import Spectrometer
+from settings import Settings
 from config import Config
 
 
@@ -17,9 +18,10 @@ class DeviceStatus(Enum):
 class SpectrometerController(QObject):
     device_status_changed = Signal(str, object)  # device_id, DeviceStatus
 
-    def __init__(self, config: Config, bottom_bar: BottomBarPanel):
+    def __init__(self, settings: Settings, config: Config, bottom_bar: BottomBarPanel):
         super().__init__()
-        self.spectrometer = Spectrometer(config)
+        self.spectrometer = Spectrometer(settings, config)
+        self.settings = settings # Used for setting settings
         self.config = config  # Used for setting control options
         self.bottom_bar = bottom_bar
         self.current_task = None
@@ -29,6 +31,10 @@ class SpectrometerController(QObject):
         self.current_task = asyncio.create_task(
             self._run_scan_async(start_freq, stop_freq, step_size)
         )
+
+    def set_settings(self, settings: Settings):
+        self.settings = settings
+        self.spectrometer.update_settings(settings)
 
     def set_config(self, config: Config):
         self.config = config
