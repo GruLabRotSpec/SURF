@@ -234,7 +234,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            signals.update_graph.emit(ScanType.FREQUENCY, max_pos)
+            signals.update_graph.emit(ScanType.FREQUENCY, pos_array.tolist(), max_list)
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
