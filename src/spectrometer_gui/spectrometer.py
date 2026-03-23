@@ -28,6 +28,12 @@ class StepDirection(Enum):
     Up = 1
 
 
+class ScanType(Enum):
+    NONE = 0
+    FREQUENCY = 1
+    CAVITY = 2
+
+
 class Spectrometer:
     def __init__(self, config: Config):
         # Experiment settings (infrequently changed)
@@ -228,7 +234,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            # plot_position_vs_intensity(posArr1, max_lists)
+            signals.update_graph.emit(ScanType.FREQUENCY, max_pos)
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
