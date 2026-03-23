@@ -1,6 +1,4 @@
-from PySide6.QtWidgets import QWidget
-
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, FigureCanvas
+from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
 

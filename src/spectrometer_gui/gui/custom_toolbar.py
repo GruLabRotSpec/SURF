@@ -1,7 +1,7 @@
 import os
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QIcon
-from PySide6.QtWidgets import QToolBar, QWidget, QVBoxLayout, QPushButton
+from PySide6.QtWidgets import QToolBar, QWidget, QVBoxLayout
 
 
 class CustomToolbar(QWidget):
