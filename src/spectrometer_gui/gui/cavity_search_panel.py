@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.spectrometer_controller import SpectrometerController, ScanType
+from gui.spectrometer_controller import SpectrometerController
+from spectrometer import ScanType
 from gui.graph_panel import GraphPanel
 
 

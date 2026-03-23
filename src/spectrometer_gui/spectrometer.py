@@ -29,6 +29,12 @@ class StepDirection(Enum):
     Up = 1
 
 
+class ScanType(Enum):
+    NONE = 0
+    FREQUENCY = 1
+    CAVITY = 2
+
+
 class Spectrometer:
     def __init__(self, config: Config):
         # Experiment settings (infrequently changed)
@@ -65,7 +71,13 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, signals: ScanSignals, start_freq: float, stop_freq: float, step_size: float = 0.5):
+    def scan_frequency(
+        self,
+        signals: ScanSignals,
+        start_freq: float,
+        stop_freq: float,
+        step_size: float = 0.5,
+    ):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -223,7 +235,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            # plot_position_vs_intensity(posArr1, max_lists)
+            signals.update_graph.emit(ScanType.FREQUENCY, pos_array.tolist(), max_list)
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
@@ -462,7 +474,7 @@ class Spectrometer:
 
     def scan_with_acquisition(self, end_pos):
         # I don't like this, but axis.is_busy() is too slow
-        # and I can't find anything better 
+        # and I can't find anything better
 
         # Maybe try fastframe?
         def _gather_data(stop_event):
@@ -482,7 +494,7 @@ class Spectrometer:
             future = executor.submit(_gather_data, stop_event)
             self.zaber_controller.move_to(end_pos, blocking=True)
             stop_event.set()
-        
+
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
 
