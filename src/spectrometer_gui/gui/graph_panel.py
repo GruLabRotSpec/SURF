@@ -6,6 +6,7 @@ from gui.graph_canvas import GraphCanvas
 
 import pandas as pd
 
+
 class GraphPanel(QWidget):
     def __init__(self):
         super().__init__()
@@ -18,4 +19,3 @@ class GraphPanel(QWidget):
 
         toolbar = NaviToolbar(self.graph, self)
         layout.addWidget(toolbar)
-

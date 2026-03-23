@@ -31,7 +31,7 @@ class StepDirection(Enum):
 class Spectrometer:
     def __init__(self, config: Config):
         # Experiment settings (infrequently changed)
-        self.__acq_rate = 300
+        self._acq_rate = 300
 
         # Config
         self.config = config
@@ -45,18 +45,18 @@ class Spectrometer:
         self.awg_controller = AWGController()
 
         # Output options
-        self.__directory = ""
-        self.__run_directory = ""
-        self.__folder_name = "Cavity Data"
-        self.__filename = "my_scan"
+        self._directory = ""
+        self._run_directory = ""
+        self._folder_name = "Cavity Data"
+        self._filename = "my_scan"
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
-        base_path = f"{self.__folder_name}/{self.__filename}_{k}"
+        base_path = f"{self._folder_name}/{self._filename}_{k}"
 
         while os.path.exists(base_path):
             k += 1
-            base_path = f"{self.__folder_name}/{self.__filename}_{k}"
+            base_path = f"{self._folder_name}/{self._filename}_{k}"
 
         os.makedirs(base_path)
         os.makedirs(f"{base_path}/{subdirectory}")
@@ -64,7 +64,13 @@ class Spectrometer:
         print("folder for data has been created: ", base_path)
         return base_path
 
-    def scan_frequency(self, signals: ScanSignals, start_freq: float, stop_freq: float, step_size: float = 0.5):
+    def scan_frequency(
+        self,
+        signals: ScanSignals,
+        start_freq: float,
+        stop_freq: float,
+        step_size: float = 0.5,
+    ):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -78,26 +84,22 @@ class Spectrometer:
         stop_freq_input = stop_freq
 
         # Creating directory for output files
-        self.__directory = self.make_dir("CavityFiles")
-        self.__run_directory = f"{self.__directory}/CavityFiles"
+        self._directory = self.make_dir("CavityFiles")
+        self._run_directory = f"{self._directory}/CavityFiles"
 
-        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
-            open(f"{self.__directory}/{self.__filename}.csv", "w+")
-            print(
-                "Successfully named file ", f"{self.__directory}/{self.__filename}.csv"
-            )
+        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
+            open(f"{self._directory}/{self._filename}.csv", "w+")
+            print("Successfully named file ", f"{self._directory}/{self._filename}.csv")
 
         # setting parameters
 
         self.delay_generator_controller.set_trig(
             self.delay_generator_controller.trigger_rate
         )
-        self._time_delay = (
-            self.__acq_rate / self.delay_generator_controller.trigger_rate
-        )
+        self._time_delay = self._acq_rate / self.delay_generator_controller.trigger_rate
 
         print(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self._acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
         iterations = abs(stop_freq_input - start_freq) / step_size
@@ -137,7 +139,7 @@ class Spectrometer:
         )
 
         # collect data
-        xx_values, yy_values = self.__fft_from_scope(new_freq)
+        xx_values, yy_values = self._fft_from_scope(new_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.calib_stop()
@@ -238,7 +240,7 @@ class Spectrometer:
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
-            xx_values_1, yy_values_1 = self.__fft_from_scope(new_freq)
+            xx_values_1, yy_values_1 = self._fft_from_scope(new_freq)
             self.oscilloscope_controller.calib_stop()
             self.delay_generator_controller.stop_pulse()
 
@@ -260,7 +262,7 @@ class Spectrometer:
                 "run #",
                 run_number + 1,
                 "has been added to: ",
-                f"{self.__directory}/{self.__filename}.csv",
+                f"{self._directory}/{self._filename}.csv",
             )
 
             # Check for stop Freq
@@ -287,13 +289,15 @@ class Spectrometer:
 
             run_number += 1
 
-            signals.progress.emit(run_number / iterations, f"{run_number} / {int(iterations)} Scans")
+            signals.progress.emit(
+                run_number / iterations, f"{run_number} / {int(iterations)} Scans"
+            )
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
         self.zaber_controller.home()
         print(
-            f"Run is finished. You will find your data in .csv file: {self.__directory}/{self.__filename}.csv"
+            f"Run is finished. You will find your data in .csv file: {self._directory}/{self._filename}.csv"
         )
 
     def cavity_search(self, stop_freq, step_size):
@@ -309,18 +313,16 @@ class Spectrometer:
         # Set tuning settings
         self.oscilloscope_controller.set_tuning_settings()
 
-        self.__directory = ""
-        self.__folder_name = "Cavity Scan"
+        self._directory = ""
+        self._folder_name = "Cavity Scan"
 
         # creating directory for files to be
-        self.__directory = self.make_dir("CavityRuns")
-        self.__run_directory = f"{self.__directory}/CavityRuns"
+        self._directory = self.make_dir("CavityRuns")
+        self._run_directory = f"{self._directory}/CavityRuns"
 
-        if not os.path.exists(f"{self.__directory}/{self.__filename}.csv"):
-            open(f"{self.__directory}/{self.__filename}.csv", "w+")
-            print(
-                "Sucessfully named file ", f"{self.__directory}/{self.__filename}.csv"
-            )
+        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
+            open(f"{self._directory}/{self._filename}.csv", "w+")
+            print("Sucessfully named file ", f"{self._directory}/{self._filename}.csv")
 
         self.zaber_controller.set_speed(ZaberSpeed.HOMING)
         self.zaber_controller.home()
@@ -414,17 +416,17 @@ class Spectrometer:
             df2 = pd.DataFrame({"Peaks": x[peaks], "Intensity": y[peaks]})
             df2 = df2.reset_index(drop=True)
             pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(
-                f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
+                f"{self._directory}/{self._filename}.csv", mode="a", index=False
             )
             pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(
-                f"{self.__run_directory}/{new_freq}MHz.csv", mode="w+", index=False
+                f"{self._run_directory}/{new_freq}MHz.csv", mode="w+", index=False
             )
 
             print(
                 "run #",
                 i + 1,
                 "has been added to: ",
-                f"{self.__directory}/{self.__filename}.csv",
+                f"{self._directory}/{self._filename}.csv",
             )
 
             self.delay_generator_controller.stop_trig()
@@ -438,7 +440,7 @@ class Spectrometer:
                 else:
                     print(
                         "You have reached the stop frequency. You will find your data in .csv file: ",
-                        f"{self.__directory}/{self.__filename}.csv",
+                        f"{self._directory}/{self._filename}.csv",
                     )
                     break
 
@@ -452,14 +454,14 @@ class Spectrometer:
                 if not run_bool:
                     print(
                         "Experiment concluded. You will find your data in .csv file: ",
-                        f"{self.__directory}/{self.__filename}.csv",
+                        f"{self._directory}/{self._filename}.csv",
                     )
                     self.zaber_controller.home()
                 break
 
     def scan_with_acquisition(self, end_pos):
         # I don't like this, but axis.is_busy() is too slow
-        # and I can't find anything better 
+        # and I can't find anything better
 
         # Maybe try fastframe?
         def _gather_data(stop_event):
@@ -479,7 +481,7 @@ class Spectrometer:
             future = executor.submit(_gather_data, stop_event)
             self.zaber_controller.move_to(end_pos, blocking=True)
             stop_event.set()
-        
+
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
 
@@ -501,7 +503,7 @@ class Spectrometer:
             gate_width,
         ) = self.oscilloscope_controller.grab_param()
         start = freq_cent - freq_span / 2
-        x_values, y_values = self.__scale_fft(
+        x_values, y_values = self._scale_fft(
             wave_values, start, new_freq, time_scale, time_start
         )
 
@@ -533,7 +535,7 @@ class Spectrometer:
 
         parameters = [
             self.delay_generator_controller.trigger_rate,
-            self.__acq_rate,
+            self._acq_rate,
             timeScale,
             timeStart,
             verticalScale,
@@ -582,11 +584,11 @@ class Spectrometer:
         DF2 = DF2.reset_index()
 
         pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
-            f"{self.__run_directory}/{total_frequency}.csv", mode="w+", index=False
+            f"{self._run_directory}/{total_frequency}.csv", mode="w+", index=False
         )  # Individual full data
 
         pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
-            f"{self.__directory}/{self.__filename}.csv", mode="a", index=False
+            f"{self._directory}/{self._filename}.csv", mode="a", index=False
         )  # appended main file with filtered data
 
     def update_config(self, config: Config):

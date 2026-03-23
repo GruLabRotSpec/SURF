@@ -1,7 +1,5 @@
-from PySide6.QtWidgets import (
-    QWidget,
-    QVBoxLayout
-)
+from PySide6.QtWidgets import QWidget, QVBoxLayout
+
 
 class AboutWindow(QWidget):
     def __init__(self):
