@@ -1,11 +1,8 @@
-from PySide6.QtWidgets import (
-    QWidget,
-    QTabWidget,
-    QVBoxLayout
-)
+from PySide6.QtWidgets import QWidget, QTabWidget, QVBoxLayout
 
 from gui.general_settings_panel import GeneralSettingsPanel
 from gui.advanced_settings_panel import AdvancedSettingsPanel
+
 
 class SettingsWindow(QWidget):
     def __init__(self):
