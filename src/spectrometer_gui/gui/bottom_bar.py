@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QProgressBar
 import typing
 
 if typing.TYPE_CHECKING:
-   from gui.spectrometer_controller import SpectrometerController
+    from gui.spectrometer_controller import SpectrometerController
 
 
 class BottomBarPanel(QWidget):

@@ -12,19 +12,19 @@ class OscilloscopeController:
 
     def initialize(self, config: Config):
         rm = visa.ResourceManager()
-        self.__visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
-        self.__oscilloscope = rm.open_resource(
-            self.__visa_address
+        self._visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+        self._oscilloscope = rm.open_resource(
+            self._visa_address
         )  # delay after each command
-        self.__oscilloscope.timeout = 10000  # ms
-        self.__oscilloscope.encoding = "latin_1"
-        self.__oscilloscope.write_termination = "\n"
-        self.__oscilloscope.expect_termination = False
-        self.__oscilloscope.chunk_size = 102400  # larger data sizes
+        self._oscilloscope.timeout = 10000  # ms
+        self._oscilloscope.encoding = "latin_1"
+        self._oscilloscope.write_termination = "\n"
+        self._oscilloscope.expect_termination = False
+        self._oscilloscope.chunk_size = 102400  # larger data sizes
         time.sleep(1)
-        r = self.__oscilloscope.query("*opc?")  # sync
+        r = self._oscilloscope.query("*opc?")  # sync
         print(r)
-        self.__oscilloscope.write("*cls")
+        self._oscilloscope.write("*cls")
 
         self.update_config(config)
         self.initialized = True
@@ -37,7 +37,9 @@ class OscilloscopeController:
 
         self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.window_type}")
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}e6")
-        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}e3") # Convert to Hz
+        self.write_cmd(
+            f"MATH4:SPECTral:RESBw {oscill_config.resolution}e3"
+        )  # Convert to Hz
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}e-6")
         self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
 
@@ -46,19 +48,19 @@ class OscilloscopeController:
 
     # sends command, ensures no error after
     def write_cmd(self, command):
-        self.__oscilloscope.write(command)
-        errorCheck = self.__oscilloscope.write("*ESR?")
+        self._oscilloscope.write(command)
+        errorCheck = self._oscilloscope.write("*ESR?")
 
         # ESR giving command error "5": Command Error. Shows that an error occurred while the
         # instrument was parsing a command or query.
         if errorCheck != 6:
             print(f"Command status register error: {errorCheck}")
 
-        self.__oscilloscope.write("*cls")
+        self._oscilloscope.write("*cls")
 
     # query command
     def query_cmd(self, command):
-        output = self.__oscilloscope.query(f"{command}")
+        output = self._oscilloscope.query(f"{command}")
         return output
 
     # grabParam for generating waveform plot
@@ -135,7 +137,7 @@ class OscilloscopeController:
 
         # data query
         t7 = time.perf_counter()
-        bin_wave = self.__oscilloscope.query_binary_values(
+        bin_wave = self._oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
@@ -180,7 +182,7 @@ class OscilloscopeController:
         # data query
         time.sleep(acqtime)
         t7 = time.perf_counter()
-        new_bin_wave = self.__oscilloscope.query_binary_values(
+        new_bin_wave = self._oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
@@ -198,13 +200,13 @@ class OscilloscopeController:
         self.write_cmd("MATH4:VERTical:POSition -4")
         self.write_cmd("MATH4:SPECTral:WINdow Hanning")
         self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd("HORizontal:MODE:SCAle 5E-6")                    ##! parameters to reset each time
-        self.write_cmd("MATH4:SPECTral:RESBw 100E3")                    ##
-        self.write_cmd("MATH4:SPECTral:CENTER 30E6")                    ##
-        self.write_cmd("MATH4:SPECTral:SPAN 20E6")                      ##
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")       ##
-        self.write_cmd(                                                 ##
-            "MATH4:VERTICAL:SCALE 500E-6"                   
+        self.write_cmd("HORizontal:MODE:SCAle 5E-6")  ##! parameters to reset each time
+        self.write_cmd("MATH4:SPECTral:RESBw 100E3")  ##
+        self.write_cmd("MATH4:SPECTral:CENTER 30E6")  ##
+        self.write_cmd("MATH4:SPECTral:SPAN 20E6")  ##
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")  ##
+        self.write_cmd(  ##
+            "MATH4:VERTICAL:SCALE 500E-6"
         )  # sets math channel vertical scale
         # time.sleep(2)
         self.write_cmd(f"{self.channel}:SCAle 1")
@@ -217,10 +219,12 @@ class OscilloscopeController:
         self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
         self.write_cmd("MATH3:VERTical:POSition -4")
         self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd("HORizontal:MODE:SCAle 500E-9")          ##! parameters to reset each time
-        self.write_cmd("MATH3:SPECTral:RESBw 890E3")            ##
-        self.write_cmd("MATH3:SPECTral:CENTER 30E6")            ##
-        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")         ##
+        self.write_cmd(
+            "HORizontal:MODE:SCAle 500E-9"
+        )  ##! parameters to reset each time
+        self.write_cmd("MATH3:SPECTral:RESBw 890E3")  ##
+        self.write_cmd("MATH3:SPECTral:CENTER 30E6")  ##
+        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")  ##
         self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
 
         self.calib_start()
