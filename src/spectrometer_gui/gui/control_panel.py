@@ -32,7 +32,7 @@ class ControlPanel(QWidget):
         self.setLayout(layout)
 
         toolbar = CustomToolbar()
-        toolbar.update_action.triggered.connect(self.__apply_values_in_control_panel)
+        toolbar.update_action.triggered.connect(self._apply_values_in_control_panel)
         layout.addWidget(toolbar)
 
         # Bottom columns
@@ -320,7 +320,7 @@ class ControlPanel(QWidget):
 
     def showEvent(self, event: QShowEvent):
         super().showEvent(event)
-        self.__set_values_in_control_panel()
+        self._set_values_in_control_panel()
 
     def __set_values_in_control_panel(self):
         print(self.spectrometer.config)
