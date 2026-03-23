@@ -1,7 +1,6 @@
 import asyncio
 import os
-from enum import Enum
-from PySide6 import QtCore
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -26,7 +25,9 @@ class StatusPanel(QWidget):
         self.setup_ui()
 
         # Signals
-        self.spectrometer.signal.device_status_changed.connect(self.on_device_status_changed)
+        self.spectrometer.signal.device_status_changed.connect(
+            self.on_device_status_changed
+        )
 
     def setup_ui(self):
         layout = QHBoxLayout()
@@ -82,9 +83,7 @@ class StatusPanel(QWidget):
 
             # Refresh button
             refresh_btn = QPushButton()
-            icon_path = os.path.join(
-                os.path.dirname(__file__), "icons/refresh-cw.svg"
-            )
+            icon_path = os.path.join(os.path.dirname(__file__), "icons/refresh-cw.svg")
             refresh_btn.setIcon(QIcon(icon_path))
             refresh_btn.setToolTip("Refresh device connection")
             refresh_btn.setFixedSize(30, 30)
@@ -110,7 +109,7 @@ class StatusPanel(QWidget):
 
         self.refresh_buttons[device_id].setEnabled(True)
 
-    def update_circle(self, device_id, status):
+    def update_circle(self, device_id: str, status: DeviceStatus):
         circle = self.device_circles[device_id]
         if circle:
             if status == DeviceStatus.ONLINE:
@@ -124,5 +123,6 @@ class StatusPanel(QWidget):
             else:  # CONNECTING
                 circle.setStyleSheet("color: gray; font-size: 16px; font-weight: bold;")
 
+    @Slot(str, DeviceStatus)
     def on_device_status_changed(self, device_id, status):
         self.update_circle(device_id, status)

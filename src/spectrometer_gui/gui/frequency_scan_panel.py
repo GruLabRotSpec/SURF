@@ -1,4 +1,5 @@
 from PySide6 import QtCore
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -104,6 +105,7 @@ class FrequencyScanPanel(QWidget):
     def cancel_scan(self):
         self.spectrometer.cancel_operation()
 
+    @Slot(bool, ScanType)
     def on_scanning(self, scanning: bool, scan_type: ScanType):
         if scanning:
             self.start_button.setEnabled(False)
