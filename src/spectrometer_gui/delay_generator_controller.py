@@ -8,11 +8,11 @@ class DelayGeneratorController:
         self.initialized = False
 
     def initialize(self, config: Config):
-        self.__visa_address = "GPIB0::9::INSTR"
-        self.__rm = visa.ResourceManager()
-        self.__delay_generator = self.__rm.open_resource(self.__visa_address)
-        self.__frequency = 0
-        self.__delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
+        self._visa_address = "GPIB0::9::INSTR"
+        self._rm = visa.ResourceManager()
+        self._delay_generator = self._rm.open_resource(self._visa_address)
+        self._frequency = 0
+        self._delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
         self.stop_pulse()
 
         # Turn on external trigger
@@ -30,25 +30,25 @@ class DelayGeneratorController:
 
     # Writes a command to the delay generator and returns the output
     def _write_cmd(self, command):
-        return self.__delay_generator.write(command)
+        return self._delay_generator.write(command)
 
     def set_delays(self, new_delays):
-        self.__delays = new_delays
+        self._delays = new_delays
 
     def get_delays(self):
-        return self.__delays
+        return self._delays
 
     def set_frequency(self, freq):
-        self.__frequency = float(freq)
-        print("Activating internal trigger at ", self.__frequency)
-        return self.__frequency
+        self._frequency = float(freq)
+        print("Activating internal trigger at ", self._frequency)
+        return self._frequency
 
     def start_trig(self):
-        write_str = "TR 0, " + str(self.__frequency)
+        write_str = "TR 0, " + str(self._frequency)
         self._write_cmd(write_str)
         write_str = "TM 0"
         self._write_cmd(write_str)
-        print("Activating internal trigger at ", str(self.__frequency))
+        print("Activating internal trigger at ", str(self._frequency))
 
     def stop_trig(self):
         write_string = "TM 1; TL 1"
