@@ -6,6 +6,7 @@ from qasync import QEventLoop
 
 from gui.main_window import MainWindow
 
+
 async def main(app):
     app_close_event = asyncio.Event()
     app.aboutToQuit.connect(app_close_event.set)
@@ -14,6 +15,7 @@ async def main(app):
     main_window.show()
 
     await app_close_event.wait()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

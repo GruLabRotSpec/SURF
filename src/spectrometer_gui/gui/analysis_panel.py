@@ -15,8 +15,9 @@ from gui.graph_panel import GraphPanel
 
 import pandas as pd
 
+
 class AnalysisPanel(QWidget):
-    def __init__(self, analysis_data = []):
+    def __init__(self, analysis_data=[]):
         super().__init__()
 
         self.analysis_data = analysis_data
@@ -71,7 +72,9 @@ class AnalysisPanel(QWidget):
     def update_plot(self):
         if not self.analysis_data.empty:
             print(self.analysis_data)
-            self.graph_panel.graph.axes.plot(self.analysis_data.iloc[:,0], self.analysis_data.iloc[:,1])
+            self.graph_panel.graph.axes.plot(
+                self.analysis_data.iloc[:, 0], self.analysis_data.iloc[:, 1]
+            )
 
     def set_data(self, df):
         self.analysis_data = df

@@ -4,7 +4,12 @@ from oscilloscope_controller import OscilloscopeController
 
 
 class Cavity:
-    def __init__(self, zaber: ZaberController, oscilloscope: OscilloscopeController, srscontroller: DelayGeneratorController):
+    def __init__(
+        self,
+        zaber: ZaberController,
+        oscilloscope: OscilloscopeController,
+        srscontroller: DelayGeneratorController,
+    ):
         self.__zaber_retune_speed = 4.8
         self.zaber = zaber
         self.oscilloscope = oscilloscope
