@@ -14,12 +14,13 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
     QRadioButton,
-    QButtonGroup
+    QButtonGroup,
 )
 
 from gui.spectrometer_controller import SpectrometerController
 from gui.settings_window import SettingsWindow
 from gui.custom_toolbar import CustomToolbar
+
 
 class ControlPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
@@ -56,7 +57,7 @@ class ControlPanel(QWidget):
         self.zaber_speed_1_field = QDoubleSpinBox(decimals=3)
         self.zaber_speed_1_field.setMinimum(0)
         self.zaber_speed_1_field.setMaximum(1)
-        self.zaber_speed_1_field.setSingleStep(.001)
+        self.zaber_speed_1_field.setSingleStep(0.001)
         self.zaber_speed_1_field.setSuffix("mm/s")
         zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
@@ -64,16 +65,14 @@ class ControlPanel(QWidget):
         self.zaber_speed_2_field = QDoubleSpinBox()
         self.zaber_speed_2_field.setMinimum(0)
         self.zaber_speed_2_field.setMaximum(5)
-        self.zaber_speed_2_field.setSingleStep(.25)
+        self.zaber_speed_2_field.setSingleStep(0.25)
         self.zaber_speed_2_field.setSuffix("mm/s")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
         zaber_control_widget = QHBoxLayout()
 
         zaber_home_btn = QPushButton()
-        icon_path = os.path.join(
-            os.path.dirname(__file__), "icons/house.svg"
-        )
+        icon_path = os.path.join(os.path.dirname(__file__), "icons/house.svg")
         zaber_home_btn.setIcon(QIcon(icon_path))
         zaber_home_btn.setToolTip("Home")
         zaber_home_btn.setFixedSize(30, 30)
@@ -95,9 +94,9 @@ class ControlPanel(QWidget):
         zaber_control_widget.addWidget(self.zaber_pos_field)
 
         zaber_go_btn = QPushButton()
-        zaber_go_btn.setIcon(QIcon(os.path.join(
-            os.path.dirname(__file__), "icons/crosshair.svg"
-        )))
+        zaber_go_btn.setIcon(
+            QIcon(os.path.join(os.path.dirname(__file__), "icons/crosshair.svg"))
+        )
         zaber_go_btn.setToolTip("Go to position")
         zaber_go_btn.setFixedSize(30, 30)
         zaber_go_btn.clicked.connect(self.set_zaber_position)
@@ -213,7 +212,7 @@ class ControlPanel(QWidget):
 
         ref_source_label = QLabel("Reference source")
         self.ref_source_field = QComboBox()
-        self.ref_source_field.addItems(["Internal","External"])
+        self.ref_source_field.addItems(["Internal", "External"])
         valon_form.addRow(ref_source_label, self.ref_source_field)
 
         ref_freq_label = QLabel("Reference frequency")
@@ -253,7 +252,9 @@ class ControlPanel(QWidget):
 
         window_type_label = QLabel("Window type")
         self.window_type_field = QComboBox()
-        self.window_type_field.addItems(["Rectangular", "Hamming", "Hanning", "Blackman"])
+        self.window_type_field.addItems(
+            ["Rectangular", "Hamming", "Hanning", "Blackman"]
+        )
         oscilloscope_form.addRow(window_type_label, self.window_type_field)
 
         gate_position_label = QLabel("Gate position")
@@ -269,7 +270,6 @@ class ControlPanel(QWidget):
 
         right_column.addWidget(oscilloscope_group)
 
-
         timing_group = QGroupBox("Delay generator")
 
         timing_form = QFormLayout()
@@ -282,7 +282,7 @@ class ControlPanel(QWidget):
         timing_form.addRow(delay_gas_label, self.delay_gas_field)
 
         right_column.addWidget(timing_group)
-       
+
         bottom_layout.addWidget(left_column_panel)
         bottom_layout.addWidget(right_column_panel)
 
@@ -303,7 +303,6 @@ class ControlPanel(QWidget):
         except Exception:
             print("Unable to get Zaber position")
 
-
     def set_zaber_position(self, home=False):
         if self.spectrometer.current_task:
             print("Cannot move Zaber during a task")
@@ -314,7 +313,6 @@ class ControlPanel(QWidget):
                 self.spectrometer.spectrometer.zaber_controller.move_to("0", False)
             else:
                 self.spectrometer.spectrometer.zaber_controller.move_to(new_pos, False)
-
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
@@ -328,54 +326,104 @@ class ControlPanel(QWidget):
         print(self.spectrometer.config)
 
         # Zaber
-        self.zaber_speed_1_field.setValue(self.spectrometer.config.zaber_controller.zaber_speed)
-        self.zaber_speed_2_field.setValue(self.spectrometer.config.zaber_controller.zaber_homing_speed)
+        self.zaber_speed_1_field.setValue(
+            self.spectrometer.config.zaber_controller.zaber_speed
+        )
+        self.zaber_speed_2_field.setValue(
+            self.spectrometer.config.zaber_controller.zaber_homing_speed
+        )
 
         # AWG
-        self.awg_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_status else False)
-        self.run_mode_field.setCurrentText(self.spectrometer.config.awg_controller.awg_run_mode)
+        self.awg_on_btn.setChecked(
+            True if self.spectrometer.config.awg_controller.awg_status else False
+        )
+        self.run_mode_field.setCurrentText(
+            self.spectrometer.config.awg_controller.awg_run_mode
+        )
         self.awg_freq_field.setValue(self.spectrometer.config.awg_controller.awg_freq)
-        self.awg_ch_1_output_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_ch_1_output else False)
-        self.awg_ch_2_output_on_btn.setChecked(True if self.spectrometer.config.awg_controller.awg_ch_2_output else False)
+        self.awg_ch_1_output_on_btn.setChecked(
+            True if self.spectrometer.config.awg_controller.awg_ch_1_output else False
+        )
+        self.awg_ch_2_output_on_btn.setChecked(
+            True if self.spectrometer.config.awg_controller.awg_ch_2_output else False
+        )
 
         # Valon
         self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
 
         # Oscilloscope
-        self.resolution_field.setValue(self.spectrometer.config.oscilloscope_controller.resolution)
-        self.sample_rate_field.setValue(self.spectrometer.config.oscilloscope_controller.sample_rate)
-        self.window_type_field.setCurrentText(self.spectrometer.config.oscilloscope_controller.window_type)
-        self.gate_position_field.setValue(self.spectrometer.config.oscilloscope_controller.gate_position)
-        self.math_avg_field.setValue(self.spectrometer.config.oscilloscope_controller.math_averages)
+        self.resolution_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.resolution
+        )
+        self.sample_rate_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.sample_rate
+        )
+        self.window_type_field.setCurrentText(
+            self.spectrometer.config.oscilloscope_controller.window_type
+        )
+        self.gate_position_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.gate_position
+        )
+        self.math_avg_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.math_averages
+        )
 
         # Delay generator
-        self.delay_gas_field.setValue(self.spectrometer.config.delay_generator_controller.trigger_rate)
+        self.delay_gas_field.setValue(
+            self.spectrometer.config.delay_generator_controller.trigger_rate
+        )
 
     def __apply_values_in_control_panel(self):
         if not self.spectrometer.current_task:
             # Zaber
-            self.spectrometer.config.zaber_controller.zaber_speed = self.zaber_speed_1_field.value()
-            self.spectrometer.config.zaber_controller.zaber_homing_speed = self.zaber_speed_2_field.value()
-            
+            self.spectrometer.config.zaber_controller.zaber_speed = (
+                self.zaber_speed_1_field.value()
+            )
+            self.spectrometer.config.zaber_controller.zaber_homing_speed = (
+                self.zaber_speed_2_field.value()
+            )
+
             # AWG
-            self.spectrometer.config.awg_controller.awg_status = True if self.awg_on_btn.isChecked() else False
-            self.spectrometer.config.awg_controller.awg_run_mode = self.run_mode_field.currentText()
-            self.spectrometer.config.awg_controller.awg_freq = self.awg_freq_field.value()
-            self.spectrometer.config.awg_controller.awg_ch_1_output = True if self.awg_ch_1_output_on_btn.isChecked() else False
-            self.spectrometer.config.awg_controller.awg_ch_2_output = True if self.awg_ch_2_output_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_status = (
+                True if self.awg_on_btn.isChecked() else False
+            )
+            self.spectrometer.config.awg_controller.awg_run_mode = (
+                self.run_mode_field.currentText()
+            )
+            self.spectrometer.config.awg_controller.awg_freq = (
+                self.awg_freq_field.value()
+            )
+            self.spectrometer.config.awg_controller.awg_ch_1_output = (
+                True if self.awg_ch_1_output_on_btn.isChecked() else False
+            )
+            self.spectrometer.config.awg_controller.awg_ch_2_output = (
+                True if self.awg_ch_2_output_on_btn.isChecked() else False
+            )
 
             # Valon
             self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
 
             # Oscilloscope
-            self.spectrometer.config.oscilloscope_controller.resolution = self.resolution_field.value()
-            self.spectrometer.config.oscilloscope_controller.sample_rate = self.sample_rate_field.value()
-            self.spectrometer.config.oscilloscope_controller.window_type = self.window_type_field.currentText()
-            self.spectrometer.config.oscilloscope_controller.gate_position = self.gate_position_field.value()
-            self.spectrometer.config.oscilloscope_controller.math_averages = self.math_avg_field.value()
-            
+            self.spectrometer.config.oscilloscope_controller.resolution = (
+                self.resolution_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.sample_rate = (
+                self.sample_rate_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.window_type = (
+                self.window_type_field.currentText()
+            )
+            self.spectrometer.config.oscilloscope_controller.gate_position = (
+                self.gate_position_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.math_averages = (
+                self.math_avg_field.value()
+            )
+
             # Delay generator
-            self.spectrometer.config.delay_generator_controller.trigger_rate = self.delay_gas_field.value()
+            self.spectrometer.config.delay_generator_controller.trigger_rate = (
+                self.delay_gas_field.value()
+            )
 
             self.spectrometer.set_config(self.spectrometer.config)
         else:

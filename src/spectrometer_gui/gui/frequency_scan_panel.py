@@ -11,7 +11,8 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.spectrometer_controller import SpectrometerController, ScanType
+from gui.spectrometer_controller import SpectrometerController
+from spectrometer import ScanType
 from gui.graph_panel import GraphPanel
 
 
@@ -22,6 +23,7 @@ class FrequencyScanPanel(QWidget):
         self.spectrometer = spectrometer
 
         self.spectrometer.signal.scanning.connect(self.on_scanning)
+        self.spectrometer.signal.update_graph.connect(self.on_update_graph)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -87,6 +89,7 @@ class FrequencyScanPanel(QWidget):
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
         graph_panel = GraphPanel()
+        self.graph_panel = graph_panel
         right_column.addWidget(graph_panel)
 
         layout.addWidget(left_column_panel)
@@ -119,3 +122,15 @@ class FrequencyScanPanel(QWidget):
             self.start_button.setEnabled(True)
             self.form_panel.setEnabled(True)
             self.cancel_button.setEnabled(False)
+
+    @Slot(ScanType, list, list)
+    def on_update_graph(self, scan_type: ScanType, pos_array: list, max_list: list):
+        if scan_type != ScanType.FREQUENCY:
+            return
+
+        self.graph_panel.graph.axes.clear()
+        self.graph_panel.graph.axes.plot(pos_array, max_list)
+        self.graph_panel.graph.axes.set_title("Zaber Position vs. Intensity")
+        self.graph_panel.graph.axes.set_xlabel("Zaber Position (mm)")
+        self.graph_panel.graph.axes.set_ylabel("Intensity (Volts)")
+        self.graph_panel.graph.draw()

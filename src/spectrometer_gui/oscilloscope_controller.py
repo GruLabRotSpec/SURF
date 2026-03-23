@@ -37,7 +37,9 @@ class OscilloscopeController:
 
         self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.window_type}")
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}e6")
-        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.resolution}e3") # Convert to Hz
+        self.write_cmd(
+            f"MATH4:SPECTral:RESBw {oscill_config.resolution}e3"
+        )  # Convert to Hz
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}e-6")
         self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
 
@@ -198,13 +200,13 @@ class OscilloscopeController:
         self.write_cmd("MATH4:VERTical:POSition -4")
         self.write_cmd("MATH4:SPECTral:WINdow Hanning")
         self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd("HORizontal:MODE:SCAle 5E-6")                    ##! parameters to reset each time
-        self.write_cmd("MATH4:SPECTral:RESBw 100E3")                    ##
-        self.write_cmd("MATH4:SPECTral:CENTER 30E6")                    ##
-        self.write_cmd("MATH4:SPECTral:SPAN 20E6")                      ##
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")       ##
-        self.write_cmd(                                                 ##
-            "MATH4:VERTICAL:SCALE 500E-6"                   
+        self.write_cmd("HORizontal:MODE:SCAle 5E-6")  ##! parameters to reset each time
+        self.write_cmd("MATH4:SPECTral:RESBw 100E3")  ##
+        self.write_cmd("MATH4:SPECTral:CENTER 30E6")  ##
+        self.write_cmd("MATH4:SPECTral:SPAN 20E6")  ##
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")  ##
+        self.write_cmd(  ##
+            "MATH4:VERTICAL:SCALE 500E-6"
         )  # sets math channel vertical scale
         # time.sleep(2)
         self.write_cmd(f"{self.channel}:SCAle 1")
@@ -217,10 +219,12 @@ class OscilloscopeController:
         self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
         self.write_cmd("MATH3:VERTical:POSition -4")
         self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd("HORizontal:MODE:SCAle 500E-9")          ##! parameters to reset each time
-        self.write_cmd("MATH3:SPECTral:RESBw 890E3")            ##
-        self.write_cmd("MATH3:SPECTral:CENTER 30E6")            ##
-        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")         ##
+        self.write_cmd(
+            "HORizontal:MODE:SCAle 500E-9"
+        )  ##! parameters to reset each time
+        self.write_cmd("MATH3:SPECTral:RESBw 890E3")  ##
+        self.write_cmd("MATH3:SPECTral:CENTER 30E6")  ##
+        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")  ##
         self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
 
         self.calib_start()
