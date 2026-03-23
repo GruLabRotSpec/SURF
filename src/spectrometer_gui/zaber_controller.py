@@ -4,6 +4,7 @@ from zaber_motion.ascii import Connection
 from zaber_motion.units import Units
 from enum import Enum
 
+
 class ZaberSpeed(Enum):
     SCANNING = 0
     HOMING = 1
@@ -51,7 +52,7 @@ class ZaberController:
     def get_pos(self) -> float:
         return self.axis.get_position(Units.LENGTH_MILLIMETRES)
 
-    def home(self, blocking = True):
+    def home(self, blocking=True):
         self.axis.home(wait_until_idle=blocking)
 
     def set_speed(self, zaber_speed: ZaberSpeed):
@@ -59,4 +60,3 @@ class ZaberController:
             self.current_speed = self.move_speed
         elif zaber_speed == ZaberSpeed.HOMING:
             self.current_speed = self.homing_speed
-
