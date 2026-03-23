@@ -5,7 +5,7 @@ from PySide6.QtCore import Signal, QObject
 
 from gui.bottom_bar import BottomBarPanel
 
-from spectrometer import Spectrometer
+from spectrometer import Spectrometer, ScanType
 from config import Config
 
 
@@ -15,16 +15,11 @@ class DeviceStatus(Enum):
     OFFLINE = "offline"
 
 
-class ScanType(Enum):
-    NONE = 0
-    FREQUENCY = 1
-    CAVITY = 2
-
-
 class ScanSignals(QObject):
     device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
     progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
+    update_graph = Signal(ScanType, list)
 
 
 class SpectrometerController(QObject):
