@@ -1,5 +1,4 @@
 from PySide6 import QtCore
-from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import (
     QLabel,
     QVBoxLayout,
@@ -12,8 +11,6 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 
 from gui.graph_panel import GraphPanel
-
-import pandas as pd
 
 
 class AnalysisPanel(QWidget):
