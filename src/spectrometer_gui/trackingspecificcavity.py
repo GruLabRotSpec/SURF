@@ -34,7 +34,15 @@ def SetParam():
 
 
 def CavityTrack():
-    global maxList, timeList, posArr, maxIntensity, endPosZaber, startPosZaber, speedZaber, speedZaber1
+    global \
+        maxList, \
+        timeList, \
+        posArr, \
+        maxIntensity, \
+        endPosZaber, \
+        startPosZaber, \
+        speedZaber, \
+        speedZaber1
     maxList = []
     timeList = []
     maxMaxVals = []
