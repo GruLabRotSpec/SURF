@@ -1,10 +1,11 @@
 from __future__ import annotations
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QProgressBar
+from PySide6.QtCore import Slot
 
 import typing
 
 if typing.TYPE_CHECKING:
-   from gui.spectrometer_controller import SpectrometerController
+    from gui.spectrometer_controller import SpectrometerController
 
 
 class BottomBarPanel(QWidget):
@@ -29,6 +30,7 @@ class BottomBarPanel(QWidget):
         # spectrometer.signal.device_status_changed.connect(self.on_device_status_changed)
         spectrometer.signal.progress.connect(self.set_status_elements)
 
+    @Slot(float, str)
     def set_status_elements(self, progress, text=None):
         if progress == -1:
             self.bottom_progress_bar.setRange(0, 0)
