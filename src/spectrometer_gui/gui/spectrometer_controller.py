@@ -19,7 +19,7 @@ class ScanSignals(QObject):
     device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
     progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
-    update_graph = Signal(ScanType, list)
+    update_graph = Signal(ScanType, list, list)  # scan_type, pos_array, max_list
 
 
 class SpectrometerController(QObject):
