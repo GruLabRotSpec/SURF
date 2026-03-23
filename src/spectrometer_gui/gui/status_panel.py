@@ -26,7 +26,9 @@ class StatusPanel(QWidget):
         self.setup_ui()
 
         # Signals
-        self.spectrometer.signal.device_status_changed.connect(self.on_device_status_changed)
+        self.spectrometer.signal.device_status_changed.connect(
+            self.on_device_status_changed
+        )
 
     def setup_ui(self):
         layout = QHBoxLayout()
@@ -82,9 +84,7 @@ class StatusPanel(QWidget):
 
             # Refresh button
             refresh_btn = QPushButton()
-            icon_path = os.path.join(
-                os.path.dirname(__file__), "icons/refresh-cw.svg"
-            )
+            icon_path = os.path.join(os.path.dirname(__file__), "icons/refresh-cw.svg")
             refresh_btn.setIcon(QIcon(icon_path))
             refresh_btn.setToolTip("Refresh device connection")
             refresh_btn.setFixedSize(30, 30)

@@ -20,10 +20,12 @@ class ScanType(Enum):
     FREQUENCY = 1
     CAVITY = 2
 
+
 class ScanSignals(QObject):
     device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
     progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
+
 
 class SpectrometerController(QObject):
     def __init__(self, config: Config):
@@ -33,7 +35,7 @@ class SpectrometerController(QObject):
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
         self.current_task = None
-    
+
     def set_bottom_bar(self, bottom_bar: BottomBarPanel):
         self.bottom_bar = bottom_bar
 
@@ -52,7 +54,11 @@ class SpectrometerController(QObject):
         # TODO: Actually support proper progress
         try:
             await asyncio.to_thread(
-                self.spectrometer.scan_frequency, self.signal, start_freq, stop_freq, step_size
+                self.spectrometer.scan_frequency,
+                self.signal,
+                start_freq,
+                stop_freq,
+                step_size,
             )
             self.bottom_bar.set_status_elements(1, "Scan completed")
         except asyncio.CancelledError:
