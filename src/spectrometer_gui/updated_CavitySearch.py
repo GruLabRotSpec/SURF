@@ -33,7 +33,16 @@ def initializeInstruments():
 
 
 def DefineParameters():
-    global directory, rundirectory, filename, valonFreq, awgFreq, StepSize, stepUpVar, StopFreqVar, StopFreq
+    global \
+        directory, \
+        rundirectory, \
+        filename, \
+        valonFreq, \
+        awgFreq, \
+        StepSize, \
+        stepUpVar, \
+        StopFreqVar, \
+        StopFreq
     awgFreq = 30
     valonFreq = totalFreq - awgFreq
     valon_controller.writeValonCommand(f"Frequency {valonFreq} MHz")
