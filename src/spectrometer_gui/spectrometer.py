@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 import time
 import numpy as np
 import pandas as pd
@@ -100,7 +101,7 @@ class Spectrometer:
             f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.__acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
-        iterations = abs(stop_freq_input - start_freq) / step_size
+        iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size)
         total_time = (
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
@@ -287,7 +288,9 @@ class Spectrometer:
 
             run_number += 1
 
-            signals.progress.emit(run_number / iterations, f"{run_number} / {int(iterations)} Scans")
+            signals.progress.emit(
+                run_number / iterations, f"{run_number} / {iterations} Scans"
+            )
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
