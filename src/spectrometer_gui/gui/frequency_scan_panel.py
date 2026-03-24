@@ -51,7 +51,7 @@ class FrequencyScanPanel(QWidget):
         self.start_freq_field.setMinimum(8000)
         self.start_freq_field.setValue(10000)
         self.start_freq_field.setMaximum(18000)
-        self.start_freq_field.setSuffix("MHz")
+        self.start_freq_field.setSuffix(" MHz")
 
         form.addRow(start_freq_label, self.start_freq_field)
 
@@ -59,7 +59,7 @@ class FrequencyScanPanel(QWidget):
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
         self.step_size_field.setValue(0.5)
-        self.step_size_field.setSuffix("MHz")
+        self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
@@ -67,7 +67,7 @@ class FrequencyScanPanel(QWidget):
         self.end_freq_field.setMinimum(8000)
         self.end_freq_field.setValue(10500)
         self.end_freq_field.setMaximum(18000)
-        self.end_freq_field.setSuffix("MHz")
+        self.end_freq_field.setSuffix(" MHz")
         form.addRow(end_freq_label, self.end_freq_field)
 
         self.start_button = QPushButton("Start")

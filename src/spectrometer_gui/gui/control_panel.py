@@ -58,7 +58,7 @@ class ControlPanel(QWidget):
         self.zaber_speed_1_field.setMinimum(0)
         self.zaber_speed_1_field.setMaximum(1)
         self.zaber_speed_1_field.setSingleStep(0.001)
-        self.zaber_speed_1_field.setSuffix("mm/s")
+        self.zaber_speed_1_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
         zaber_speed_2_label = QLabel("Zaber homing speed")
@@ -66,7 +66,7 @@ class ControlPanel(QWidget):
         self.zaber_speed_2_field.setMinimum(0)
         self.zaber_speed_2_field.setMaximum(5)
         self.zaber_speed_2_field.setSingleStep(0.25)
-        self.zaber_speed_2_field.setSuffix("mm/s")
+        self.zaber_speed_2_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
         zaber_control_widget = QHBoxLayout()
@@ -90,7 +90,7 @@ class ControlPanel(QWidget):
         self.zaber_pos_field.setMinimum(0)
         self.zaber_pos_field.setMaximum(50)
         self.zaber_pos_field.setSingleStep(1)
-        self.zaber_pos_field.setSuffix("mm")
+        self.zaber_pos_field.setSuffix(" mm")
         zaber_control_widget.addWidget(self.zaber_pos_field)
 
         zaber_go_btn = QPushButton()
@@ -133,7 +133,7 @@ class ControlPanel(QWidget):
 
         awg_freq_label = QLabel("Frequency")
         self.awg_freq_field = QDoubleSpinBox()
-        self.awg_freq_field.setSuffix("MHz")
+        self.awg_freq_field.setSuffix(" MHz")
         awg_form.addRow(awg_freq_label, self.awg_freq_field)
 
         self.awg_ch_1_output_on_btn = QRadioButton("On")
@@ -192,7 +192,7 @@ class ControlPanel(QWidget):
         self.rf_field = QDoubleSpinBox()
         self.rf_field.setMinimum(0)
         self.rf_field.setMaximum(20)
-        self.rf_field.setSuffix("dBm")
+        self.rf_field.setSuffix(" dBm")
         valon_form.addRow(rf_label, self.rf_field)
 
         self.synth_power_on_btn = QRadioButton("On")
@@ -218,7 +218,7 @@ class ControlPanel(QWidget):
         ref_freq_label = QLabel("Reference frequency")
         self.ref_freq_field = QDoubleSpinBox()
         self.ref_freq_field.setValue(10)
-        self.ref_freq_field.setSuffix("MHz")
+        self.ref_freq_field.setSuffix(" MHz")
         valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
         left_column.addWidget(valon_group)
@@ -239,7 +239,7 @@ class ControlPanel(QWidget):
         self.resolution_field = QDoubleSpinBox()
         self.resolution_field.setMinimum(0)
         self.resolution_field.setMaximum(100000)
-        self.resolution_field.setSuffix("kHz")
+        self.resolution_field.setSuffix(" kHz")
         oscilloscope_form.addRow(resolution_label, self.resolution_field)
 
         sample_rate_label = QLabel("Sample rate")
@@ -247,7 +247,7 @@ class ControlPanel(QWidget):
         self.sample_rate_field.setMinimum(0)
         self.sample_rate_field.setSingleStep(100)
         self.sample_rate_field.setMaximum(1000)
-        self.sample_rate_field.setSuffix("MS/s")
+        self.sample_rate_field.setSuffix(" MS/s")
         oscilloscope_form.addRow(sample_rate_label, self.sample_rate_field)
 
         window_type_label = QLabel("Window type")
@@ -259,7 +259,7 @@ class ControlPanel(QWidget):
 
         gate_position_label = QLabel("Gate position")
         self.gate_position_field = QDoubleSpinBox()
-        self.gate_position_field.setSuffix("μs")
+        self.gate_position_field.setSuffix(" μs")
         oscilloscope_form.addRow(gate_position_label, self.gate_position_field)
 
         math_avg_label = QLabel("Math averages")
@@ -278,7 +278,7 @@ class ControlPanel(QWidget):
         delay_gas_label = QLabel("Delay gas - MW")
         self.delay_gas_field = QDoubleSpinBox()
         self.delay_gas_field.setMinimum(0)
-        self.delay_gas_field.setSuffix("μs")
+        self.delay_gas_field.setSuffix(" μs")
         timing_form.addRow(delay_gas_label, self.delay_gas_field)
 
         right_column.addWidget(timing_group)
