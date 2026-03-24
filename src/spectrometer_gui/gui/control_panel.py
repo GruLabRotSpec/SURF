@@ -275,11 +275,11 @@ class ControlPanel(QWidget):
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
 
-        delay_gas_label = QLabel("Delay gas - MW")
-        self.delay_gas_field = QDoubleSpinBox()
-        self.delay_gas_field.setMinimum(0)
-        self.delay_gas_field.setSuffix(" μs")
-        timing_form.addRow(delay_gas_label, self.delay_gas_field)
+        trigger_rate_label = QLabel("Trigger Rate")
+        self.trigger_rate_field = QDoubleSpinBox()
+        self.trigger_rate_field.setMinimum(0)
+        self.trigger_rate_field.setSuffix(" Hz")
+        timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
 
         right_column.addWidget(timing_group)
 
@@ -369,7 +369,7 @@ class ControlPanel(QWidget):
         )
 
         # Delay generator
-        self.delay_gas_field.setValue(
+        self.trigger_rate_field.setValue(
             self.spectrometer.config.delay_generator_controller.trigger_rate
         )
 
@@ -422,7 +422,7 @@ class ControlPanel(QWidget):
 
             # Delay generator
             self.spectrometer.config.delay_generator_controller.trigger_rate = (
-                self.delay_gas_field.value()
+                self.trigger_rate_field.value()
             )
 
             self.spectrometer.set_config(self.spectrometer.config)
