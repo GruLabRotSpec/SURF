@@ -1,5 +1,5 @@
 import os
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
 from PySide6.QtWidgets import (
     QLabel,
@@ -27,6 +27,8 @@ class ControlPanel(QWidget):
         super().__init__()
 
         self.spectrometer = spectrometer
+
+        self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -71,13 +73,14 @@ class ControlPanel(QWidget):
 
         zaber_control_widget = QHBoxLayout()
 
-        zaber_home_btn = QPushButton()
+        self.zaber_home_btn = QPushButton()
         icon_path = os.path.join(os.path.dirname(__file__), "icons/house.svg")
-        zaber_home_btn.setIcon(QIcon(icon_path))
-        zaber_home_btn.setToolTip("Home")
-        zaber_home_btn.setFixedSize(30, 30)
-        zaber_home_btn.clicked.connect(lambda: self.set_zaber_position(True))
-        zaber_control_widget.addWidget(zaber_home_btn)
+        self.zaber_home_btn.setIcon(QIcon(icon_path))
+        self.zaber_home_btn.setToolTip("Home")
+        self.zaber_home_btn.setFixedSize(30, 30)
+        self.zaber_home_btn.setEnabled(False)
+        self.zaber_home_btn.clicked.connect(lambda: self.set_zaber_position(True))
+        zaber_control_widget.addWidget(self.zaber_home_btn)
 
         self.zaber_slider = QSlider(Qt.Orientation.Horizontal)
         self.zaber_slider.setMinimum(0)
@@ -93,14 +96,14 @@ class ControlPanel(QWidget):
         self.zaber_pos_field.setSuffix(" mm")
         zaber_control_widget.addWidget(self.zaber_pos_field)
 
-        zaber_go_btn = QPushButton()
-        zaber_go_btn.setIcon(
+        self.zaber_go_btn = QPushButton()
+        self.zaber_go_btn.setIcon(
             QIcon(os.path.join(os.path.dirname(__file__), "icons/crosshair.svg"))
         )
-        zaber_go_btn.setToolTip("Go to position")
-        zaber_go_btn.setFixedSize(30, 30)
-        zaber_go_btn.clicked.connect(self.set_zaber_position)
-        zaber_control_widget.addWidget(zaber_go_btn)
+        self.zaber_go_btn.setToolTip("Go to position")
+        self.zaber_go_btn.setFixedSize(30, 30)
+        self.zaber_go_btn.clicked.connect(self.set_zaber_position)
+        zaber_control_widget.addWidget(self.zaber_go_btn)
 
         zaber_form.addRow("Manual control", zaber_control_widget)
 
@@ -292,16 +295,20 @@ class ControlPanel(QWidget):
         layout.addWidget(bottom_panel)
         layout.addStretch()
 
-        self.get_zaber_position()
-
-    def get_zaber_position(self):
-        print("Attempting to get Zaber position...")
-        try:
-            pos = self.spectrometer.spectrometer.zaber_controller.get_pos()
-            self.zaber_slider.setValue(pos)
-            self.zaber_pos_field.setValue(pos)
-        except Exception:
-            print("Unable to get Zaber position")
+    @Slot(float)
+    def on_zaber_position(self, position):
+        if position != -1:
+            self.zaber_slider.setValue(int(position))
+            self.zaber_pos_field.setValue(position)
+            self.zaber_slider.setEnabled(True)
+            self.zaber_pos_field.setEnabled(True)
+            self.zaber_go_btn.setEnabled(True)
+            self.zaber_home_btn.setEnabled(True)
+        else:
+            self.zaber_slider.setEnabled(False)
+            self.zaber_pos_field.setEnabled(False)
+            self.zaber_go_btn.setEnabled(False)
+            self.zaber_home_btn.setEnabled(False)
 
     def set_zaber_position(self, home=False):
         if self.spectrometer.current_task:
@@ -310,7 +317,7 @@ class ControlPanel(QWidget):
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
             if home:
-                self.spectrometer.spectrometer.zaber_controller.move_to("0", False)
+                self.spectrometer.spectrometer.zaber_controller.move_to(0, False)
             else:
                 self.spectrometer.spectrometer.zaber_controller.move_to(new_pos, False)
 
@@ -322,7 +329,7 @@ class ControlPanel(QWidget):
         super().showEvent(event)
         self._set_values_in_control_panel()
 
-    def __set_values_in_control_panel(self):
+    def _set_values_in_control_panel(self):
         print(self.spectrometer.config)
 
         # Zaber
@@ -373,7 +380,7 @@ class ControlPanel(QWidget):
             self.spectrometer.config.delay_generator_controller.trigger_rate
         )
 
-    def __apply_values_in_control_panel(self):
+    def _apply_values_in_control_panel(self):
         if not self.spectrometer.current_task:
             # Zaber
             self.spectrometer.config.zaber_controller.zaber_speed = (

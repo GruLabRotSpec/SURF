@@ -35,7 +35,7 @@ class AWGController:
 
         self.awg_freq = awg_config.awg_freq
 
-    def __write_cmd(self, command):
+    def _write_cmd(self, command):
         return self._awg.write(command)
 
     def run(self):

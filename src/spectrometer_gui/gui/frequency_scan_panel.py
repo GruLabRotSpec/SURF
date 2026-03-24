@@ -2,6 +2,7 @@ from PySide6 import QtCore
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -24,6 +25,7 @@ class FrequencyScanPanel(QWidget):
 
         self.spectrometer.signal.scanning.connect(self.on_scanning)
         self.spectrometer.signal.update_graph.connect(self.on_update_graph)
+        self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -51,14 +53,31 @@ class FrequencyScanPanel(QWidget):
         self.start_freq_field.setMinimum(8000)
         self.start_freq_field.setValue(10000)
         self.start_freq_field.setMaximum(18000)
+        self.start_freq_field.setDecimals(3)
         self.start_freq_field.setSuffix(" MHz")
+
+        zaber_pos_label = QLabel("Zaber Position")
+        zaber_pos_layout = QHBoxLayout()
+        self.zaber_pos_field = QDoubleSpinBox()
+        self.zaber_pos_field.setMinimum(0)
+        self.zaber_pos_field.setMaximum(50)
+        self.zaber_pos_field.setDecimals(3)
+        self.zaber_pos_field.setSuffix(" mm")
+        self.zaber_pos_field.setEnabled(False)
+        zaber_pos_layout.addWidget(self.zaber_pos_field)
+        self.zaber_set_pos_checkbox = QCheckBox("Set Position")
+        self.zaber_set_pos_checkbox.setChecked(False)
+        self.zaber_set_pos_checkbox.toggled.connect(self.on_zaber_set_pos_toggled)
+        zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
+        form.addRow(zaber_pos_label, zaber_pos_layout)
 
         form.addRow(start_freq_label, self.start_freq_field)
 
-        step_size_label = QLabel("Step Size")
+        step_size_label = QLabel("Freq Step Size")
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
         self.step_size_field.setValue(0.5)
+        self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
 
@@ -67,6 +86,7 @@ class FrequencyScanPanel(QWidget):
         self.end_freq_field.setMinimum(8000)
         self.end_freq_field.setValue(10500)
         self.end_freq_field.setMaximum(18000)
+        self.end_freq_field.setDecimals(3)
         self.end_freq_field.setSuffix(" MHz")
         form.addRow(end_freq_label, self.end_freq_field)
 
@@ -98,13 +118,19 @@ class FrequencyScanPanel(QWidget):
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
 
+    @Slot()
     def start_scan(self):
+        start_pos = None
+        if self.zaber_set_pos_checkbox.isChecked():
+            start_pos = float(self.zaber_pos_field.value())
         self.spectrometer.run_scan(
             float(self.start_freq_field.value()),
             float(self.end_freq_field.value()),
             float(self.step_size_field.value()),
+            start_pos,
         )
 
+    @Slot()
     def cancel_scan(self):
         self.spectrometer.cancel_operation()
 
@@ -134,3 +160,22 @@ class FrequencyScanPanel(QWidget):
         self.graph_panel.graph.axes.set_xlabel("Zaber Position (mm)")
         self.graph_panel.graph.axes.set_ylabel("Intensity (Volts)")
         self.graph_panel.graph.draw()
+
+    @Slot(float)
+    def on_zaber_position(self, position):
+        if self.zaber_set_pos_checkbox.isChecked():
+            return
+        if position != -1:
+            self.zaber_pos_field.setValue(position)
+            self.zaber_set_pos_checkbox.setEnabled(True)
+        else:
+            self.zaber_pos_field.setValue(0)
+            self.zaber_set_pos_checkbox.setChecked(False)
+            self.zaber_set_pos_checkbox.setEnabled(False)
+
+    @Slot(bool)
+    def on_zaber_set_pos_toggled(self, checked):
+        if checked:
+            self.zaber_pos_field.setEnabled(True)
+        else:
+            self.zaber_pos_field.setEnabled(False)
