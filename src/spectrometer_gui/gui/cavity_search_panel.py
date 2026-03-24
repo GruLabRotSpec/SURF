@@ -48,6 +48,7 @@ class CavitySearchPanel(QWidget):
         start_freq_field.setMinimum(8000)
         start_freq_field.setMaximum(18000)
         start_freq_field.setSingleStep(1000)
+        start_freq_field.setDecimals(3)
         start_freq_field.setSuffix(" MHz")
         form.addRow(start_freq_label, start_freq_field)
 
@@ -55,6 +56,7 @@ class CavitySearchPanel(QWidget):
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
         self.step_size_field.setValue(0.5)
+        self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
 
@@ -63,6 +65,7 @@ class CavitySearchPanel(QWidget):
         self.end_freq_field.setMinimum(8000)
         self.end_freq_field.setMaximum(18000)
         self.end_freq_field.setValue(9000)
+        self.end_freq_field.setDecimals(3)
         self.end_freq_field.setSuffix(" MHz")
         form.addRow(end_freq_label, self.end_freq_field)
 

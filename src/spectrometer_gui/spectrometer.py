@@ -77,6 +77,7 @@ class Spectrometer:
         start_freq: float,
         stop_freq: float,
         step_size: float = 0.5,
+        start_pos: float | None = None,
     ):
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
@@ -87,6 +88,10 @@ class Spectrometer:
 
         # Toggle switch
         self.switch_controller.set_switch_freq()
+
+        # Move zaber to start position if specified
+        if start_pos is not None:
+            self.zaber_controller.move_to(start_pos, False)
 
         stop_freq_input = stop_freq
 
@@ -494,7 +499,7 @@ class Spectrometer:
 
         return future.result()
 
-    def __fft_from_scope(self, new_freq):
+    def _fft_from_scope(self, new_freq):
         wave_values = self.oscilloscope_controller.acq_ft_curve(self._time_delay)
 
         (
@@ -631,7 +636,7 @@ class Spectrometer:
             "awg": _is_initialized(self.awg_controller),
         }
 
-    def __scale_fft(self, wave_values, start, new_freq, time_scale, time_start):
+    def _scale_fft(self, wave_values, start, new_freq, time_scale, time_start):
         fft_y_values = np.array(wave_values, dtype="float")
         fft_x_values = (
             np.linspace(
