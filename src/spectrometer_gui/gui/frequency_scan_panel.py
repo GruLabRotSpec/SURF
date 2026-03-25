@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType
+from spectrometer import ScanType, GraphState
 from gui.graph_panel import GraphPanel
 
 
@@ -149,14 +149,16 @@ class FrequencyScanPanel(QWidget):
             self.form_panel.setEnabled(True)
             self.cancel_button.setEnabled(False)
 
-    @Slot(ScanType, list, list)
-    def on_update_graph(self, scan_type: ScanType, pos_array: list, max_list: list):
-        if scan_type != ScanType.FREQUENCY:
+    @Slot(GraphState)
+    def on_update_graph(self, graph_state: GraphState):
+        if graph_state.scan_type != ScanType.FREQUENCY:
             return
 
         self.graph_panel.graph.axes.clear()
-        self.graph_panel.graph.axes.plot(pos_array, max_list)
-        self.graph_panel.graph.axes.set_title("Zaber Position vs. Intensity")
+        self.graph_panel.graph.axes.plot(graph_state.pos_array, graph_state.max_list)
+        self.graph_panel.graph.axes.set_title(
+            f"Zaber Position vs. Intensity @ {graph_state.frequency} MHz"
+        )
         self.graph_panel.graph.axes.set_xlabel("Zaber Position (mm)")
         self.graph_panel.graph.axes.set_ylabel("Intensity (Volts)")
         self.graph_panel.graph.draw()
