@@ -118,6 +118,8 @@ class FrequencyScanPanel(QWidget):
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
 
+        self.on_update_graph(GraphState(ScanType.FREQUENCY, [], [], 0, [], []))
+
     @Slot()
     def start_scan(self):
         start_pos = None
@@ -154,13 +156,22 @@ class FrequencyScanPanel(QWidget):
         if graph_state.scan_type != ScanType.FREQUENCY:
             return
 
-        self.graph_panel.graph.axes.clear()
-        self.graph_panel.graph.axes.plot(graph_state.pos_array, graph_state.max_list)
-        self.graph_panel.graph.axes.set_title(
+        self.graph_panel.graph.axes1.clear()
+        self.graph_panel.graph.axes1.plot(graph_state.pos_array, graph_state.max_list)
+        self.graph_panel.graph.axes1.set_title(
             f"Zaber Position vs. Intensity @ {graph_state.frequency} MHz"
         )
-        self.graph_panel.graph.axes.set_xlabel("Zaber Position (mm)")
-        self.graph_panel.graph.axes.set_ylabel("Intensity (Volts)")
+        self.graph_panel.graph.axes1.set_xlabel("Zaber Position (mm)")
+        self.graph_panel.graph.axes1.set_ylabel("Intensity (Volts)")
+
+        if not graph_state.fft_x:
+            self.graph_panel.graph.axes2.clear()
+            self.graph_panel.graph.axes2.set_title("FFT Data")
+            self.graph_panel.graph.axes2.set_xlabel("Frequency")
+            self.graph_panel.graph.axes2.set_ylabel("Relative Intensity")
+
+        self.graph_panel.graph.axes2.plot(graph_state.fft_x, graph_state.fft_y)
+
         self.graph_panel.graph.draw()
 
     @Slot(float)

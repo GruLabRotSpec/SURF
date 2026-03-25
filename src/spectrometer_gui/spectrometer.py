@@ -32,6 +32,8 @@ class GraphState:
     pos_array: list
     max_list: list
     frequency: float
+    fft_x: list
+    fft_y: list
 
 
 class StepDirection(Enum):
@@ -262,10 +264,6 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            signals.update_graph.emit(
-                GraphState(ScanType.FREQUENCY, pos_array.tolist(), max_list, new_freq)
-            )
-
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.move_to(max_pos)
@@ -280,17 +278,28 @@ class Spectrometer:
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
-            xx_values_1, yy_values_1 = self._fft_from_scope(new_freq)
+            xx_values, yy_values = self._fft_from_scope(new_freq)
             self.oscilloscope_controller.calib_stop()
             self.delay_generator_controller.stop_pulse()
+
+            signals.update_graph.emit(
+                GraphState(
+                    ScanType.FREQUENCY,
+                    pos_array.tolist(),
+                    max_list,
+                    new_freq,
+                    xx_values,
+                    yy_values.tolist(),
+                )
+            )
 
             # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
             upper_bound = total_frequency + step_size / 2
             lower_bound = total_frequency - step_size / 2
 
             self.write_data_to_csv(
-                xx_values_1,
-                yy_values_1,
+                xx_values,
+                yy_values,
                 lower_bound,
                 upper_bound,
                 curr_pos,
@@ -410,9 +419,6 @@ class Spectrometer:
 
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.calib_stop()
-
-            if not max_list:
-                raise ValueError("max_list is empty")
 
             for max_lists in max_list:
                 pos_arr = np.linspace(
