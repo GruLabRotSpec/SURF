@@ -6,7 +6,7 @@ from typing import Literal
 
 
 class ValonConfig(BaseModel):
-    rf_level: int  # TODO, Figure out if this is actually int only
+    rf_level: int
     valon_port: str
 
 
@@ -28,10 +28,11 @@ class AWGConfig(BaseModel):
 class OscilloscopeConfig(BaseModel):
     channel: str
     resolution: float
-    sample_rate: float
+    sample_rate: int
     window_type: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
     gate_position: float
     math_averages: int
+    acq_rate: int
 
 
 class DelayGeneratorConfig(BaseModel):

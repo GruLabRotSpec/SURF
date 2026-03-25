@@ -37,9 +37,6 @@ class ScanType(Enum):
 
 class Spectrometer:
     def __init__(self, config: Config):
-        # Experiment settings (infrequently changed)
-        self._acq_rate = 300
-
         # Config
         self.config = config
 
@@ -108,10 +105,13 @@ class Spectrometer:
         self.delay_generator_controller.set_trig(
             self.delay_generator_controller.trigger_rate
         )
-        self._time_delay = self._acq_rate / self.delay_generator_controller.trigger_rate
+        self._time_delay = (
+            self.oscilloscope_controller.acq_rate
+            / self.delay_generator_controller.trigger_rate
+        )
 
         print(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self._acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
         iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size)
@@ -547,7 +547,7 @@ class Spectrometer:
 
         parameters = [
             self.delay_generator_controller.trigger_rate,
-            self._acq_rate,
+            self.oscilloscope_controller.acq_rate,
             timeScale,
             timeStart,
             verticalScale,

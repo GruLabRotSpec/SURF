@@ -135,7 +135,7 @@ class ControlPanel(QWidget):
         awg_form.addRow(run_mode_label, self.run_mode_field)
 
         awg_freq_label = QLabel("Frequency")
-        self.awg_freq_field = QDoubleSpinBox()
+        self.awg_freq_field = QSpinBox()
         self.awg_freq_field.setSuffix(" MHz")
         awg_form.addRow(awg_freq_label, self.awg_freq_field)
 
@@ -192,7 +192,7 @@ class ControlPanel(QWidget):
         valon_form.addRow(rf_output_label, rf_output_group_widget)
 
         rf_label = QLabel("RF level (power)")
-        self.rf_field = QDoubleSpinBox()
+        self.rf_field = QSpinBox()
         self.rf_field.setMinimum(0)
         self.rf_field.setMaximum(20)
         self.rf_field.setSuffix(" dBm")
@@ -270,6 +270,12 @@ class ControlPanel(QWidget):
         self.math_avg_field.setMinimum(2)
         self.math_avg_field.setMaximum(1000000)
         oscilloscope_form.addRow(math_avg_label, self.math_avg_field)
+
+        acq_rate_label = QLabel("Acquisition rate")
+        self.acq_rate_field = QSpinBox()
+        self.acq_rate_field.setMinimum(1)
+        self.acq_rate_field.setMaximum(10000)
+        oscilloscope_form.addRow(acq_rate_label, self.acq_rate_field)
 
         right_column.addWidget(oscilloscope_group)
 
@@ -374,6 +380,9 @@ class ControlPanel(QWidget):
         self.math_avg_field.setValue(
             self.spectrometer.config.oscilloscope_controller.math_averages
         )
+        self.acq_rate_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.acq_rate
+        )
 
         # Delay generator
         self.trigger_rate_field.setValue(
@@ -419,12 +428,15 @@ class ControlPanel(QWidget):
             )
             self.spectrometer.config.oscilloscope_controller.window_type = (
                 self.window_type_field.currentText()
-            )
+            )  # type: ignore
             self.spectrometer.config.oscilloscope_controller.gate_position = (
                 self.gate_position_field.value()
             )
             self.spectrometer.config.oscilloscope_controller.math_averages = (
                 self.math_avg_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.acq_rate = (
+                self.acq_rate_field.value()
             )
 
             # Delay generator
