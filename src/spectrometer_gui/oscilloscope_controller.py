@@ -64,34 +64,12 @@ class OscilloscopeController:
         output = self._oscilloscope.query(f"{command}")
         return output
 
-    # grabParam for generating waveform plot
-    def grab_param(self):
-        timeScale = float(self.query_cmd("wfmoutpre:xincr?"))  # horizontal spacing
-        timeStart = float(self.query_cmd("wfmoutpre:xzero?"))
-        verticalScale = float(self.query_cmd("wfmoutpre:ymult?"))  # volts / level
-        verticalOffset = float(self.query_cmd("wfmoutpre:yzero?"))  # reference voltage
-        verticalPosition = float(
-            self.query_cmd("wfmoutpre:yoff?")
-        )  # reference position (level)
-
-        FreqCent = float(self.query_cmd("MATH4:SPECTral:CENTER?"))
-        FreqSpan = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
-        Resolution = float(self.query_cmd("MATH4:SPECTral:RESBw?"))
-        GatePos = float(self.query_cmd("MATH4:SPECTral:GATEPOS?"))
-        GateWidth = float(self.query_cmd("MATH4:SPECTral:GATEWIDTH?"))
-
-        return (
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            FreqCent,
-            FreqSpan,
-            Resolution,
-            GatePos,
-            GateWidth,
-        )
+    def grab_fft_params(self):
+        time_scale = float(self.query_cmd("wfmoutpre:xincr?"))
+        time_start = float(self.query_cmd("wfmoutpre:xzero?"))
+        freq_cent = float(self.query_cmd("MATH4:SPECTral:CENTER?"))
+        freq_span = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
+        return time_scale, time_start, freq_cent, freq_span
 
     # starts oscilloscope run
     def calib_start(self):

@@ -12,7 +12,8 @@ from scipy.signal import find_peaks
 
 from enum import Enum
 
-from config import Config
+from config import Config, save_config
+from pathlib import Path
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -106,7 +107,18 @@ class Spectrometer:
         self._run_directory = f"{self._directory}/CavityFiles"
 
         if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
-            open(f"{self._directory}/{self._filename}.csv", "w+")
+            header_df = pd.DataFrame(
+                columns=[
+                    "Frequency (MHz)",
+                    "Intensity",
+                    "Center Freq",
+                    "Cavity Position",
+                ]
+            )
+            header_df.to_csv(f"{self._directory}/{self._filename}.csv", index=False)
+            save_config(
+                Path(f"{self._directory}/{self._filename}_config.toml"), self.config
+            )
             print("Successfully named file ", f"{self._directory}/{self._filename}.csv")
 
         # setting parameters
@@ -320,9 +332,8 @@ class Spectrometer:
         # Cleanup
         self.delay_generator_controller.stop_trig()
         self.zaber_controller.home()
-        print(
-            f"Run is finished. You will find your data in .csv file: {self._directory}/{self._filename}.csv"
-        )
+        self.finalize_csv()
+        print("Run is finished")
 
     def cavity_search(self, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
@@ -399,6 +410,9 @@ class Spectrometer:
 
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.calib_stop()
+
+            if not max_list:
+                raise ValueError("max_list is empty")
 
             for max_lists in max_list:
                 pos_arr = np.linspace(
@@ -517,15 +531,9 @@ class Spectrometer:
         (
             time_scale,
             time_start,
-            vertical_scale,
-            vertical_offset,
-            vertical_position,
             freq_cent,
             freq_span,
-            resolution,
-            gate_pos,
-            gate_width,
-        ) = self.oscilloscope_controller.grab_param()
+        ) = self.oscilloscope_controller.grab_fft_params()
         start = freq_cent - freq_span / 2
         x_values, y_values = self._scale_fft(
             wave_values, start, new_freq, time_scale, time_start
@@ -535,85 +543,51 @@ class Spectrometer:
 
     def write_data_to_csv(
         self,
-        xx_values,
-        yy_values,
-        lower_bound,
-        upper_bound,
-        curr_pos,
+        frequency_values,
+        intensity_values,
+        lower_frequency_bound,
+        upper_frequency_bound,
+        cavity_position,
         step_direction,
-        total_frequency,
+        center_frequency,
     ):
+        spectrum_data = pd.DataFrame(
+            {"Frequency (MHz)": frequency_values, "Intensity": intensity_values}
+        )
 
-        (
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            FreqCent,
-            FreqSpan,
-            Resolution,
-            GatePos,
-            GateWidth,
-        ) = self.oscilloscope_controller.grab_param()
-
-        parameters = [
-            self.delay_generator_controller.trigger_rate,
-            self.oscilloscope_controller.acq_rate,
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            Resolution,
-            GatePos,
-            GateWidth,
-        ]
-
-        parameter_labels = [
-            "Trigger Rate",
-            "Acquisitions",
-            "Horizontal Spacing",
-            "Time Start",
-            "Vertical Scale",
-            "Vertical Offset",
-            "Vertical Position",
-            "Resolution",
-            "Gate Position",
-            "Gate Width",
-        ]
-
-        DF1 = pd.DataFrame({"Frequency (MHz)": xx_values, "Intensity": yy_values})
-        DF2 = pd.DataFrame(
+        metadata = pd.DataFrame(
             {
-                "Center Freq": [total_frequency],
-                "Cavity Position": [curr_pos],
+                "Center Freq": [center_frequency],
+                "Cavity Position": [cavity_position],
             }
         )
 
-        DF1_2 = DF1.loc[
-            (
-                (DF1["Frequency (MHz)"] >= lower_bound)
-                & (DF1["Frequency (MHz)"] <= upper_bound)
-            )
+        filtered_spectrum = spectrum_data.loc[
+            (spectrum_data["Frequency (MHz)"] >= lower_frequency_bound)
+            & (spectrum_data["Frequency (MHz)"] <= upper_frequency_bound)
         ]
 
         if step_direction == StepDirection.Down:
-            DF1_2 = DF1_2[::-1]
+            filtered_spectrum = filtered_spectrum.iloc[::-1]
 
-        DF3 = pd.DataFrame({"Scope Parameter": parameter_labels, "Value": parameters})
+        pd.concat([spectrum_data, metadata], axis=1).to_csv(
+            f"{self._run_directory}/{center_frequency}.csv", mode="w+", index=False
+        )
 
-        DF1 = DF1.reset_index()
-        DF1_2 = DF1_2.reset_index()
-        DF2 = DF2.reset_index()
-
-        pd.concat([pd.concat([DF1, DF2], axis=1)]).to_csv(
-            f"{self._run_directory}/{total_frequency}.csv", mode="w+", index=False
-        )  # Individual full data
-
-        pd.concat([pd.concat([DF1_2, DF2, DF3], axis=1)]).to_csv(
+        pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
             f"{self._directory}/{self._filename}.csv", mode="a", index=False
-        )  # appended main file with filtered data
+        )
+
+    def finalize_csv(self):
+        filepath = f"{self._directory}/{self._filename}.csv"
+        df = pd.read_csv(filepath)
+
+        for col in ["Center Freq", "Cavity Position"]:
+            df[col] = df[col].dropna().reset_index(drop=True)
+
+        df.to_csv(filepath, index=False)
+
+        print(f"CSV data finalized: {self._directory}/{self._filename}.csv")
 
     def update_config(self, config: Config):
         self.config = config
