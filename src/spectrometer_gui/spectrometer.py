@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass
 import math
 import time
 import numpy as np
@@ -22,6 +23,14 @@ from awg_controller import AWGController
 
 if typing.TYPE_CHECKING:
     from gui.spectrometer_controller import ScanSignals
+
+
+@dataclass
+class GraphState:
+    scan_type: ScanType
+    pos_array: list
+    max_list: list
+    frequency: float
 
 
 class StepDirection(Enum):
@@ -206,6 +215,11 @@ class Spectrometer:
             print(f"The new Valon Frequency is: {new_freq}")
             curr_pos = self.zaber_controller.get_pos()
 
+            signals.progress.emit(
+                run_number / iterations,
+                f"{run_number} / {iterations} - Freq {new_freq} MHz",
+            )
+
             print(
                 "Attempting to travel from ",
                 start_pos_zaber,
@@ -236,7 +250,9 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            signals.update_graph.emit(ScanType.FREQUENCY, pos_array.tolist(), max_list)
+            signals.update_graph.emit(
+                GraphState(ScanType.FREQUENCY, pos_array.tolist(), max_list, new_freq)
+            )
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
@@ -300,10 +316,6 @@ class Spectrometer:
                 self.valon_controller.step_down()
 
             run_number += 1
-
-            signals.progress.emit(
-                run_number / iterations, f"{run_number} / {iterations} Scans"
-            )
 
         # Cleanup
         self.delay_generator_controller.stop_trig()

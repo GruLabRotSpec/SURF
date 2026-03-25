@@ -5,9 +5,6 @@ from config import Config
 
 
 class ValonController:
-    def __init__(self):
-        self._delay = 0.1
-
     def initialize(self, config: Config):
         con = serial.Serial(
             port=config.valon_controller.valon_port, baudrate=9600, timeout=3
@@ -36,7 +33,7 @@ class ValonController:
         self._connection.reset_input_buffer()
         print(format_cmd)
         self._connection.write(format_cmd.encode())
-        time.sleep(self._delay)
+        time.sleep(0.1)
         response_bytes = self._connection.read(1024)
         response = response_bytes.decode().strip()
         print(response)
