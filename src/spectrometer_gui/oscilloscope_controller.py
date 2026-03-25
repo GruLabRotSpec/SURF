@@ -45,6 +45,7 @@ class OscilloscopeController:
 
         self.channel = oscill_config.channel
         self.gate_pos = oscill_config.gate_position
+        self.acq_rate = oscill_config.acq_rate
 
     # sends command, ensures no error after
     def write_cmd(self, command):

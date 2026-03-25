@@ -22,6 +22,7 @@ sample_rate = 500
 window_type = "Rectangular"
 gate_position = 18.45
 math_averages = 1000000
+acq_rate = 300
 
 [delay_generator_controller]
 trigger_rate = 5.0
