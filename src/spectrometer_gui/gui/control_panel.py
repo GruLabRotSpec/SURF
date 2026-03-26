@@ -71,6 +71,15 @@ class ControlPanel(QWidget):
         self.zaber_speed_2_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
+        zaber_step_size_label = QLabel("Zaber step size")
+        self.zaber_step_size_field = QDoubleSpinBox()
+        self.zaber_step_size_field.setMinimum(0)
+        self.zaber_step_size_field.setMaximum(5)
+        self.zaber_step_size_field.setSingleStep(0.25)
+        self.zaber_step_size_field.setSuffix(" mm")
+        self.zaber_step_size_field.setEnabled(False) # Temporary
+        zaber_form.addRow(zaber_step_size_label, self.zaber_step_size_field)
+
         zaber_control_widget = QHBoxLayout()
 
         self.zaber_home_btn = QPushButton()
@@ -237,6 +246,15 @@ class ControlPanel(QWidget):
 
         oscilloscope_form = QFormLayout()
         oscilloscope_group.setLayout(oscilloscope_form)
+
+        math_type_label = QLabel("Math")
+        self.math_type_field = QComboBox()
+        self.math_type_field.addItems(
+            ["MATH1", "MATH2", "MATH3", "MATH4"]
+        )
+        self.math_type_field.setCurrentText("MATH4") # Temporary
+        self.math_type_field.setEnabled(False) # Temporary
+        oscilloscope_form.addRow(math_type_label, self.math_type_field)
 
         resolution_label = QLabel("Resolution")
         self.resolution_field = QDoubleSpinBox()
