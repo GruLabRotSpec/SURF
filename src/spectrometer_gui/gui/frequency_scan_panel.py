@@ -23,6 +23,9 @@ class FrequencyScanPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
+        self.spec_xx = []
+        self.spec_yy = []
+
         self.spectrometer = spectrometer
 
         self.spectrometer.signal.scanning.connect(self.on_scanning)
@@ -75,15 +78,6 @@ class FrequencyScanPanel(QWidget):
 
         form.addRow(start_freq_label, self.start_freq_field)
 
-        end_freq_label = QLabel("Ending Frequency")
-        self.end_freq_field = QDoubleSpinBox()
-        self.end_freq_field.setMinimum(8000)
-        self.end_freq_field.setMaximum(18000)
-        self.end_freq_field.setDecimals(3)
-        self.end_freq_field.setSuffix(" MHz")
-        self.end_freq_field.setValue(10500)
-        form.addRow(end_freq_label, self.end_freq_field)
-
         step_size_label = QLabel("Freq Step Size")
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
@@ -95,10 +89,10 @@ class FrequencyScanPanel(QWidget):
         end_freq_label = QLabel("Ending Frequency")
         self.end_freq_field = QDoubleSpinBox()
         self.end_freq_field.setMinimum(8000)
-        self.end_freq_field.setValue(10500)
         self.end_freq_field.setMaximum(18000)
         self.end_freq_field.setDecimals(3)
         self.end_freq_field.setSuffix(" MHz")
+        self.end_freq_field.setValue(10500)
         form.addRow(end_freq_label, self.end_freq_field)
 
         experiment_group = QGroupBox()
@@ -217,13 +211,16 @@ class FrequencyScanPanel(QWidget):
         self.graph_panel.graph.axes1.set_xlabel("Zaber Position (mm)")
         self.graph_panel.graph.axes1.set_ylabel("Intensity (Volts)")
 
-        if not graph_state.fft_x:
-            self.graph_panel.graph.axes2.clear()
-            self.graph_panel.graph.axes2.set_title("Spectrum")
-            self.graph_panel.graph.axes2.set_xlabel("Frequency")
-            self.graph_panel.graph.axes2.set_ylabel("Relative Intensity")
+        if graph_state.fft_x:
+            self.spec_xx.extend(graph_state.fft_x)
+            self.spec_yy.extend(graph_state.fft_y)
 
-        self.graph_panel.graph.axes2.plot(graph_state.fft_x, graph_state.fft_y)
+        self.graph_panel.graph.axes2.clear()
+        self.graph_panel.graph.axes2.set_title("Spectrum")
+        self.graph_panel.graph.axes2.set_xlabel("Frequency (MHz)")
+        self.graph_panel.graph.axes2.set_ylabel("Relative Intensity (Volts)")
+
+        self.graph_panel.graph.axes2.plot(self.spec_xx, self.spec_yy)
 
         self.graph_panel.graph.draw()
 
