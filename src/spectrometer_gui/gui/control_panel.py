@@ -71,7 +71,16 @@ class ControlPanel(QWidget):
         self.zaber_speed_2_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
-        zaber_control_widget = QHBoxLayout()
+        zaber_step_size_label = QLabel("Zaber step size")
+        self.zaber_step_size_field = QDoubleSpinBox()
+        self.zaber_step_size_field.setMinimum(0)
+        self.zaber_step_size_field.setMaximum(5)
+        self.zaber_step_size_field.setSingleStep(0.25)
+        self.zaber_step_size_field.setSuffix(" mm")
+        self.zaber_step_size_field.setEnabled(False) # Temporary
+        zaber_form.addRow(zaber_step_size_label, self.zaber_step_size_field)
+
+        zaber_control_widget_1 = QHBoxLayout()
 
         self.zaber_home_btn = QPushButton()
         icon_path = os.path.join(os.path.dirname(__file__), "icons/house.svg")
@@ -80,21 +89,21 @@ class ControlPanel(QWidget):
         self.zaber_home_btn.setFixedSize(30, 30)
         self.zaber_home_btn.setEnabled(False)
         self.zaber_home_btn.clicked.connect(lambda: self.set_zaber_position(True))
-        zaber_control_widget.addWidget(self.zaber_home_btn)
+        zaber_control_widget_1.addWidget(self.zaber_home_btn)
 
         self.zaber_slider = QSlider(Qt.Orientation.Horizontal)
         self.zaber_slider.setMinimum(0)
         self.zaber_slider.setMaximum(50)
         self.zaber_slider.setSingleStep(1)
         self.zaber_slider.setEnabled(False)
-        zaber_control_widget.addWidget(self.zaber_slider)
+        zaber_control_widget_1.addWidget(self.zaber_slider)
 
         self.zaber_pos_field = QDoubleSpinBox()
         self.zaber_pos_field.setMinimum(0)
         self.zaber_pos_field.setMaximum(50)
         self.zaber_pos_field.setSingleStep(1)
         self.zaber_pos_field.setSuffix(" mm")
-        zaber_control_widget.addWidget(self.zaber_pos_field)
+        zaber_control_widget_1.addWidget(self.zaber_pos_field)
 
         self.zaber_go_btn = QPushButton()
         self.zaber_go_btn.setIcon(
@@ -103,9 +112,39 @@ class ControlPanel(QWidget):
         self.zaber_go_btn.setToolTip("Go to position")
         self.zaber_go_btn.setFixedSize(30, 30)
         self.zaber_go_btn.clicked.connect(self.set_zaber_position)
-        zaber_control_widget.addWidget(self.zaber_go_btn)
+        zaber_control_widget_1.addWidget(self.zaber_go_btn)
 
-        zaber_form.addRow("Manual control", zaber_control_widget)
+        zaber_form.addRow("Position (absolute)", zaber_control_widget_1)
+
+        zaber_control_widget_2 = QHBoxLayout()
+
+        self.zaber_move_left_btn = QPushButton()
+        icon_path = os.path.join(os.path.dirname(__file__), "icons/chevrons_left.svg")
+        self.zaber_move_left_btn.setIcon(QIcon(icon_path))
+        self.zaber_move_left_btn.setToolTip("Move left by increment")
+        self.zaber_move_left_btn.setFixedSize(30, 30)
+        self.zaber_move_left_btn.setEnabled(False)
+        self.zaber_move_left_btn.clicked.connect(lambda: self.set_zaber_position(True))
+        zaber_control_widget_2.addWidget(self.zaber_move_left_btn)
+
+        self.zaber_inc_field = QDoubleSpinBox()
+        self.zaber_inc_field.setMinimum(-50)
+        self.zaber_inc_field.setMaximum(50)
+        self.zaber_inc_field.setSingleStep(1)
+        self.zaber_inc_field.setSuffix(" mm")
+        zaber_control_widget_2.addWidget(self.zaber_inc_field)
+
+        self.zaber_move_right_btn = QPushButton()
+        self.zaber_move_right_btn.setIcon(
+            QIcon(os.path.join(os.path.dirname(__file__), "icons/chevrons_right.svg"))
+        )
+        self.zaber_move_right_btn.setToolTip("Move right by increment")
+        self.zaber_move_right_btn.setFixedSize(30, 30)
+        self.zaber_move_right_btn.setEnabled(False)
+        self.zaber_move_right_btn.clicked.connect(self.set_zaber_position)
+        zaber_control_widget_2.addWidget(self.zaber_move_right_btn)
+
+        zaber_form.addRow("Position (relative)", zaber_control_widget_2)
 
         left_column.addWidget(zaber_group)
 
@@ -237,6 +276,15 @@ class ControlPanel(QWidget):
 
         oscilloscope_form = QFormLayout()
         oscilloscope_group.setLayout(oscilloscope_form)
+
+        math_type_label = QLabel("Math")
+        self.math_type_field = QComboBox()
+        self.math_type_field.addItems(
+            ["MATH1", "MATH2", "MATH3", "MATH4"]
+        )
+        self.math_type_field.setCurrentText("MATH4") # Temporary
+        self.math_type_field.setEnabled(False) # Temporary
+        oscilloscope_form.addRow(math_type_label, self.math_type_field)
 
         resolution_label = QLabel("Resolution")
         self.resolution_field = QDoubleSpinBox()

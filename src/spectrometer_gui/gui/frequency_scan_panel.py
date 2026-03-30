@@ -2,6 +2,7 @@ from PySide6 import QtCore
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QGroupBox,
     QCheckBox,
     QFormLayout,
     QHBoxLayout,
@@ -9,6 +10,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QLineEdit,
     QDoubleSpinBox,
 )
 
@@ -89,6 +91,57 @@ class FrequencyScanPanel(QWidget):
         self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
+
+        end_freq_label = QLabel("Ending Frequency")
+        self.end_freq_field = QDoubleSpinBox()
+        self.end_freq_field.setMinimum(8000)
+        self.end_freq_field.setValue(10500)
+        self.end_freq_field.setMaximum(18000)
+        self.end_freq_field.setDecimals(3)
+        self.end_freq_field.setSuffix(" MHz")
+        form.addRow(end_freq_label, self.end_freq_field)
+
+        experiment_group = QGroupBox()
+
+        experiment_form = QFormLayout()
+        experiment_group.setLayout(experiment_form)
+
+        sample_name_label = QLabel("Sample name")
+        self.sample_name_field = QLineEdit()
+        experiment_form.addRow(sample_name_label, self.sample_name_field)
+
+        sample_temp_label = QLabel("Sample temp")
+        self.sample_temp_field = QDoubleSpinBox()
+        self.sample_temp_field.setSuffix(" C")
+        experiment_form.addRow(sample_temp_label, self.sample_temp_field)
+
+        gas_name_label = QLabel("Gas")
+        self.gas_name_field = QLineEdit()
+        experiment_form.addRow(gas_name_label, self.gas_name_field)
+
+        gas_width_label = QLabel("Gas width")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setSuffix(" μs")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        gas_width_label = QLabel("Backing pressure")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setValue(15)
+        self.gas_width_field.setMaximum(25)
+        self.gas_width_field.setSuffix(" psi")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        gas_width_label = QLabel("Chamber pressure")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setSuffix(" torr")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        mw_width_label = QLabel("MW width")
+        self.mw_width_field = QDoubleSpinBox()
+        self.mw_width_field.setSuffix(" μs")
+        experiment_form.addRow(mw_width_label, self.mw_width_field)
+
+        left_column.addWidget(experiment_group)
 
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_scan)
