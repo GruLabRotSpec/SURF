@@ -100,7 +100,8 @@ class Spectrometer:
 
         # Move zaber to start position if specified
         if start_pos is not None:
-            self.zaber_controller.move_to(start_pos, False)
+            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
+            self.zaber_controller.move_to(start_pos)
 
         stop_freq_input = stop_freq
 
@@ -137,7 +138,7 @@ class Spectrometer:
             f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
         )
 
-        iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size)
+        iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size) + 1
         total_time = (
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
@@ -174,7 +175,7 @@ class Spectrometer:
         )
 
         # collect data
-        xx_values, yy_values = self._fft_from_scope(new_freq)
+        frequency_values, intensity_values = self._fft_from_scope(new_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.calib_stop()
@@ -186,16 +187,6 @@ class Spectrometer:
         lower_bound = total_frequency - step_size / 2
 
         print(f"Freq Bounds: {lower_bound} to {upper_bound}")
-
-        self.write_data_to_csv(
-            xx_values,
-            yy_values,
-            lower_bound,
-            upper_bound,
-            curr_pos,
-            step_direction,
-            total_frequency,
-        )
 
         if step_direction == StepDirection.Up and new_freq < stop_freq:
             self.valon_controller.step_up()
@@ -278,9 +269,42 @@ class Spectrometer:
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
-            xx_values, yy_values = self._fft_from_scope(new_freq)
+            frequency_values, intensity_values = self._fft_from_scope(new_freq)
             self.oscilloscope_controller.calib_stop()
             self.delay_generator_controller.stop_pulse()
+
+            # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
+            upper_bound = total_frequency + step_size / 2
+            lower_bound = total_frequency - step_size / 2
+
+            spectrum_data = pd.DataFrame(
+                {"Frequency (MHz)": frequency_values, "Intensity": intensity_values}
+            )
+
+            metadata = pd.DataFrame(
+                {
+                    "Center Freq": [total_frequency],
+                    "Cavity Position": [curr_pos],
+                }
+            )
+
+            filtered_spectrum = spectrum_data.loc[
+                (spectrum_data["Frequency (MHz)"] >= lower_bound)
+                & (spectrum_data["Frequency (MHz)"] <= upper_bound)
+            ]
+
+            filtered_spectrum.reset_index(drop=True)
+
+            if step_direction == StepDirection.Down:
+                filtered_spectrum = filtered_spectrum.iloc[::-1]
+
+            pd.concat([spectrum_data, metadata], axis=1).to_csv(
+                f"{self._run_directory}/{total_frequency}.csv", mode="w+", index=False,
+            )
+
+            pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
+                f"{self._directory}/{self._filename}.csv", mode="a", index=False, header=False
+            )
 
             signals.update_graph.emit(
                 GraphState(
@@ -288,23 +312,9 @@ class Spectrometer:
                     pos_array.tolist(),
                     max_list,
                     new_freq,
-                    xx_values,
-                    yy_values.tolist(),
+                    filtered_spectrum["Frequency (MHz)"].to_list(),
+                    filtered_spectrum["Intensity"].to_list(),
                 )
-            )
-
-            # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
-            upper_bound = total_frequency + step_size / 2
-            lower_bound = total_frequency - step_size / 2
-
-            self.write_data_to_csv(
-                xx_values,
-                yy_values,
-                lower_bound,
-                upper_bound,
-                curr_pos,
-                step_direction,
-                total_frequency,
             )
 
             print(
@@ -546,43 +556,6 @@ class Spectrometer:
         )
 
         return x_values, y_values
-
-    def write_data_to_csv(
-        self,
-        frequency_values,
-        intensity_values,
-        lower_frequency_bound,
-        upper_frequency_bound,
-        cavity_position,
-        step_direction,
-        center_frequency,
-    ):
-        spectrum_data = pd.DataFrame(
-            {"Frequency (MHz)": frequency_values, "Intensity": intensity_values}
-        )
-
-        metadata = pd.DataFrame(
-            {
-                "Center Freq": [center_frequency],
-                "Cavity Position": [cavity_position],
-            }
-        )
-
-        filtered_spectrum = spectrum_data.loc[
-            (spectrum_data["Frequency (MHz)"] >= lower_frequency_bound)
-            & (spectrum_data["Frequency (MHz)"] <= upper_frequency_bound)
-        ]
-
-        if step_direction == StepDirection.Down:
-            filtered_spectrum = filtered_spectrum.iloc[::-1]
-
-        pd.concat([spectrum_data, metadata], axis=1).to_csv(
-            f"{self._run_directory}/{center_frequency}.csv", mode="w+", index=False
-        )
-
-        pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
-            f"{self._directory}/{self._filename}.csv", mode="a", index=False
-        )
 
     def finalize_csv(self):
         filepath = f"{self._directory}/{self._filename}.csv"
