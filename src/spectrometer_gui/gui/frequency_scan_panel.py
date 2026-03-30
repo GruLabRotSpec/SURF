@@ -2,17 +2,20 @@ from PySide6 import QtCore
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
+    QGroupBox,
+    QCheckBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QLineEdit,
     QDoubleSpinBox,
 )
 
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType
+from spectrometer import ScanType, GraphState
 from gui.graph_panel import GraphPanel
 
 
@@ -20,10 +23,14 @@ class FrequencyScanPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
+        self.spec_xx = []
+        self.spec_yy = []
+
         self.spectrometer = spectrometer
 
         self.spectrometer.signal.scanning.connect(self.on_scanning)
         self.spectrometer.signal.update_graph.connect(self.on_update_graph)
+        self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -49,26 +56,86 @@ class FrequencyScanPanel(QWidget):
         start_freq_label = QLabel("Starting Frequency")
         self.start_freq_field = QDoubleSpinBox()
         self.start_freq_field.setMinimum(8000)
-        self.start_freq_field.setValue(10000)
         self.start_freq_field.setMaximum(18000)
-        self.start_freq_field.setSuffix("MHz")
+        self.start_freq_field.setDecimals(3)
+        self.start_freq_field.setSuffix(" MHz")
+        self.start_freq_field.setValue(10000)
+
+        zaber_pos_label = QLabel("Zaber Position")
+        zaber_pos_layout = QHBoxLayout()
+        self.zaber_pos_field = QDoubleSpinBox()
+        self.zaber_pos_field.setMinimum(0)
+        self.zaber_pos_field.setMaximum(50)
+        self.zaber_pos_field.setDecimals(3)
+        self.zaber_pos_field.setSuffix(" mm")
+        self.zaber_pos_field.setEnabled(False)
+        zaber_pos_layout.addWidget(self.zaber_pos_field)
+        self.zaber_set_pos_checkbox = QCheckBox("Set Position")
+        self.zaber_set_pos_checkbox.setChecked(False)
+        self.zaber_set_pos_checkbox.toggled.connect(self.on_zaber_set_pos_toggled)
+        zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
+        form.addRow(zaber_pos_label, zaber_pos_layout)
 
         form.addRow(start_freq_label, self.start_freq_field)
 
-        step_size_label = QLabel("Step Size")
+        step_size_label = QLabel("Freq Step Size")
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
         self.step_size_field.setValue(0.5)
-        self.step_size_field.setSuffix("MHz")
+        self.step_size_field.setDecimals(3)
+        self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
         self.end_freq_field = QDoubleSpinBox()
         self.end_freq_field.setMinimum(8000)
-        self.end_freq_field.setValue(10500)
         self.end_freq_field.setMaximum(18000)
-        self.end_freq_field.setSuffix("MHz")
+        self.end_freq_field.setDecimals(3)
+        self.end_freq_field.setSuffix(" MHz")
+        self.end_freq_field.setValue(10500)
         form.addRow(end_freq_label, self.end_freq_field)
+
+        experiment_group = QGroupBox()
+
+        experiment_form = QFormLayout()
+        experiment_group.setLayout(experiment_form)
+
+        sample_name_label = QLabel("Sample name")
+        self.sample_name_field = QLineEdit()
+        experiment_form.addRow(sample_name_label, self.sample_name_field)
+
+        sample_temp_label = QLabel("Sample temp")
+        self.sample_temp_field = QDoubleSpinBox()
+        self.sample_temp_field.setSuffix(" C")
+        experiment_form.addRow(sample_temp_label, self.sample_temp_field)
+
+        gas_name_label = QLabel("Gas")
+        self.gas_name_field = QLineEdit()
+        experiment_form.addRow(gas_name_label, self.gas_name_field)
+
+        gas_width_label = QLabel("Gas width")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setSuffix(" μs")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        gas_width_label = QLabel("Backing pressure")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setValue(15)
+        self.gas_width_field.setMaximum(25)
+        self.gas_width_field.setSuffix(" psi")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        gas_width_label = QLabel("Chamber pressure")
+        self.gas_width_field = QDoubleSpinBox()
+        self.gas_width_field.setSuffix(" torr")
+        experiment_form.addRow(gas_width_label, self.gas_width_field)
+
+        mw_width_label = QLabel("MW width")
+        self.mw_width_field = QDoubleSpinBox()
+        self.mw_width_field.setSuffix(" μs")
+        experiment_form.addRow(mw_width_label, self.mw_width_field)
+
+        left_column.addWidget(experiment_group)
 
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_scan)
@@ -98,13 +165,21 @@ class FrequencyScanPanel(QWidget):
         layout.setStretch(0, 1)
         layout.setStretch(1, 1)
 
+        self.on_update_graph(GraphState(ScanType.FREQUENCY, [], [], 0, [], []))
+
+    @Slot()
     def start_scan(self):
+        start_pos = None
+        if self.zaber_set_pos_checkbox.isChecked():
+            start_pos = float(self.zaber_pos_field.value())
         self.spectrometer.run_scan(
             float(self.start_freq_field.value()),
             float(self.end_freq_field.value()),
             float(self.step_size_field.value()),
+            start_pos,
         )
 
+    @Slot()
     def cancel_scan(self):
         self.spectrometer.cancel_operation()
 
@@ -123,14 +198,47 @@ class FrequencyScanPanel(QWidget):
             self.form_panel.setEnabled(True)
             self.cancel_button.setEnabled(False)
 
-    @Slot(ScanType, list, list)
-    def on_update_graph(self, scan_type: ScanType, pos_array: list, max_list: list):
-        if scan_type != ScanType.FREQUENCY:
+    @Slot(GraphState)
+    def on_update_graph(self, graph_state: GraphState):
+        if graph_state.scan_type != ScanType.FREQUENCY:
             return
 
-        self.graph_panel.graph.axes.clear()
-        self.graph_panel.graph.axes.plot(pos_array, max_list)
-        self.graph_panel.graph.axes.set_title("Zaber Position vs. Intensity")
-        self.graph_panel.graph.axes.set_xlabel("Zaber Position (mm)")
-        self.graph_panel.graph.axes.set_ylabel("Intensity (Volts)")
+        self.graph_panel.graph.axes1.clear()
+        self.graph_panel.graph.axes1.plot(graph_state.pos_array, graph_state.max_list)
+        self.graph_panel.graph.axes1.set_title(
+            f"Zaber Position vs. Intensity @ {graph_state.frequency} MHz"
+        )
+        self.graph_panel.graph.axes1.set_xlabel("Zaber Position (mm)")
+        self.graph_panel.graph.axes1.set_ylabel("Intensity (Volts)")
+
+        if graph_state.fft_x:
+            self.spec_xx.extend(graph_state.fft_x)
+            self.spec_yy.extend(graph_state.fft_y)
+
+        self.graph_panel.graph.axes2.clear()
+        self.graph_panel.graph.axes2.set_title("Spectrum")
+        self.graph_panel.graph.axes2.set_xlabel("Frequency (MHz)")
+        self.graph_panel.graph.axes2.set_ylabel("Relative Intensity (Volts)")
+
+        self.graph_panel.graph.axes2.plot(self.spec_xx, self.spec_yy)
+
         self.graph_panel.graph.draw()
+
+    @Slot(float)
+    def on_zaber_position(self, position):
+        if self.zaber_set_pos_checkbox.isChecked():
+            return
+        if position != -1:
+            self.zaber_pos_field.setValue(position)
+            self.zaber_set_pos_checkbox.setEnabled(True)
+        else:
+            self.zaber_pos_field.setValue(0)
+            self.zaber_set_pos_checkbox.setChecked(False)
+            self.zaber_set_pos_checkbox.setEnabled(False)
+
+    @Slot(bool)
+    def on_zaber_set_pos_toggled(self, checked):
+        if checked:
+            self.zaber_pos_field.setEnabled(True)
+        else:
+            self.zaber_pos_field.setEnabled(False)

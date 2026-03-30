@@ -23,7 +23,7 @@
     devShell.x86_64-linux = pkgs.mkShell {
       packages = with pkgs; [
         python
-        black
+        pre-commit
         uv
 
         qt6.qtbase

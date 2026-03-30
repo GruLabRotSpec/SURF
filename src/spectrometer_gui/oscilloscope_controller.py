@@ -12,19 +12,19 @@ class OscilloscopeController:
 
     def initialize(self, config: Config):
         rm = visa.ResourceManager()
-        self.__visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
-        self.__oscilloscope = rm.open_resource(
-            self.__visa_address
+        self._visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+        self._oscilloscope = rm.open_resource(
+            self._visa_address
         )  # delay after each command
-        self.__oscilloscope.timeout = 10000  # ms
-        self.__oscilloscope.encoding = "latin_1"
-        self.__oscilloscope.write_termination = "\n"
-        self.__oscilloscope.expect_termination = False
-        self.__oscilloscope.chunk_size = 102400  # larger data sizes
+        self._oscilloscope.timeout = 10000  # ms
+        self._oscilloscope.encoding = "latin_1"
+        self._oscilloscope.write_termination = "\n"
+        self._oscilloscope.expect_termination = False
+        self._oscilloscope.chunk_size = 102400  # larger data sizes
         time.sleep(1)
-        r = self.__oscilloscope.query("*opc?")  # sync
+        r = self._oscilloscope.query("*opc?")  # sync
         print(r)
-        self.__oscilloscope.write("*cls")
+        self._oscilloscope.write("*cls")
 
         self.update_config(config)
         self.initialized = True
@@ -45,52 +45,31 @@ class OscilloscopeController:
 
         self.channel = oscill_config.channel
         self.gate_pos = oscill_config.gate_position
+        self.acq_rate = oscill_config.acq_rate
 
     # sends command, ensures no error after
     def write_cmd(self, command):
-        self.__oscilloscope.write(command)
-        errorCheck = self.__oscilloscope.write("*ESR?")
+        self._oscilloscope.write(command)
+        errorCheck = self._oscilloscope.write("*ESR?")
 
         # ESR giving command error "5": Command Error. Shows that an error occurred while the
         # instrument was parsing a command or query.
         if errorCheck != 6:
             print(f"Command status register error: {errorCheck}")
 
-        self.__oscilloscope.write("*cls")
+        self._oscilloscope.write("*cls")
 
     # query command
     def query_cmd(self, command):
-        output = self.__oscilloscope.query(f"{command}")
+        output = self._oscilloscope.query(f"{command}")
         return output
 
-    # grabParam for generating waveform plot
-    def grab_param(self):
-        timeScale = float(self.query_cmd("wfmoutpre:xincr?"))  # horizontal spacing
-        timeStart = float(self.query_cmd("wfmoutpre:xzero?"))
-        verticalScale = float(self.query_cmd("wfmoutpre:ymult?"))  # volts / level
-        verticalOffset = float(self.query_cmd("wfmoutpre:yzero?"))  # reference voltage
-        verticalPosition = float(
-            self.query_cmd("wfmoutpre:yoff?")
-        )  # reference position (level)
-
-        FreqCent = float(self.query_cmd("MATH4:SPECTral:CENTER?"))
-        FreqSpan = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
-        Resolution = float(self.query_cmd("MATH4:SPECTral:RESBw?"))
-        GatePos = float(self.query_cmd("MATH4:SPECTral:GATEPOS?"))
-        GateWidth = float(self.query_cmd("MATH4:SPECTral:GATEWIDTH?"))
-
-        return (
-            timeScale,
-            timeStart,
-            verticalScale,
-            verticalOffset,
-            verticalPosition,
-            FreqCent,
-            FreqSpan,
-            Resolution,
-            GatePos,
-            GateWidth,
-        )
+    def grab_fft_params(self):
+        time_scale = float(self.query_cmd("wfmoutpre:xincr?"))
+        time_start = float(self.query_cmd("wfmoutpre:xzero?"))
+        freq_cent = float(self.query_cmd("MATH4:SPECTral:CENTER?"))
+        freq_span = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
+        return time_scale, time_start, freq_cent, freq_span
 
     # starts oscilloscope run
     def calib_start(self):
@@ -137,7 +116,7 @@ class OscilloscopeController:
 
         # data query
         t7 = time.perf_counter()
-        bin_wave = self.__oscilloscope.query_binary_values(
+        bin_wave = self._oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
@@ -182,7 +161,7 @@ class OscilloscopeController:
         # data query
         time.sleep(acqtime)
         t7 = time.perf_counter()
-        new_bin_wave = self.__oscilloscope.query_binary_values(
+        new_bin_wave = self._oscilloscope.query_binary_values(
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
