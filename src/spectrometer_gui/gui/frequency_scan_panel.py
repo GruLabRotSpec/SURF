@@ -51,10 +51,10 @@ class FrequencyScanPanel(QWidget):
         start_freq_label = QLabel("Starting Frequency")
         self.start_freq_field = QDoubleSpinBox()
         self.start_freq_field.setMinimum(8000)
-        self.start_freq_field.setValue(10000)
         self.start_freq_field.setMaximum(18000)
         self.start_freq_field.setDecimals(3)
         self.start_freq_field.setSuffix(" MHz")
+        self.start_freq_field.setValue(10000)
 
         zaber_pos_label = QLabel("Zaber Position")
         zaber_pos_layout = QHBoxLayout()
@@ -73,6 +73,15 @@ class FrequencyScanPanel(QWidget):
 
         form.addRow(start_freq_label, self.start_freq_field)
 
+        end_freq_label = QLabel("Ending Frequency")
+        self.end_freq_field = QDoubleSpinBox()
+        self.end_freq_field.setMinimum(8000)
+        self.end_freq_field.setMaximum(18000)
+        self.end_freq_field.setDecimals(3)
+        self.end_freq_field.setSuffix(" MHz")
+        self.end_freq_field.setValue(10500)
+        form.addRow(end_freq_label, self.end_freq_field)
+
         step_size_label = QLabel("Freq Step Size")
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
@@ -80,15 +89,6 @@ class FrequencyScanPanel(QWidget):
         self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
-
-        end_freq_label = QLabel("Ending Frequency")
-        self.end_freq_field = QDoubleSpinBox()
-        self.end_freq_field.setMinimum(8000)
-        self.end_freq_field.setValue(10500)
-        self.end_freq_field.setMaximum(18000)
-        self.end_freq_field.setDecimals(3)
-        self.end_freq_field.setSuffix(" MHz")
-        form.addRow(end_freq_label, self.end_freq_field)
 
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self.start_scan)
@@ -166,7 +166,7 @@ class FrequencyScanPanel(QWidget):
 
         if not graph_state.fft_x:
             self.graph_panel.graph.axes2.clear()
-            self.graph_panel.graph.axes2.set_title("FFT Data")
+            self.graph_panel.graph.axes2.set_title("Spectrum")
             self.graph_panel.graph.axes2.set_xlabel("Frequency")
             self.graph_panel.graph.axes2.set_ylabel("Relative Intensity")
 
