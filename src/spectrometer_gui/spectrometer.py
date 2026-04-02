@@ -273,7 +273,7 @@ class Spectrometer:
             self.oscilloscope_controller.calib_stop()
             self.delay_generator_controller.stop_pulse()
 
-            # filtering exported data to bandwidth of the cavity ## this equation only works when stepsize is at max the width of the cavity bandwidth
+            # filtering exported data to bandwidth of the cavity
             upper_bound = total_frequency + step_size / 2
             lower_bound = total_frequency - step_size / 2
 
@@ -299,11 +299,16 @@ class Spectrometer:
                 filtered_spectrum = filtered_spectrum.iloc[::-1]
 
             pd.concat([spectrum_data, metadata], axis=1).to_csv(
-                f"{self._run_directory}/{total_frequency}.csv", mode="w+", index=False,
+                f"{self._run_directory}/{total_frequency}.csv",
+                mode="w+",
+                index=False,
             )
 
             pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
-                f"{self._directory}/{self._filename}.csv", mode="a", index=False, header=False
+                f"{self._directory}/{self._filename}.csv",
+                mode="a",
+                index=False,
+                header=False,
             )
 
             signals.update_graph.emit(

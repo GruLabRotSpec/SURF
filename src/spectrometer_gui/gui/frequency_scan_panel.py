@@ -81,6 +81,7 @@ class FrequencyScanPanel(QWidget):
         step_size_label = QLabel("Freq Step Size")
         self.step_size_field = QDoubleSpinBox()
         self.step_size_field.setMinimum(0)
+        self.step_size_field.setMaximum(1)
         self.step_size_field.setValue(0.5)
         self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
