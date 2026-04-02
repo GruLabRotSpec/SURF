@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal, QObject, QTimer
 from gui.bottom_bar import BottomBarPanel
 
 from spectrometer import Spectrometer, ScanType, GraphState
+from settings import Settings
 from config import Config
 
 
@@ -24,9 +25,10 @@ class ScanSignals(QObject):
 
 
 class SpectrometerController(QObject):
-    def __init__(self, config: Config):
+    def __init__(self, settings: Settings, config: Config):
         super().__init__()
-        self.spectrometer = Spectrometer(config)
+        self.spectrometer = Spectrometer(settings, config)
+        self.settings = settings  # Used for setting settings
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
@@ -38,6 +40,10 @@ class SpectrometerController(QObject):
 
     def set_bottom_bar(self, bottom_bar: BottomBarPanel):
         self.bottom_bar = bottom_bar
+
+    def set_settings(self, settings: Settings):
+        self.settings = settings
+        self.spectrometer.update_settings(settings)
 
     def set_config(self, config: Config):
         self.config = config

@@ -1,0 +1,7 @@
+[output]
+location = "~/Documents/"
+filename = "my_scan"
+
+[logging]
+enabled = true
+location = "./testing/"

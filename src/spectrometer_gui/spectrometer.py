@@ -14,6 +14,7 @@ from enum import Enum
 
 from config import Config, save_config
 from pathlib import Path
+from settings import Settings
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -48,8 +49,9 @@ class ScanType(Enum):
 
 
 class Spectrometer:
-    def __init__(self, config: Config):
+    def __init__(self, settings: Settings, config: Config):
         # Config
+        self.settings = settings
         self.config = config
 
         # Devices
@@ -572,6 +574,9 @@ class Spectrometer:
         df.to_csv(filepath, index=False)
 
         print(f"CSV data finalized: {self._directory}/{self._filename}.csv")
+
+    def update_settings(self, settings: Settings):
+        self.settings = settings
 
     def update_config(self, config: Config):
         self.config = config
