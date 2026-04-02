@@ -102,8 +102,9 @@ class Spectrometer:
 
         # Move zaber to start position if specified
         if start_pos is not None:
+            print(f"Zaber moving to set position: {start_pos}")
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
-            self.zaber_controller.move_to(start_pos)
+            self.zaber_controller.move_to(start_pos, True)
 
         stop_freq_input = stop_freq
 
@@ -137,7 +138,8 @@ class Spectrometer:
         )
 
         print(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, each run the oscilloscope will require a time delay of {self._time_delay}"
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, ",
+            f"each run the oscilloscope will require a time delay of {self._time_delay}",
         )
 
         iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size) + 1
@@ -158,16 +160,12 @@ class Spectrometer:
 
         print("All parameters set, moving to run sequence.")
 
-        # From old function CalibrateAndRun
-
-        max_list = []
-        run_bool = True
         new_freq = valon_freq
 
-        ### First Run ###
         curr_pos = self.zaber_controller.get_pos()
-        print("Zaber is at position", curr_pos)
+        print(f"Starting scan with zaber at: {curr_pos}")
 
+        ### First Run ###
         self.oscilloscope_controller.set_settings()
         self.oscilloscope_controller.acquire_fft_data_at_max()
 
@@ -177,33 +175,19 @@ class Spectrometer:
         )
 
         # collect data
-        frequency_values, intensity_values = self._fft_from_scope(new_freq)
+        _, _ = self._fft_from_scope(new_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.calib_stop()
         self.delay_generator_controller.stop_pulse()
 
-        # For exporting
-        total_frequency = new_freq + self.awg_controller.awg_freq
-        upper_bound = total_frequency + step_size / 2
-        lower_bound = total_frequency - step_size / 2
-
-        print(f"Freq Bounds: {lower_bound} to {upper_bound}")
-
-        if step_direction == StepDirection.Up and new_freq < stop_freq:
-            self.valon_controller.step_up()
-        elif step_direction == StepDirection.Down and new_freq >= stop_freq:
-            self.valon_controller.step_down()
-        else:
-            raise ValueError("ERROR: Valon didn't step in first run.")
-
         ### All Other Runs ###
         run_number = 1
-        while run_bool:
+        while True:
             curr_pos = self.zaber_controller.get_pos()
 
             self.oscilloscope_controller.set_tuning_settings()
-            time.sleep(10)  # TODO: Figure out how to remove this
+            time.sleep(2)  # TODO: Figure out how to remove this
             self.oscilloscope_controller.calib_stop()
 
             if step_direction == StepDirection.Up:
@@ -220,7 +204,6 @@ class Spectrometer:
             total_frequency = new_freq + self.awg_controller.awg_freq
             print(f"the new center freq is: {total_frequency}")
             print(f"The new Valon Frequency is: {new_freq}")
-            curr_pos = self.zaber_controller.get_pos()
 
             signals.progress.emit(
                 run_number / iterations,
@@ -242,7 +225,6 @@ class Spectrometer:
 
             self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.move_to(start_pos_zaber)
-
             self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
             self.oscilloscope_controller.calib_start()
