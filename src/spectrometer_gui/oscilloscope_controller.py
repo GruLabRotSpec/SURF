@@ -169,6 +169,8 @@ class OscilloscopeController:
 
         self.write_cmd("WFMOutpre?")
 
+        self.stop_acq()
+
         return new_bin_wave
 
     def set_math3(self):

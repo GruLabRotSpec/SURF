@@ -126,9 +126,7 @@ class Spectrometer:
             )
             print("Successfully named file ", f"{self._directory}/{self._filename}.csv")
 
-        self.delay_generator_controller.set_trig(
-            self.delay_generator_controller.trigger_rate
-        )
+        self.delay_generator_controller.set_trig()
         self._time_delay = (
             self.oscilloscope_controller.acq_rate
             / self.delay_generator_controller.trigger_rate
@@ -165,12 +163,10 @@ class Spectrometer:
         self.oscilloscope_controller.acquire_fft_data_at_max()
 
         self.delay_generator_controller.start_pulse()
-        self.delay_generator_controller.set_trig(
-            self.delay_generator_controller.trigger_rate
-        )
+        self.delay_generator_controller.set_trig()
 
         # collect data
-        _, _ = self._fft_from_scope(valon_freq)
+        _, _ = self.fft_from_scope(valon_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.stop_acq()
@@ -212,23 +208,14 @@ class Spectrometer:
                 f"{run_number} / {iterations} - Freq {new_freq} MHz",
             )
 
-            print(
-                "Attempting to travel from ",
-                start_position,
-                " mm to ",
-                end_position,
-                " mm",
-            )
+            print("Zaber Scan from ", start_position, " mm to ", end_position, " mm")
 
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
 
-            self.oscilloscope_controller.start_acq()
             self.delay_generator_controller.start_trig()
 
             max_list = self.scan_with_acquisition(end_position)
-
-            self.oscilloscope_controller.stop_acq()
 
             # TODO: Check if we can just grab the actual pos's from the zaber
             pos_array = np.linspace(start_position, end_position, len(max_list))
@@ -237,57 +224,23 @@ class Spectrometer:
 
             print("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
-            curr_pos = self.zaber_controller.get_pos()
-            print("Running scan... Zaber is at position: ", curr_pos)
 
-            self.delay_generator_controller.set_trig(
-                self.delay_generator_controller.trigger_rate
-            )
+            self.delay_generator_controller.set_trig()
 
             self.oscilloscope_controller.set_math4()
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
-            frequency_values, intensity_values = self._fft_from_scope(new_freq)
-            self.oscilloscope_controller.stop_acq()
+            frequency_values, intensity_values = self.fft_from_scope(new_freq)
             self.delay_generator_controller.stop_pulse()
 
-            # filtering exported data to bandwidth of the cavity
-            upper_bound = total_frequency + step_size / 2
-            lower_bound = total_frequency - step_size / 2
-
-            spectrum_data = pd.DataFrame(
-                {"Frequency (MHz)": frequency_values, "Intensity": intensity_values}
-            )
-
-            metadata = pd.DataFrame(
-                {
-                    "Center Freq": [total_frequency],
-                    "Cavity Position": [curr_pos],
-                }
-            )
-
-            filtered_spectrum = spectrum_data.loc[
-                (spectrum_data["Frequency (MHz)"] >= lower_bound)
-                & (spectrum_data["Frequency (MHz)"] <= upper_bound)
-            ]
-
-            filtered_spectrum.reset_index(drop=True)
-
-            if step_direction == StepDirection.Down:
-                filtered_spectrum = filtered_spectrum.iloc[::-1]
-
-            pd.concat([spectrum_data, metadata], axis=1).to_csv(
-                f"{self._run_directory}/{total_frequency}.csv",
-                mode="w+",
-                index=False,
-            )
-
-            pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
-                f"{self._directory}/{self._filename}.csv",
-                mode="a",
-                index=False,
-                header=False,
+            _, filtered_spectrum = self.process_frequency_data(
+                total_frequency,
+                step_size,
+                frequency_values,
+                intensity_values,
+                max_pos,
+                step_direction,
             )
 
             signals.update_graph.emit(
@@ -326,6 +279,7 @@ class Spectrometer:
 
         # Cleanup
         self.delay_generator_controller.stop_trig()
+        self.oscilloscope_controller.stop_acq()
         self.zaber_controller.home()
         self.finalize_csv()
         print("Run is finished")
@@ -394,14 +348,9 @@ class Spectrometer:
 
             print("Zaber is at position ", curr_pos)
 
-            time.sleep(2)
-            self.oscilloscope_controller.start_acq()
             self.delay_generator_controller.start_trig()
-
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
-
             self.delay_generator_controller.stop_trig()
-            self.oscilloscope_controller.stop_acq()
 
             for max_lists in max_list:
                 pos_arr = np.linspace(
@@ -464,29 +413,15 @@ class Spectrometer:
                     i += 1
                     self.valon_controller.step_up()
 
-                else:
-                    print(
-                        "You have reached the stop frequency. You will find your data in .csv file: ",
-                        f"{self._directory}/{self._filename}.csv",
-                    )
-                    break
-
-            elif step_up_var and not stop_freq_var:
-                run_bool = input(
-                    "Do you want to run another experiment? (Y/N): "
-                ).lower()
-                if run_bool:
-                    i += 1
-                    self.valon_controller.step_up()
-                if not run_bool:
-                    print(
-                        "Experiment concluded. You will find your data in .csv file: ",
-                        f"{self._directory}/{self._filename}.csv",
-                    )
-                    self.zaber_controller.home()
-                break
+        print(
+            "Experiment concluded. You will find your data in .csv file: ",
+            f"{self._directory}/{self._filename}.csv",
+        )
+        self.zaber_controller.home()
 
     def scan_with_acquisition(self, end_pos):
+        self.oscilloscope_controller.start_acq()
+
         # I don't like this, but axis.is_busy() is too slow
         # and I can't find anything better
 
@@ -509,12 +444,14 @@ class Spectrometer:
             self.zaber_controller.move_to(end_pos, ZaberSpeed.SCANNING, blocking=True)
             stop_event.set()
 
+        self.oscilloscope_controller.stop_acq()
+
         curr_pos = self.zaber_controller.get_pos()
         print("Zaber moved to: ", curr_pos, " mm")
 
         return future.result()
 
-    def _fft_from_scope(self, new_freq):
+    def fft_from_scope(self, new_freq):
         wave_values = self.oscilloscope_controller.acq_ft_curve(self._time_delay)
 
         (
@@ -523,12 +460,76 @@ class Spectrometer:
             freq_cent,
             freq_span,
         ) = self.oscilloscope_controller.grab_fft_params()
-        start = freq_cent - freq_span / 2
-        x_values, y_values = self._scale_fft(
-            wave_values, start, new_freq, time_scale, time_start
+
+        start = freq_cent - freq_span / 2 / 1000000
+
+        fft_y_values = np.array(wave_values, dtype="float")
+        fft_x_values = (
+            np.linspace(
+                time_start,
+                time_scale * len(wave_values),
+                len(wave_values),
+                endpoint=False,
+            )
+            / 1000000
         )
 
+        fft_x_values = [x + new_freq for x in fft_x_values]
+        fft_x_values = [x + start for x in fft_x_values]
+
+        x_values = fft_x_values[3:]
+        y_values = fft_y_values[3:]
+
         return x_values, y_values
+
+    def process_frequency_data(
+        self,
+        total_frequency,
+        step_size,
+        frequency_values,
+        intensity_values,
+        current_position,
+        step_direction,
+    ):
+        # filtering exported data to bandwidth of the cavity
+        upper_bound = total_frequency + step_size / 2
+        lower_bound = total_frequency - step_size / 2
+
+        spectrum_data = pd.DataFrame(
+            {"Frequency (MHz)": frequency_values, "Intensity": intensity_values}
+        )
+
+        metadata = pd.DataFrame(
+            {
+                "Center Freq": [total_frequency],
+                "Cavity Position": [current_position],
+            }
+        )
+
+        filtered_spectrum = spectrum_data.loc[
+            (spectrum_data["Frequency (MHz)"] >= lower_bound)
+            & (spectrum_data["Frequency (MHz)"] <= upper_bound)
+        ]
+
+        if step_direction == StepDirection.Down:
+            filtered_spectrum = filtered_spectrum.iloc[::-1]
+
+        filtered_spectrum = filtered_spectrum.reset_index(drop=True)
+
+        pd.concat([spectrum_data, metadata], axis=1).to_csv(
+            f"{self._run_directory}/{total_frequency}.csv",
+            mode="w+",
+            index=False,
+        )
+
+        pd.concat([filtered_spectrum, metadata], axis=1).to_csv(
+            f"{self._directory}/{self._filename}.csv",
+            mode="a",
+            index=False,
+            header=False,
+        )
+
+        return spectrum_data, filtered_spectrum
 
     def finalize_csv(self):
         filepath = f"{self._directory}/{self._filename}.csv"
@@ -576,22 +577,3 @@ class Spectrometer:
             "switch": _is_initialized(self.switch_controller),
             "awg": _is_initialized(self.awg_controller),
         }
-
-    def _scale_fft(self, wave_values, start, new_freq, time_scale, time_start):
-        fft_y_values = np.array(wave_values, dtype="float")
-        fft_x_values = (
-            np.linspace(
-                time_start,
-                time_scale * len(wave_values),
-                len(wave_values),
-                endpoint=False,
-            )
-            / 1000000
-        )
-
-        start = start / 1000000
-        fft_x_values = [x + new_freq for x in fft_x_values]
-        fft_x_values = [x + start for x in fft_x_values]
-        new_fft_x_values = fft_x_values[3:]
-        new_fft_y_values = fft_y_values[3:]
-        return new_fft_x_values, new_fft_y_values
