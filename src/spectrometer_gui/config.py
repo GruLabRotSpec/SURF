@@ -11,7 +11,7 @@ class ValonConfig(BaseModel):
 
 
 class ZaberConfig(BaseModel):
-    zaber_speed: float  # TODO: Limit the speed to the possible range
+    zaber_speed: float
     zaber_homing_speed: float
     zaber_step_size: float
     zaber_port: str
@@ -25,14 +25,20 @@ class AWGConfig(BaseModel):
     awg_ch_2_output: bool
 
 
+class MathConfig(BaseModel):
+    window: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
+    resolution: float
+    gate_position: float
+
+
 class OscilloscopeConfig(BaseModel):
     channel: str
-    resolution: float
-    sample_rate: int
-    window_type: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
-    gate_position: float
-    math_averages: int
     acq_rate: int
+    sample_rate: int
+    math_averages: int
+    visa_address: str
+    math3: MathConfig
+    math4: MathConfig
 
 
 class DelayGeneratorConfig(BaseModel):

@@ -6,13 +6,12 @@ from config import Config
 
 
 class OscilloscopeController:
-    # initializing scope
     def __init__(self):
         self.initialized = False
 
     def initialize(self, config: Config):
         rm = visa.ResourceManager()
-        self._visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+        self._visa_address = config.oscilloscope_controller.visa_address
         self._oscilloscope = rm.open_resource(
             self._visa_address
         )  # delay after each command
@@ -21,9 +20,11 @@ class OscilloscopeController:
         self._oscilloscope.write_termination = "\n"
         self._oscilloscope.expect_termination = False
         self._oscilloscope.chunk_size = 102400  # larger data sizes
+
         time.sleep(1)
+
         r = self._oscilloscope.query("*opc?")  # sync
-        print(r)
+        print(f"Scope Query: {r}")
         self._oscilloscope.write("*cls")
 
         self.update_config(config)
@@ -35,19 +36,41 @@ class OscilloscopeController:
     def update_config(self, config: Config):
         oscill_config = config.oscilloscope_controller
 
-        self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.window_type}")
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}e6")
-        self.write_cmd(
-            f"MATH4:SPECTral:RESBw {oscill_config.resolution}e3"
-        )  # Convert to Hz
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.gate_position}e-6")
+
+        # Math 3
+        self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.math3.window}")
+        self.write_cmd(f"MATH3:SPECTral:RESBw {oscill_config.math3.resolution}e3")
+        self.write_cmd(f"MATH3:SPECTral:GATEPOS {oscill_config.math3.gate_position}e-6")
+        self.write_cmd(f"MATH3:NUMAvg {oscill_config.math_averages}")
+
+        # Math 4
+        self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.math4.window}")
+        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.math4.resolution}e3")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.math4.gate_position}e-6")
         self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
 
         self.channel = oscill_config.channel
-        self.gate_pos = oscill_config.gate_position
         self.acq_rate = oscill_config.acq_rate
+        self.config = config
 
-    # sends command, ensures no error after
+    def recall_setup(
+        self,
+        setup,
+        folder="C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab",
+    ):
+        self.write_cmd(f'RECALL:SETUP "{folder}\\{setup}"')
+        time.sleep(3)
+        print("Successfully recalled setup")
+
+    def recall_setup_cavity(self, setup="cavity_ch2000002.set"):
+        self.write_cmd(f'RECALL:SETUP "{setup}"')
+        time.sleep(7)
+
+    def recall_mol_peak(self, setup="cavity000.set"):
+        self.write_cmd(f'RECALL:SETUP "{setup}"')
+        time.sleep(7)
+
     def write_cmd(self, command):
         self._oscilloscope.write(command)
         errorCheck = self._oscilloscope.write("*ESR?")
@@ -59,7 +82,9 @@ class OscilloscopeController:
 
         self._oscilloscope.write("*cls")
 
-    # query command
+        # Give the scope a small amount of time to update
+        time.sleep(0.1)
+
     def query_cmd(self, command):
         output = self._oscilloscope.query(f"{command}")
         return output
@@ -71,8 +96,7 @@ class OscilloscopeController:
         freq_span = float(self.query_cmd("MATH4:SPECTral:SPAN?"))
         return time_scale, time_start, freq_cent, freq_span
 
-    # starts oscilloscope run
-    def calib_start(self):
+    def start_acq(self):
         # initial config
         self.write_cmd("acquire:state 0")
         self.write_cmd("header 0")
@@ -85,15 +109,8 @@ class OscilloscopeController:
         self.write_cmd("acquire:STOPAfter RUNSTop")  # cont
         self.write_cmd("acquire:state 1")
 
-    # stops oscilloscope run
-    def calib_stop(self):
+    def stop_acq(self):
         self.write_cmd("acquire:state 0")
-
-    def clear(self):
-        self.write_cmd("CLEAR ALL")  # doesn't work
-
-    def run(self):
-        self.write_cmd("acquire:state 1")  # run
 
     def acquire_fft_data_at_max(self):
         # math4 input param
@@ -120,28 +137,11 @@ class OscilloscopeController:
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
-        print("acquire time: ", t8 - t7)
+        print("fft acquire time: ", t8 - t7)
 
         self.write_cmd("WFMOutpre?")
 
         return bin_wave
-
-    def recall_setup(
-        self,
-        setup,
-        folder="C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab",
-    ):
-        self.write_cmd(f'RECALL:SETUP "{folder}\\{setup}"')
-        time.sleep(3)
-        print("Successfully recalled setup")
-
-    def recall_setup_cavity(self, setup="cavity_ch2000002.set"):
-        self.write_cmd(f'RECALL:SETUP "{setup}"')
-        time.sleep(7)
-
-    def recall_mol_peak(self, setup="cavity000.set"):
-        self.write_cmd(f'RECALL:SETUP "{setup}"')
-        time.sleep(7)
 
     def acq_ft_curve(self, acqtime):  # this is for actually pulling the data
         self.write_cmd("header 0")
@@ -165,45 +165,38 @@ class OscilloscopeController:
             "curve?", datatype="f", container=np.array, is_big_endian=True
         )
         t8 = time.perf_counter()
-        print("acquire time: ", t8 - t7)
+        print("ft curve acquire time: ", t8 - t7)
 
         self.write_cmd("WFMOutpre?")
 
         return new_bin_wave
 
-    def set_settings(self):
+    def set_math3(self):
+        oscill_config = self.config.oscilloscope_controller
+        self.write_cmd("SELECT:MATH4 0")
+        self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
+        self.write_cmd("SELECT:MATH3 1")
+
+        self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.math3.window}")
+        self.write_cmd(f"MATH3:SPECTral:RESBw {oscill_config.math3.resolution}e3")
+        self.write_cmd("MATH3:SPECTral:CENTER 30E6")
+        self.write_cmd(f"MATH3:SPECTral:GATEPOS {oscill_config.math3.gate_position}e-6")
+        self.write_cmd(f"MATH3:NUMAvg {oscill_config.math_averages}")
+        self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")
+
+        self.start_acq()
+
+    def set_math4(self):
+        oscill_config = self.config.oscilloscope_controller
         self.write_cmd("SELECT:MATH3 0")
         self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({self.channel}))"')
         self.write_cmd("SELECT:MATH4 1")
-        self.write_cmd("MATH4:NUMAvg 1000000")
-        self.write_cmd("MATH4:VERTical:POSition -4")
-        self.write_cmd("MATH4:SPECTral:WINdow Hanning")
-        self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd("HORizontal:MODE:SCAle 5E-6")  ##! parameters to reset each time
-        self.write_cmd("MATH4:SPECTral:RESBw 100E3")  ##
-        self.write_cmd("MATH4:SPECTral:CENTER 30E6")  ##
-        self.write_cmd("MATH4:SPECTral:SPAN 20E6")  ##
-        self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.gate_pos}")  ##
-        self.write_cmd(  ##
-            "MATH4:VERTICAL:SCALE 500E-6"
-        )  # sets math channel vertical scale
-        # time.sleep(2)
+
+        self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.math4.window}")
+        self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.math4.resolution}e3")
+        self.write_cmd("MATH4:SPECTral:CENTER 30E6")
+        self.write_cmd("MATH4:SPECTral:SPAN 20E6")
+        self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.math4.gate_position}e-6")
+        self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
+        self.write_cmd("MATH4:VERTICAL:SCALE 500E-6")
         self.write_cmd(f"{self.channel}:SCAle 1")
-
-    def set_tuning_settings(self):
-        self.write_cmd("SELECT:MATH4 0")
-
-        self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
-        self.write_cmd("SELECT:MATH3 1")
-        self.write_cmd("MATH3:SPECTral:WINdow Rectangular")
-        self.write_cmd("MATH3:VERTical:POSition -4")
-        self.write_cmd("HORizontal:MODE:SAMPLERate 500E6")
-        self.write_cmd(
-            "HORizontal:MODE:SCAle 500E-9"
-        )  ##! parameters to reset each time
-        self.write_cmd("MATH3:SPECTral:RESBw 890E3")  ##
-        self.write_cmd("MATH3:SPECTral:CENTER 30E6")  ##
-        self.write_cmd("MATH3:SPECTral:GATEPOS 600E-9")  ##
-        self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")  # sets math channel vertical scale
-
-        self.calib_start()

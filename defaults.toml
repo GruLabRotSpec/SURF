@@ -17,12 +17,20 @@ awg_ch_2_output = true
 
 [oscilloscope_controller]
 channel = "CH4"
-resolution = 100.0
-sample_rate = 500
-window_type = "Rectangular"
-gate_position = 18.45
-math_averages = 1000000
 acq_rate = 300
+sample_rate = 500
+math_averages = 1000000
+visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
+
+[oscilloscope_controller.math3]
+window = "Rectangular"
+resolution = 890.0
+gate_position = 0.6
+
+[oscilloscope_controller.math4]
+window = "Hanning"
+resolution = 100.0
+gate_position = 18.45
 
 [delay_generator_controller]
 trigger_rate = 5.0

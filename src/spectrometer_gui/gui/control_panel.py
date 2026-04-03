@@ -77,7 +77,7 @@ class ControlPanel(QWidget):
         self.zaber_step_size_field.setMaximum(5)
         self.zaber_step_size_field.setSingleStep(0.25)
         self.zaber_step_size_field.setSuffix(" mm")
-        self.zaber_step_size_field.setEnabled(False) # Temporary
+        self.zaber_step_size_field.setEnabled(False)
         zaber_form.addRow(zaber_step_size_label, self.zaber_step_size_field)
 
         zaber_control_widget_1 = QHBoxLayout()
@@ -272,61 +272,6 @@ class ControlPanel(QWidget):
 
         # right_column.addStretch(1)
 
-        oscilloscope_group = QGroupBox("Oscilloscope")
-
-        oscilloscope_form = QFormLayout()
-        oscilloscope_group.setLayout(oscilloscope_form)
-
-        math_type_label = QLabel("Math")
-        self.math_type_field = QComboBox()
-        self.math_type_field.addItems(
-            ["MATH1", "MATH2", "MATH3", "MATH4"]
-        )
-        self.math_type_field.setCurrentText("MATH4") # Temporary
-        self.math_type_field.setEnabled(False) # Temporary
-        oscilloscope_form.addRow(math_type_label, self.math_type_field)
-
-        resolution_label = QLabel("Resolution")
-        self.resolution_field = QDoubleSpinBox()
-        self.resolution_field.setMinimum(0)
-        self.resolution_field.setMaximum(100000)
-        self.resolution_field.setSuffix(" kHz")
-        oscilloscope_form.addRow(resolution_label, self.resolution_field)
-
-        sample_rate_label = QLabel("Sample rate")
-        self.sample_rate_field = QSpinBox()
-        self.sample_rate_field.setMinimum(0)
-        self.sample_rate_field.setSingleStep(100)
-        self.sample_rate_field.setMaximum(1000)
-        self.sample_rate_field.setSuffix(" MS/s")
-        oscilloscope_form.addRow(sample_rate_label, self.sample_rate_field)
-
-        window_type_label = QLabel("Window type")
-        self.window_type_field = QComboBox()
-        self.window_type_field.addItems(
-            ["Rectangular", "Hamming", "Hanning", "Blackman"]
-        )
-        oscilloscope_form.addRow(window_type_label, self.window_type_field)
-
-        gate_position_label = QLabel("Gate position")
-        self.gate_position_field = QDoubleSpinBox()
-        self.gate_position_field.setSuffix(" μs")
-        oscilloscope_form.addRow(gate_position_label, self.gate_position_field)
-
-        math_avg_label = QLabel("Math averages")
-        self.math_avg_field = QSpinBox()
-        self.math_avg_field.setMinimum(2)
-        self.math_avg_field.setMaximum(1000000)
-        oscilloscope_form.addRow(math_avg_label, self.math_avg_field)
-
-        acq_rate_label = QLabel("Acquisition rate")
-        self.acq_rate_field = QSpinBox()
-        self.acq_rate_field.setMinimum(1)
-        self.acq_rate_field.setMaximum(10000)
-        oscilloscope_form.addRow(acq_rate_label, self.acq_rate_field)
-
-        right_column.addWidget(oscilloscope_group)
-
         timing_group = QGroupBox("Delay generator")
 
         timing_form = QFormLayout()
@@ -339,6 +284,92 @@ class ControlPanel(QWidget):
         timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
 
         right_column.addWidget(timing_group)
+
+        # Oscilloscope group boxes
+        general_group = QGroupBox("General")
+        general_form = QFormLayout()
+        general_group.setLayout(general_form)
+
+        acq_rate_label = QLabel("Acquisition rate")
+        self.acq_rate_field = QSpinBox()
+        self.acq_rate_field.setMinimum(1)
+        self.acq_rate_field.setMaximum(10000)
+        general_form.addRow(acq_rate_label, self.acq_rate_field)
+
+        sample_rate_label = QLabel("Sample rate")
+        self.sample_rate_field = QSpinBox()
+        self.sample_rate_field.setMinimum(0)
+        self.sample_rate_field.setSingleStep(100)
+        self.sample_rate_field.setMaximum(1000)
+        self.sample_rate_field.setSuffix(" MS/s")
+        general_form.addRow(sample_rate_label, self.sample_rate_field)
+
+        math_averages_label = QLabel("Math averages")
+        self.math_averages_field = QSpinBox()
+        self.math_averages_field.setMinimum(2)
+        self.math_averages_field.setMaximum(1000000)
+        general_form.addRow(math_averages_label, self.math_averages_field)
+
+        math3_group = QGroupBox("Math 3")
+        math3_form = QFormLayout()
+        math3_group.setLayout(math3_form)
+
+        math3_window_label = QLabel("Window")
+        self.math3_window_field = QComboBox()
+        self.math3_window_field.addItems(
+            ["Rectangular", "Hamming", "Hanning", "Blackman"]
+        )
+        self.math3_window_field.setCurrentText("Rectangular")
+        math3_form.addRow(math3_window_label, self.math3_window_field)
+
+        math3_res_label = QLabel("Resolution")
+        self.math3_res_field = QDoubleSpinBox()
+        self.math3_res_field.setMinimum(0)
+        self.math3_res_field.setMaximum(100000)
+        self.math3_res_field.setSuffix(" kHz")
+        self.math3_res_field.setValue(890.0)
+        math3_form.addRow(math3_res_label, self.math3_res_field)
+
+        math3_gatepos_label = QLabel("Gate position")
+        self.math3_gatepos_field = QDoubleSpinBox()
+        self.math3_gatepos_field.setSuffix(" us")
+        self.math3_gatepos_field.setValue(0.6)
+        math3_form.addRow(math3_gatepos_label, self.math3_gatepos_field)
+
+        math4_group = QGroupBox("Math 4")
+        math4_form = QFormLayout()
+        math4_group.setLayout(math4_form)
+
+        math4_window_label = QLabel("Window")
+        self.math4_window_field = QComboBox()
+        self.math4_window_field.addItems(
+            ["Rectangular", "Hamming", "Hanning", "Blackman"]
+        )
+        self.math4_window_field.setCurrentText("Hanning")
+        math4_form.addRow(math4_window_label, self.math4_window_field)
+
+        math4_res_label = QLabel("Resolution")
+        self.math4_res_field = QDoubleSpinBox()
+        self.math4_res_field.setMinimum(0)
+        self.math4_res_field.setMaximum(100000)
+        self.math4_res_field.setSuffix(" kHz")
+        self.math4_res_field.setValue(100.0)
+        math4_form.addRow(math4_res_label, self.math4_res_field)
+
+        math4_gatepos_label = QLabel("Gate position")
+        self.math4_gatepos_field = QDoubleSpinBox()
+        self.math4_gatepos_field.setSuffix(" us")
+        self.math4_gatepos_field.setValue(18.45)
+        math4_form.addRow(math4_gatepos_label, self.math4_gatepos_field)
+
+        oscilloscope_group = QGroupBox("Oscilloscope")
+        oscilloscope_layout = QVBoxLayout()
+        oscilloscope_group.setLayout(oscilloscope_layout)
+        oscilloscope_layout.addWidget(general_group)
+        oscilloscope_layout.addWidget(math3_group)
+        oscilloscope_layout.addWidget(math4_group)
+
+        right_column.addWidget(oscilloscope_group)
 
         bottom_layout.addWidget(left_column_panel)
         bottom_layout.addWidget(right_column_panel)
@@ -412,24 +443,37 @@ class ControlPanel(QWidget):
         # Valon
         self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
 
-        # Oscilloscope
-        self.resolution_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.resolution
+        # Oscilloscope - Math 4
+        self.math4_window_field.setCurrentText(
+            self.spectrometer.config.oscilloscope_controller.math4.window
+        )
+        self.math4_res_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.math4.resolution
+        )
+        self.math4_gatepos_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.math4.gate_position
+        )
+
+        # Oscilloscope - Math 3
+        self.math3_window_field.setCurrentText(
+            self.spectrometer.config.oscilloscope_controller.math3.window
+        )
+        self.math3_res_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.math3.resolution
+        )
+        self.math3_gatepos_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.math3.gate_position
+        )
+
+        # Oscilloscope - General
+        self.acq_rate_field.setValue(
+            self.spectrometer.config.oscilloscope_controller.acq_rate
         )
         self.sample_rate_field.setValue(
             self.spectrometer.config.oscilloscope_controller.sample_rate
         )
-        self.window_type_field.setCurrentText(
-            self.spectrometer.config.oscilloscope_controller.window_type
-        )
-        self.gate_position_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.gate_position
-        )
-        self.math_avg_field.setValue(
+        self.math_averages_field.setValue(
             self.spectrometer.config.oscilloscope_controller.math_averages
-        )
-        self.acq_rate_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.acq_rate
         )
 
         # Delay generator
@@ -467,24 +511,37 @@ class ControlPanel(QWidget):
             # Valon
             self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
 
-            # Oscilloscope
-            self.spectrometer.config.oscilloscope_controller.resolution = (
-                self.resolution_field.value()
+            # Oscilloscope - Math 4
+            self.spectrometer.config.oscilloscope_controller.math4.window = (  # type: ignore[assignment]
+                self.math4_window_field.currentText()
+            )
+            self.spectrometer.config.oscilloscope_controller.math4.resolution = (
+                self.math4_res_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.math4.gate_position = (
+                self.math4_gatepos_field.value()
+            )
+
+            # Oscilloscope - Math 3
+            self.spectrometer.config.oscilloscope_controller.math3.window = (  # type: ignore[assignment]
+                self.math3_window_field.currentText()
+            )
+            self.spectrometer.config.oscilloscope_controller.math3.resolution = (
+                self.math3_res_field.value()
+            )
+            self.spectrometer.config.oscilloscope_controller.math3.gate_position = (
+                self.math3_gatepos_field.value()
+            )
+
+            # Oscilloscope - General
+            self.spectrometer.config.oscilloscope_controller.acq_rate = (
+                self.acq_rate_field.value()
             )
             self.spectrometer.config.oscilloscope_controller.sample_rate = (
                 self.sample_rate_field.value()
             )
-            self.spectrometer.config.oscilloscope_controller.window_type = (
-                self.window_type_field.currentText()
-            )  # type: ignore
-            self.spectrometer.config.oscilloscope_controller.gate_position = (
-                self.gate_position_field.value()
-            )
             self.spectrometer.config.oscilloscope_controller.math_averages = (
-                self.math_avg_field.value()
-            )
-            self.spectrometer.config.oscilloscope_controller.acq_rate = (
-                self.acq_rate_field.value()
+                self.math_averages_field.value()
             )
 
             # Delay generator

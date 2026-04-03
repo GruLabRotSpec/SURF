@@ -166,7 +166,7 @@ class Spectrometer:
         print(f"Starting scan with zaber at: {curr_pos}")
 
         ### First Run ###
-        self.oscilloscope_controller.set_settings()
+        self.oscilloscope_controller.set_math4()
         self.oscilloscope_controller.acquire_fft_data_at_max()
 
         self.delay_generator_controller.start_pulse()
@@ -178,7 +178,7 @@ class Spectrometer:
         _, _ = self._fft_from_scope(new_freq)
 
         # stop scope and pulse valve
-        self.oscilloscope_controller.calib_stop()
+        self.oscilloscope_controller.stop_acq()
         self.delay_generator_controller.stop_pulse()
 
         ### All Other Runs ###
@@ -186,9 +186,9 @@ class Spectrometer:
         while True:
             curr_pos = self.zaber_controller.get_pos()
 
-            self.oscilloscope_controller.set_tuning_settings()
+            self.oscilloscope_controller.set_math3()
             time.sleep(2)  # TODO: Figure out how to remove this
-            self.oscilloscope_controller.calib_stop()
+            self.oscilloscope_controller.stop_acq()
 
             if step_direction == StepDirection.Up:
                 new_freq = valon_freq + step_size * run_number
@@ -227,12 +227,12 @@ class Spectrometer:
             self.zaber_controller.move_to(start_pos_zaber)
             self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
-            self.oscilloscope_controller.calib_start()
+            self.oscilloscope_controller.start_acq()
             self.delay_generator_controller.start_trig()
 
             max_list = self.scan_with_acquisition(end_pos_zaber)
 
-            self.oscilloscope_controller.calib_stop()
+            self.oscilloscope_controller.stop_acq()
 
             # TODO: Check if we can just grab the actual pos's from the zaber
             pos_array = np.linspace(start_pos_zaber, end_pos_zaber, len(max_list))
@@ -249,12 +249,12 @@ class Spectrometer:
                 self.delay_generator_controller.trigger_rate
             )
 
-            self.oscilloscope_controller.set_settings()
+            self.oscilloscope_controller.set_math4()
             self.oscilloscope_controller.acquire_fft_data_at_max()
 
             self.delay_generator_controller.start_pulse()
             frequency_values, intensity_values = self._fft_from_scope(new_freq)
-            self.oscilloscope_controller.calib_stop()
+            self.oscilloscope_controller.stop_acq()
             self.delay_generator_controller.stop_pulse()
 
             # filtering exported data to bandwidth of the cavity
@@ -354,7 +354,7 @@ class Spectrometer:
         self.switch_controller.set_switch_cavity()
 
         # Set tuning settings
-        self.oscilloscope_controller.set_tuning_settings()
+        self.oscilloscope_controller.set_math3()
 
         self._directory = ""
         self._folder_name = "Cavity Scan"
@@ -411,13 +411,13 @@ class Spectrometer:
             self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
             time.sleep(2)
-            self.oscilloscope_controller.calib_start()
+            self.oscilloscope_controller.start_acq()
             self.delay_generator_controller.start_trig()
 
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
 
             self.delay_generator_controller.stop_trig()
-            self.oscilloscope_controller.calib_stop()
+            self.oscilloscope_controller.stop_acq()
 
             for max_lists in max_list:
                 pos_arr = np.linspace(
@@ -473,7 +473,7 @@ class Spectrometer:
             )
 
             self.delay_generator_controller.stop_trig()
-            self.oscilloscope_controller.calib_stop()
+            self.oscilloscope_controller.stop_acq()
 
             if step_up_var and stop_freq_var:
                 if new_freq < stop_freq:
