@@ -11,8 +11,8 @@ class ValonConfig(BaseModel):
 
 
 class ZaberConfig(BaseModel):
-    zaber_speed: float
-    zaber_homing_speed: float
+    zaber_scanning_speed: float
+    zaber_moving_speed: float
     zaber_step_size: float
     zaber_port: str
 

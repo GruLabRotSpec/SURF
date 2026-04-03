@@ -103,8 +103,7 @@ class Spectrometer:
         # Move zaber to start position if specified
         if start_pos is not None:
             print(f"Zaber moving to set position: {start_pos}")
-            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
-            self.zaber_controller.move_to(start_pos, True)
+            self.zaber_controller.move_to(start_pos, ZaberSpeed.MOVING, True)
 
         stop_freq_input = stop_freq
 
@@ -126,8 +125,6 @@ class Spectrometer:
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
             print("Successfully named file ", f"{self._directory}/{self._filename}.csv")
-
-        # setting parameters
 
         self.delay_generator_controller.set_trig(
             self.delay_generator_controller.trigger_rate
@@ -160,8 +157,6 @@ class Spectrometer:
 
         print("All parameters set, moving to run sequence.")
 
-        new_freq = valon_freq
-
         curr_pos = self.zaber_controller.get_pos()
         print(f"Starting scan with zaber at: {curr_pos}")
 
@@ -175,7 +170,7 @@ class Spectrometer:
         )
 
         # collect data
-        _, _ = self._fft_from_scope(new_freq)
+        _, _ = self._fft_from_scope(valon_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.stop_acq()
@@ -184,22 +179,29 @@ class Spectrometer:
         ### All Other Runs ###
         run_number = 1
         while True:
-            curr_pos = self.zaber_controller.get_pos()
-
             self.oscilloscope_controller.set_math3()
             time.sleep(2)  # TODO: Figure out how to remove this
             self.oscilloscope_controller.stop_acq()
 
+            start_position = self.zaber_controller.get_pos()
+
+            # Step Zaber & Freq
             if step_direction == StepDirection.Up:
                 new_freq = valon_freq + step_size * run_number
-                start_pos_zaber = curr_pos
-                end_pos_zaber = curr_pos + self.zaber_controller.step_size
+                end_position = start_position + self.zaber_controller.step_size
             elif step_direction == StepDirection.Down:
                 new_freq = valon_freq - step_size * run_number
-                start_pos_zaber = curr_pos
-                end_pos_zaber = curr_pos - self.zaber_controller.step_size
+                end_position = start_position - self.zaber_controller.step_size
             else:
                 raise ValueError("Invalid step direction", step_direction)
+
+            # Check for end of zaber
+            if end_position > 50 or start_position > 50:
+                print("The end of the zaber extension has been reached")
+                break
+            elif end_position < 0 or start_position < 0:
+                print("The zaber has reached home")
+                break
 
             total_frequency = new_freq + self.awg_controller.awg_freq
             print(f"the new center freq is: {total_frequency}")
@@ -212,36 +214,29 @@ class Spectrometer:
 
             print(
                 "Attempting to travel from ",
-                start_pos_zaber,
+                start_position,
                 " mm to ",
-                end_pos_zaber,
+                end_position,
                 " mm",
             )
 
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
 
-            print(f"Moving Zaber to {start_pos_zaber}")
-
-            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
-            self.zaber_controller.move_to(start_pos_zaber)
-            self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
-
             self.oscilloscope_controller.start_acq()
             self.delay_generator_controller.start_trig()
 
-            max_list = self.scan_with_acquisition(end_pos_zaber)
+            max_list = self.scan_with_acquisition(end_position)
 
             self.oscilloscope_controller.stop_acq()
 
             # TODO: Check if we can just grab the actual pos's from the zaber
-            pos_array = np.linspace(start_pos_zaber, end_pos_zaber, len(max_list))
+            pos_array = np.linspace(start_position, end_position, len(max_list))
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
             print("Moving to maximum position at: ", max_pos, " mm")
-            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
-            self.zaber_controller.move_to(max_pos)
+            self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
             curr_pos = self.zaber_controller.get_pos()
             print("Running scan... Zaber is at position: ", curr_pos)
 
@@ -308,7 +303,7 @@ class Spectrometer:
 
             print(
                 "run #",
-                run_number + 1,
+                run_number,
                 "has been added to: ",
                 f"{self._directory}/{self._filename}.csv",
             )
@@ -319,14 +314,6 @@ class Spectrometer:
                 break
             elif new_freq < stop_freq and step_direction == StepDirection.Down:
                 print("You have reached the stop frequency")
-                break
-
-            # Check for end of zaber
-            if end_pos_zaber > 50 or start_pos_zaber > 50:
-                print("The end of the zaber extension has been reached")
-                break
-            elif end_pos_zaber <= 0 or start_pos_zaber < 0:
-                print("The zaber has reached home")
                 break
 
             # Step
@@ -367,7 +354,6 @@ class Spectrometer:
             open(f"{self._directory}/{self._filename}.csv", "w+")
             print("Sucessfully named file ", f"{self._directory}/{self._filename}.csv")
 
-        self.zaber_controller.set_speed(ZaberSpeed.HOMING)
         self.zaber_controller.home()
 
         print("Zaber has arrived at home position 0 mm")
@@ -402,13 +388,11 @@ class Spectrometer:
             self.delay_generator_controller.set_frequency(
                 300
             )  # Trigger rate for cavity search
-            self.zaber_controller.set_speed(ZaberSpeed.HOMING)
             self.zaber_controller.home()
 
             curr_pos = self.zaber_controller.get_pos()
 
             print("Zaber is at position ", curr_pos)
-            self.zaber_controller.set_speed(ZaberSpeed.SCANNING)
 
             time.sleep(2)
             self.oscilloscope_controller.start_acq()
@@ -522,7 +506,7 @@ class Spectrometer:
         stop_event = threading.Event()
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(_gather_data, stop_event)
-            self.zaber_controller.move_to(end_pos, blocking=True)
+            self.zaber_controller.move_to(end_pos, ZaberSpeed.SCANNING, blocking=True)
             stop_event.set()
 
         curr_pos = self.zaber_controller.get_pos()

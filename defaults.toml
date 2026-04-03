@@ -3,8 +3,8 @@ rf_level = 10.0
 valon_port = "COM3"
 
 [zaber_controller]
-zaber_speed = 0.003
-zaber_homing_speed = 2.0
+zaber_scanning_speed = 0.003
+zaber_moving_speed = 2.0
 zaber_step_size = 0.07
 zaber_port = "COM5"
 

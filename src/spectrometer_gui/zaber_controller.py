@@ -7,7 +7,7 @@ from enum import Enum
 
 class ZaberSpeed(Enum):
     SCANNING = 0
-    HOMING = 1
+    MOVING = 1
 
 
 class ZaberController:
@@ -34,18 +34,19 @@ class ZaberController:
     def update_config(self, config: Config):
         zaber_config = config.zaber_controller
 
-        self.move_speed = zaber_config.zaber_speed
-        self.homing_speed = zaber_config.zaber_homing_speed
         self.step_size = zaber_config.zaber_step_size
 
-        self.current_speed = self.move_speed
+        self.speeds = {
+            ZaberSpeed.SCANNING: zaber_config.zaber_scanning_speed,
+            ZaberSpeed.MOVING: zaber_config.zaber_moving_speed,
+        }
 
-    def move_to(self, pos, blocking=True):
+    def move_to(self, pos, speed, blocking=True):
         self.axis.move_absolute(
             pos,
             Units.LENGTH_MILLIMETRES,
             wait_until_idle=blocking,
-            velocity=self.current_speed,
+            velocity=self.speeds[speed],
             velocity_unit=Units.VELOCITY_MILLIMETRES_PER_SECOND,
         )
 
@@ -54,9 +55,3 @@ class ZaberController:
 
     def home(self, blocking=True):
         self.axis.home(wait_until_idle=blocking)
-
-    def set_speed(self, zaber_speed: ZaberSpeed):
-        if zaber_speed == ZaberSpeed.SCANNING:
-            self.current_speed = self.move_speed
-        elif zaber_speed == ZaberSpeed.HOMING:
-            self.current_speed = self.homing_speed

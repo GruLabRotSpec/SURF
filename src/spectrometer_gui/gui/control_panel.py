@@ -55,7 +55,7 @@ class ControlPanel(QWidget):
         zaber_form = QFormLayout()
         zaber_group.setLayout(zaber_form)
 
-        zaber_speed_1_label = QLabel("Zaber scanning speed")
+        zaber_speed_1_label = QLabel("Scanning speed")
         self.zaber_speed_1_field = QDoubleSpinBox(decimals=3)
         self.zaber_speed_1_field.setMinimum(0)
         self.zaber_speed_1_field.setMaximum(1)
@@ -63,7 +63,7 @@ class ControlPanel(QWidget):
         self.zaber_speed_1_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
-        zaber_speed_2_label = QLabel("Zaber homing speed")
+        zaber_speed_2_label = QLabel("Moving speed")
         self.zaber_speed_2_field = QDoubleSpinBox()
         self.zaber_speed_2_field.setMinimum(0)
         self.zaber_speed_2_field.setMaximum(5)
@@ -71,7 +71,7 @@ class ControlPanel(QWidget):
         self.zaber_speed_2_field.setSuffix(" mm/s")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
-        zaber_step_size_label = QLabel("Zaber step size")
+        zaber_step_size_label = QLabel("Step size")
         self.zaber_step_size_field = QDoubleSpinBox()
         self.zaber_step_size_field.setMinimum(0)
         self.zaber_step_size_field.setMaximum(5)
@@ -148,7 +148,7 @@ class ControlPanel(QWidget):
 
         left_column.addWidget(zaber_group)
 
-        awg_group = QGroupBox("Arbitrary waveform generator")
+        awg_group = QGroupBox("Arbitrary Waveform Generator")
 
         awg_form = QFormLayout()
         awg_group.setLayout(awg_form)
@@ -272,7 +272,7 @@ class ControlPanel(QWidget):
 
         # right_column.addStretch(1)
 
-        timing_group = QGroupBox("Delay generator")
+        timing_group = QGroupBox("Delay Generator")
 
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
@@ -401,10 +401,13 @@ class ControlPanel(QWidget):
         else:
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
+            speed = float(self.zaber_speed_1_field.value())
             if home:
-                self.spectrometer.spectrometer.zaber_controller.move_to(0, False)
+                self.spectrometer.spectrometer.zaber_controller.home(False)
             else:
-                self.spectrometer.spectrometer.zaber_controller.move_to(new_pos, False)
+                self.spectrometer.spectrometer.zaber_controller.move_to(
+                    new_pos, speed, False
+                )
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
@@ -419,10 +422,10 @@ class ControlPanel(QWidget):
 
         # Zaber
         self.zaber_speed_1_field.setValue(
-            self.spectrometer.config.zaber_controller.zaber_speed
+            self.spectrometer.config.zaber_controller.zaber_scanning_speed
         )
         self.zaber_speed_2_field.setValue(
-            self.spectrometer.config.zaber_controller.zaber_homing_speed
+            self.spectrometer.config.zaber_controller.zaber_moving_speed
         )
 
         # AWG
@@ -484,10 +487,10 @@ class ControlPanel(QWidget):
     def _apply_values_in_control_panel(self):
         if not self.spectrometer.current_task:
             # Zaber
-            self.spectrometer.config.zaber_controller.zaber_speed = (
+            self.spectrometer.config.zaber_controller.zaber_scanning_speed = (
                 self.zaber_speed_1_field.value()
             )
-            self.spectrometer.config.zaber_controller.zaber_homing_speed = (
+            self.spectrometer.config.zaber_controller.zaber_moving_speed = (
                 self.zaber_speed_2_field.value()
             )
 
