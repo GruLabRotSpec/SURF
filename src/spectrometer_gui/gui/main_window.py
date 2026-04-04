@@ -15,6 +15,7 @@ import pandas as pd
 from gui.settings_window import SettingsWindow
 from gui.about_window import AboutWindow
 
+from gui.broadband_panel import BroadbandPanel
 from gui.frequency_scan_panel import FrequencyScanPanel
 from gui.cavity_search_panel import CavitySearchPanel
 from gui.control_panel import ControlPanel
@@ -50,6 +51,7 @@ class MainWindow(QMainWindow):
 
         bottom_bar_panel = BottomBarPanel(self.controller)
         status_panel = StatusPanel(self.controller)
+        broadband_panel = BroadbandPanel()
         frequency_scan = FrequencyScanPanel(self.controller)
         cavity_search = CavitySearchPanel(self.controller)
         control_panel = ControlPanel(self.controller)
@@ -59,6 +61,7 @@ class MainWindow(QMainWindow):
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
+        self.tab_widget.addTab(broadband_panel, "Broadband")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
         self.tab_widget.addTab(cavity_search, "Cavity Search")
         self.tab_widget.addTab(control_panel, "Control")
