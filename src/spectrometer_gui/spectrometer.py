@@ -23,6 +23,8 @@ from valon_controller import ValonController
 from switch_controller import SwitchController
 from awg_controller import AWGController
 
+from logger import CustomLogger
+
 if typing.TYPE_CHECKING:
     from gui.spectrometer_controller import ScanSignals
 
@@ -62,6 +64,10 @@ class Spectrometer:
         self.delay_generator_controller = DelayGeneratorController()
         self.awg_controller = AWGController()
 
+        # Logger
+        self.logger = CustomLogger()
+        self.logger.logger.info("This is a test.")
+
         # Output options
         self._directory = ""
         self._run_directory = ""
@@ -78,7 +84,6 @@ class Spectrometer:
 
         os.makedirs(base_path)
         os.makedirs(f"{base_path}/{subdirectory}")
-
         print("folder for data has been created: ", base_path)
         return base_path
 

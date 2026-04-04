@@ -1,13 +1,15 @@
 import logging
 
-logger = logging.getLogger()
-logger.setLevel(logging.debug)
+class CustomLogger():
+    def __init__(self):
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
 
-file_handler = logging.FileHandler("test.log") # Change later to path stored in settings
-file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
+        self.file_handler = logging.FileHandler("test.log") # Change later to path stored in settings
+        self.file_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
 
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
+        self.console_handler = logging.StreamHandler()
+        self.console_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s: %(message)s"))
 
-logger.addHandler(file_handler)
-logger.addHandler(console_handler)
+        self.logger.addHandler(self.file_handler)
+        self.logger.addHandler(self.console_handler)
