@@ -23,6 +23,7 @@ from valon_controller import ValonController
 from switch_controller import SwitchController
 from awg_controller import AWGController
 
+import logging
 from logger import CustomLogger
 
 if typing.TYPE_CHECKING:
@@ -65,8 +66,8 @@ class Spectrometer:
         self.awg_controller = AWGController()
 
         # Logger
-        self.logger = CustomLogger()
-        self.logger.logger.info("This is a test.")
+        self.logger = CustomLogger("grugui.spectrometer", logging.DEBUG)
+        self.logger.logger.debug("This is a logging test.")
 
         # Output options
         self._directory = ""
@@ -84,7 +85,7 @@ class Spectrometer:
 
         os.makedirs(base_path)
         os.makedirs(f"{base_path}/{subdirectory}")
-        print("folder for data has been created: ", base_path)
+        self.logger.logger.info("folder for data has been created: ", base_path)
         return base_path
 
     def scan_frequency(
@@ -107,7 +108,7 @@ class Spectrometer:
 
         # Move zaber to start position if specified
         if start_pos is not None:
-            print(f"Zaber moving to set position: {start_pos}")
+            self.logger.logger.info(f"Zaber moving to set position: {start_pos}")
             self.zaber_controller.move_to(start_pos, ZaberSpeed.MOVING, True)
 
         stop_freq_input = stop_freq
@@ -129,7 +130,7 @@ class Spectrometer:
             save_config(
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
-            print("Successfully named file ", f"{self._directory}/{self._filename}.csv")
+            self.logger.logger.info("Successfully named file ", f"{self._directory}/{self._filename}.csv")
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
@@ -137,7 +138,7 @@ class Spectrometer:
             / self.delay_generator_controller.trigger_rate
         )
 
-        print(
+        self.logger.logger.info(
             f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, ",
             f"each run the oscilloscope will require a time delay of {self._time_delay}",
         )
@@ -147,7 +148,7 @@ class Spectrometer:
             iterations * self._time_delay + 14 * iterations
         ) / 60  # Includes zaber scanning time (in minutes)
 
-        print(
+        self.logger.logger.info(
             f"The estimated time for this scan is at least {total_time} mins, with {iterations} scans"
         )
 
@@ -158,10 +159,10 @@ class Spectrometer:
         stop_freq = stop_freq_input - self.awg_controller.awg_freq
         step_size = float(step_size)
 
-        print("All parameters set, moving to run sequence.")
+        self.logger.logger.info("All parameters set, moving to run sequence.")
 
         curr_pos = self.zaber_controller.get_pos()
-        print(f"Starting scan with zaber at: {curr_pos}")
+        self.logger.logger.info(f"Starting scan with zaber at: {curr_pos}")
 
         ### First Run ###
         self.oscilloscope_controller.set_math4()
@@ -198,22 +199,22 @@ class Spectrometer:
 
             # Check for end of zaber
             if end_position > 50 or start_position > 50:
-                print("The end of the zaber extension has been reached")
+                self.logger.logger.info("The end of the zaber extension has been reached")
                 break
             elif end_position < 0 or start_position < 0:
-                print("The zaber has reached home")
+                self.logger.logger.info("The zaber has reached home")
                 break
 
             total_frequency = new_freq + self.awg_controller.awg_freq
-            print(f"the new center freq is: {total_frequency}")
-            print(f"The new Valon Frequency is: {new_freq}")
+            self.logger.logger.info(f"the new center freq is: {total_frequency}")
+            self.logger.logger.info(f"The new Valon Frequency is: {new_freq}")
 
             signals.progress.emit(
                 run_number / iterations,
                 f"{run_number} / {iterations} - Freq {new_freq} MHz",
             )
 
-            print("Zaber Scan from ", start_position, " mm to ", end_position, " mm")
+            self.logger.logger.info("Zaber Scan from ", start_position, " mm to ", end_position, " mm")
 
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
@@ -227,7 +228,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            print("Moving to maximum position at: ", max_pos, " mm")
+            self.logger.logger.info("Moving to maximum position at: ", max_pos, " mm")
             self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
 
             self.delay_generator_controller.set_trig()
@@ -259,7 +260,7 @@ class Spectrometer:
                 )
             )
 
-            print(
+            self.logger.logger.info(
                 "run #",
                 run_number,
                 "has been added to: ",
@@ -268,10 +269,10 @@ class Spectrometer:
 
             # Check for stop Freq
             if new_freq > stop_freq and step_direction == StepDirection.Up:
-                print("You have reached the stop frequency")
+                self.logger.logger.info("You have reached the stop frequency")
                 break
             elif new_freq < stop_freq and step_direction == StepDirection.Down:
-                print("You have reached the stop frequency")
+                self.logger.logger.info("You have reached the stop frequency")
                 break
 
             # Step
@@ -287,7 +288,7 @@ class Spectrometer:
         self.oscilloscope_controller.stop_acq()
         self.zaber_controller.home()
         self.finalize_csv()
-        print("Run is finished")
+        self.logger.logger.info("Run is finished")
 
     def cavity_search(self, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
@@ -311,11 +312,11 @@ class Spectrometer:
 
         if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
             open(f"{self._directory}/{self._filename}.csv", "w+")
-            print("Sucessfully named file ", f"{self._directory}/{self._filename}.csv")
+            self.logger.logger.info("Sucessfully named file ", f"{self._directory}/{self._filename}.csv")
 
         self.zaber_controller.home()
 
-        print("Zaber has arrived at home position 0 mm")
+        self.logger.logger.info("Zaber has arrived at home position 0 mm")
         # stop_freq = stop_freqinput - self.__awg_freq
         try:
             step_size = float(step_size)
@@ -323,15 +324,15 @@ class Spectrometer:
             self.valon_controller.write_cmd(f"FrequencyStep {step_size} MHz")
         except ValueError:
             step_up_var = False
-            print("Only running single sequence.")
+            self.logger.logger.info("Only running single sequence.")
         try:
             stop_freq = float(stop_freqinput)
             stop_freq_var = True
         except ValueError:
             stop_freq_var = False
-            print("No end frequency set. ")
+            self.logger.logger.info("No end frequency set. ")
 
-        print("All parameters acquired, moving to calibrate and run sequence.")
+        self.logger.logger.info("All parameters acquired, moving to calibrate and run sequence.")
 
         max_list = []
         run_bool = True
@@ -339,7 +340,7 @@ class Spectrometer:
 
         while run_bool:
             new_freq = valon_freq + step_size * i + self.awg_controller.awg_freq
-            print(f"The new Valon Frequency is: {new_freq}")
+            self.logger.logger.info(f"The new Valon Frequency is: {new_freq}")
 
             start_pos_zaber_mm = 0
             end_pos_zaber_mm = 50
@@ -351,7 +352,7 @@ class Spectrometer:
 
             curr_pos = self.zaber_controller.get_pos()
 
-            print("Zaber is at position ", curr_pos)
+            self.logger.logger.info("Zaber is at position ", curr_pos)
 
             self.delay_generator_controller.start_trig()
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
@@ -361,8 +362,8 @@ class Spectrometer:
                 pos_arr = np.linspace(
                     start_pos_zaber_mm, end_pos_zaber_mm, len(max_lists)
                 )
-                print("Length of max: ", len(max_lists))
-                print("Length of pos: ", len(pos_arr))
+                self.logger.logger.info("Length of max: ", len(max_lists))
+                self.logger.logger.info("Length of pos: ", len(pos_arr))
 
                 DF = pd.DataFrame(
                     {
@@ -403,7 +404,7 @@ class Spectrometer:
                 f"{self._run_directory}/{new_freq}MHz.csv", mode="w+", index=False
             )
 
-            print(
+            self.logger.logger.info(
                 "run #",
                 i + 1,
                 "has been added to: ",
@@ -418,7 +419,7 @@ class Spectrometer:
                     i += 1
                     self.valon_controller.step_up()
 
-        print(
+        self.logger.logger.info(
             "Experiment concluded. You will find your data in .csv file: ",
             f"{self._directory}/{self._filename}.csv",
         )
@@ -452,7 +453,7 @@ class Spectrometer:
         self.oscilloscope_controller.stop_acq()
 
         curr_pos = self.zaber_controller.get_pos()
-        print("Zaber moved to: ", curr_pos, " mm")
+        self.logger.logger.info("Zaber moved to: ", curr_pos, " mm")
 
         return future.result()
 
@@ -545,7 +546,7 @@ class Spectrometer:
 
         df.to_csv(filepath, index=False)
 
-        print(f"CSV data finalized: {self._directory}/{self._filename}.csv")
+        self.logger.logger.info(f"CSV data finalized: {self._directory}/{self._filename}.csv")
 
     def update_settings(self, settings: Settings):
         self.settings = settings
@@ -558,14 +559,14 @@ class Spectrometer:
         self.oscilloscope_controller.update_config(config)
         self.delay_generator_controller.update_config(config)
 
-        print("Config updated")
+        self.logger.logger.info("Config updated")
 
     def init_device(self, device_name, config):
         try:
             getattr(self, device_name).initialize(config)
             success = True
         except Exception as e:
-            print(f"Failed to initialize {device_name}: {e}")
+            self.logger.logger.error(f"Failed to initialize {device_name}: {e}")
             success = False
 
         return success
