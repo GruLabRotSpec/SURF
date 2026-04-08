@@ -8,6 +8,9 @@ from typing import Literal
 class ValonConfig(BaseModel):
     rf_level: int
     valon_port: str
+    synth_power: bool
+    ref_source: Literal["Internal","External"]
+    ref_freq: float
 
 
 class ZaberConfig(BaseModel):
