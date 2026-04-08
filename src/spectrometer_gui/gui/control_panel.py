@@ -445,6 +445,13 @@ class ControlPanel(QWidget):
 
         # Valon
         self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
+        self.synth_power_on_btn.setChecked(
+            True if self.spectrometer.config.valon_controller.synth_power else False
+        )
+        self.ref_source_field.setCurrentText(
+            self.spectrometer.config.valon_controller.ref_source
+        )
+        self.ref_freq_field.setValue(self.spectrometer.config.valon_controller.ref_freq)
 
         # Oscilloscope - Math 4
         self.math4_window_field.setCurrentText(
@@ -513,6 +520,15 @@ class ControlPanel(QWidget):
 
             # Valon
             self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
+            self.spectrometer.config.valon_controller.synth_power = (
+                True if self.synth_power_on_btn.isChecked() else False
+            )
+            self.spectrometer.config.valon_controller.ref_source = (
+                self.ref_source_field.currentText()
+            )
+            self.spectrometer.config.valon_controller.ref_freq = (
+                self.ref_freq_field.value()
+            )
 
             # Oscilloscope - Math 4
             self.spectrometer.config.oscilloscope_controller.math4.window = (  # type: ignore[assignment]

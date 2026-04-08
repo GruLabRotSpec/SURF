@@ -1,6 +1,9 @@
 [valon_controller]
 rf_level = 10.0
 valon_port = "COM3"
+synth_power = true
+ref_source = "Internal"
+ref_freq = 10.00
 
 [zaber_controller]
 zaber_scanning_speed = 0.003
