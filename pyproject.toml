@@ -11,6 +11,7 @@ dependencies = [
     "pandas>=2.3.2",
     "pip>=25.3",
     "pydantic>=2.12.5",
+    "pyqtdarktheme>=2.1.0",
     "pyserial>=3.5",
     "pyside6>=6.9.2",
     "pythonnet>=3.0.5",
