@@ -1,3 +1,5 @@
+theme = "auto"
+
 [output]
 location = "~/Documents/"
 filename = "my_scan"

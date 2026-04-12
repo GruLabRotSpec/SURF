@@ -8,13 +8,17 @@ from PySide6.QtWidgets import (
     QPushButton,
     QCheckBox,
     QFileDialog,
+    QComboBox,
 )
 
 from settings import Settings
+from gui.theme import apply_theme, get_themes
+
 
 class GeneralSettingsPanel(QWidget):
     def __init__(self, settings: Settings):
         super().__init__()
+        self.settings = settings
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -52,12 +56,29 @@ class GeneralSettingsPanel(QWidget):
         self.logging_location_label = QLabel("Logging location")
         self.logging_location_field = QLineEdit("", readOnly=True)
         self.logging_location_field.setText(settings.logging.location)
-        self.logging_location_browse = QPushButton("Browse...", enabled=False)
+        self.logging_location_browse = QPushButton("Browse...")
+        self.logging_location_browse.setEnabled(False)
         logging_form.addRow(self.logging_location_label)
         logging_form.addRow(self.logging_location_field, self.logging_location_browse)
         self.logging_location_browse.clicked.connect(self.get_logging_location)
 
         layout.addWidget(logging_group)
+
+        theme_group = QGroupBox("Theme")
+
+        theme_form = QFormLayout()
+        theme_group.setLayout(theme_form)
+
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(get_themes())
+        self.theme_combo.setCurrentText(settings.theme)
+        theme_form.addRow("Theme", self.theme_combo)
+
+        layout.addWidget(theme_group)
+
+    def update_settings(self):
+        self.settings.theme = self.theme_combo.currentText()
+        apply_theme(self.settings.theme)
 
     def on_logging_toggle(self):
         if self.logging_toggle.isChecked():

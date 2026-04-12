@@ -26,6 +26,7 @@ from gui.spectrometer_controller import SpectrometerController
 
 from settings import load_settings
 from config import load_config, save_config
+from gui.theme import apply_theme
 
 
 class MainWindow(QMainWindow):
@@ -33,8 +34,12 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.app = app
-        self.settings = load_settings(Path("./settings.toml"))  # Change path later
-        self.config = load_config(Path("./defaults.toml"))
+        self.settings_path = Path("./settings.toml")  # Change path later
+        self.settings = load_settings(self.settings_path)
+        apply_theme(self.settings.theme)
+        self.config = load_config(
+            Path(__file__).parent.parent / "defaults" / "default_config.toml"
+        )
 
         self.setWindowTitle("Gru GUI")
 
@@ -190,7 +195,7 @@ class MainWindow(QMainWindow):
         )
 
     def show_settings(self):
-        self.settings_window = SettingsWindow(self.settings)
+        self.settings_window = SettingsWindow(self.settings, self.settings_path)
         self.settings_window.show()
 
     def show_about(self):
