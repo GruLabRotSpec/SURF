@@ -1,4 +1,5 @@
 [valon_controller]
+rf_output = true
 rf_level = 10.0
 valon_port = "COM3"
 synth_power = true

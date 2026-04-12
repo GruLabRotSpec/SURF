@@ -124,7 +124,7 @@ class ControlPanel(QWidget):
         self.zaber_move_left_btn.setToolTip("Move left by increment")
         self.zaber_move_left_btn.setFixedSize(30, 30)
         self.zaber_move_left_btn.setEnabled(False)
-        self.zaber_move_left_btn.clicked.connect(lambda: self.set_zaber_position(True))
+        self.zaber_move_left_btn.clicked.connect(self.set_zaber_position_relative)
         zaber_control_widget_2.addWidget(self.zaber_move_left_btn)
 
         self.zaber_inc_field = QDoubleSpinBox()
@@ -141,7 +141,7 @@ class ControlPanel(QWidget):
         self.zaber_move_right_btn.setToolTip("Move right by increment")
         self.zaber_move_right_btn.setFixedSize(30, 30)
         self.zaber_move_right_btn.setEnabled(False)
-        self.zaber_move_right_btn.clicked.connect(self.set_zaber_position)
+        self.zaber_move_right_btn.clicked.connect(self.set_zaber_position_relative)
         zaber_control_widget_2.addWidget(self.zaber_move_right_btn)
 
         zaber_form.addRow("Position (relative)", zaber_control_widget_2)
@@ -408,6 +408,9 @@ class ControlPanel(QWidget):
                 self.spectrometer.spectrometer.zaber_controller.move_to(
                     new_pos, speed, False
                 )
+
+    def set_zaber_position_relative(self):
+        self.spectrometer.zaber_controller.axis.move_relative(self.zaber_inc_field) # Temp fix
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
