@@ -555,6 +555,7 @@ class Spectrometer:
         self.config = config
 
         self.zaber_controller.update_config(config)
+        self.valon_controller.update_config(config)
         self.awg_controller.update_config(config)
         self.oscilloscope_controller.update_config(config)
         self.delay_generator_controller.update_config(config)

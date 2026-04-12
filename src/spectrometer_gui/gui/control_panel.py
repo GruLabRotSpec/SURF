@@ -444,6 +444,9 @@ class ControlPanel(QWidget):
         )
 
         # Valon
+        self.rf_output_on_btn.setChecked(
+            True if self.spectrometer.config.valon_controller.rf_output else False
+        )
         self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
         self.synth_power_on_btn.setChecked(
             True if self.spectrometer.config.valon_controller.synth_power else False
@@ -519,6 +522,9 @@ class ControlPanel(QWidget):
             )
 
             # Valon
+            self.spectrometer.config.valon_controller.rf_output = (
+                True if self.rf_output_on_btn.isChecked() else False
+            )
             self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
             self.spectrometer.config.valon_controller.synth_power = (
                 True if self.synth_power_on_btn.isChecked() else False

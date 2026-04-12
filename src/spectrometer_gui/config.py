@@ -6,6 +6,7 @@ from typing import Literal
 
 
 class ValonConfig(BaseModel):
+    rf_output: bool
     rf_level: int
     valon_port: str
     synth_power: bool
