@@ -37,9 +37,9 @@ class GeneralSettingsPanel(QWidget):
         output_location_browse.clicked.connect(self.get_output_location)
 
         filename_label = QLabel("Filename")
-        filename_field = QLineEdit("")
-        filename_field.setText(settings.output.filename)
-        output_form.addRow(filename_label, filename_field)
+        self.filename_field = QLineEdit("")
+        self.filename_field.setText(settings.output.filename)
+        output_form.addRow(filename_label, self.filename_field)
 
         layout.addWidget(output_group)
 
@@ -77,6 +77,12 @@ class GeneralSettingsPanel(QWidget):
         layout.addWidget(theme_group)
 
     def update_settings(self):
+        self.settings.output.location = self.logging_location_field.text()
+        self.settings.output.filename = self.filename_field.text()
+        self.settings.logging.enabled = (
+            True if self.logging_toggle.isChecked() else False
+        )
+        self.settings.logging.location = self.logging_location_field.text()
         self.settings.theme = self.theme_combo.currentText()
         apply_theme(self.settings.theme)
 
