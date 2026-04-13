@@ -72,8 +72,8 @@ class Spectrometer:
         # Output options
         self._directory = ""
         self._run_directory = ""
-        self._folder_name = "Cavity Data"
-        self._filename = "my_scan"
+        self._folder_name = self.settings.output.location
+        self._filename = self.settings.output.filename
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
@@ -130,7 +130,9 @@ class Spectrometer:
             save_config(
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
-            self.logger.logger.info("Successfully named file ", f"{self._directory}/{self._filename}.csv")
+            self.logger.logger.info(
+                "Successfully named file ", f"{self._directory}/{self._filename}.csv"
+            )
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
@@ -199,7 +201,9 @@ class Spectrometer:
 
             # Check for end of zaber
             if end_position > 50 or start_position > 50:
-                self.logger.logger.info("The end of the zaber extension has been reached")
+                self.logger.logger.info(
+                    "The end of the zaber extension has been reached"
+                )
                 break
             elif end_position < 0 or start_position < 0:
                 self.logger.logger.info("The zaber has reached home")
@@ -214,7 +218,9 @@ class Spectrometer:
                 f"{run_number} / {iterations} - Freq {new_freq} MHz",
             )
 
-            self.logger.logger.info("Zaber Scan from ", start_position, " mm to ", end_position, " mm")
+            self.logger.logger.info(
+                f"Zaber Scan from {start_position} mm to {end_position} mm"
+            )
 
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
@@ -228,7 +234,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            self.logger.logger.info("Moving to maximum position at: ", max_pos, " mm")
+            self.logger.logger.info(f"Moving to maximum position at: {max_pos} mm")
             self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
 
             self.delay_generator_controller.set_trig()
@@ -312,7 +318,9 @@ class Spectrometer:
 
         if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
             open(f"{self._directory}/{self._filename}.csv", "w+")
-            self.logger.logger.info("Sucessfully named file ", f"{self._directory}/{self._filename}.csv")
+            self.logger.logger.info(
+                "Sucessfully named file ", f"{self._directory}/{self._filename}.csv"
+            )
 
         self.zaber_controller.home()
 
@@ -332,7 +340,9 @@ class Spectrometer:
             stop_freq_var = False
             self.logger.logger.info("No end frequency set. ")
 
-        self.logger.logger.info("All parameters acquired, moving to calibrate and run sequence.")
+        self.logger.logger.info(
+            "All parameters acquired, moving to calibrate and run sequence."
+        )
 
         max_list = []
         run_bool = True
@@ -546,7 +556,9 @@ class Spectrometer:
 
         df.to_csv(filepath, index=False)
 
-        self.logger.logger.info(f"CSV data finalized: {self._directory}/{self._filename}.csv")
+        self.logger.logger.info(
+            f"CSV data finalized: {self._directory}/{self._filename}.csv"
+        )
 
     def update_settings(self, settings: Settings):
         self.settings = settings

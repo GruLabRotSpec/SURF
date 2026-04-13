@@ -1,3 +1,4 @@
+import logging
 import time
 import serial
 from enum import Enum
@@ -6,8 +7,8 @@ from config import Config
 
 
 class RefSource(Enum):
-    INTERNAL = 0
-    EXTERNAL = 1
+    INTERNAL = "INTERNAL"
+    EXTERNAL = "EXTERNAL"
 
 
 class ValonController:
@@ -48,16 +49,16 @@ class ValonController:
 
     # Write Valon cmds, either writing or querying based on presence of \r
     def write_cmd(self, cmd):
+        #print(f"Valon CMD: {cmd}")
         # Format command with line termination \r, encode (utf-8 I think), send to Valon
-        format_cmd = f"{cmd}"
-        format_cmd += "\r"
+        format_cmd = f"{cmd}\r"
         self._connection.reset_input_buffer()
-        print(format_cmd)
+        #print(format_cmd)
         self._connection.write(format_cmd.encode())
         time.sleep(0.1)
         response_bytes = self._connection.read(1024)
         response = response_bytes.decode().strip()
-        print(response)
+        #print(f"Valon Response: {response}")
         return response
 
     def set_settings(self, rf_level):
@@ -127,12 +128,12 @@ class ValonController:
         self.write_cmd("REFS?")
 
     def set_ref_source(self, source: RefSource):
-        self.write_cmd(f"REF {source.value}")
+        self.write_cmd(f"REF {source}")
 
     def get_ref_freq(self):
-        self.write_cmd("REF? M")
+        self.write_cmd("REF? MHz")
 
     def set_ref_freq(self, freq):
-        self.write_cmd(f"REFerence; {freq} M")
+        self.write_cmd(f"REFerence {freq} MHz")
 
     
