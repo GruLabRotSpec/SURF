@@ -72,8 +72,8 @@ class Spectrometer:
         # Output options
         self._directory = ""
         self._run_directory = ""
-        self._folder_name = "Cavity Data"
-        self._filename = "my_scan"
+        self._folder_name = self.settings.output.location
+        self._filename = self.settings.output.filename
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
@@ -222,7 +222,7 @@ class Spectrometer:
             )
 
             self.logger.logger.info(
-                "Zaber Scan from ", start_position, " mm to ", end_position, " mm"
+                f"Zaber Scan from {start_position} mm to {end_position} mm"
             )
 
             # Retuning of the cavity position
@@ -237,7 +237,7 @@ class Spectrometer:
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
 
-            self.logger.logger.info("Moving to maximum position at: ", max_pos, " mm")
+            self.logger.logger.info(f"Moving to maximum position at: {max_pos} mm")
             self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
 
             self.delay_generator_controller.set_trig()

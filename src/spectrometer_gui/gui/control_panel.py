@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
@@ -20,6 +21,7 @@ from PySide6.QtWidgets import (
 from gui.spectrometer_controller import SpectrometerController
 from gui.settings_window import SettingsWindow
 from gui.custom_toolbar import CustomToolbar
+#from spectrometer_gui.zaber_controller import ZaberSpeed
 
 
 class ControlPanel(QWidget):
@@ -389,11 +391,15 @@ class ControlPanel(QWidget):
             self.zaber_pos_field.setEnabled(True)
             self.zaber_go_btn.setEnabled(True)
             self.zaber_home_btn.setEnabled(True)
+            self.zaber_move_left_btn.setEnabled(True)
+            self.zaber_move_right_btn.setEnabled(True)
         else:
             self.zaber_slider.setEnabled(False)
             self.zaber_pos_field.setEnabled(False)
             self.zaber_go_btn.setEnabled(False)
             self.zaber_home_btn.setEnabled(False)
+            self.zaber_move_left_btn.setEnabled(False)
+            self.zaber_move_right_btn.setEnabled(False)
 
     def set_zaber_position(self, home=False):
         if self.spectrometer.current_task:
@@ -401,16 +407,15 @@ class ControlPanel(QWidget):
         else:
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
-            speed = float(self.zaber_speed_1_field.value())
             if home:
                 self.spectrometer.spectrometer.zaber_controller.home(False)
             else:
                 self.spectrometer.spectrometer.zaber_controller.move_to(
-                    new_pos, speed, False
+                    new_pos, 1, False
                 )
 
     def set_zaber_position_relative(self):
-        self.spectrometer.zaber_controller.axis.move_relative(self.zaber_inc_field) # Temp fix
+        self.spectrometer.spectrometer.zaber_controller.axis.move_relative(self.zaber_inc_field.value()) # Temp fix
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()
