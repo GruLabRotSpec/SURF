@@ -21,7 +21,6 @@ from PySide6.QtWidgets import (
 from gui.spectrometer_controller import SpectrometerController
 from gui.settings_window import SettingsWindow
 from gui.custom_toolbar import CustomToolbar
-#from spectrometer_gui.zaber_controller import ZaberSpeed
 
 
 class ControlPanel(QWidget):
@@ -292,6 +291,21 @@ class ControlPanel(QWidget):
         general_form = QFormLayout()
         general_group.setLayout(general_form)
 
+        preset_layout = QHBoxLayout()
+        preset_layout.setContentsMargins(0, 0, 0, 0)
+        self.preset_combo = QComboBox()
+        if self.spectrometer.config.scope_preset.presets:
+            for key, preset in self.spectrometer.config.scope_preset.presets.items():
+                self.preset_combo.addItem(preset.name, preset)
+        else:
+            self.preset_combo.addItem("None")
+        self.recall_btn = QPushButton("Recall")
+        self.recall_btn.clicked.connect(self._recall_preset)
+        preset_layout.addWidget(self.preset_combo)
+        preset_layout.addWidget(self.recall_btn)
+        preset_label = QLabel("Preset")
+        general_form.addRow(preset_label, preset_layout)
+
         acq_rate_label = QLabel("Acquisition rate")
         self.acq_rate_field = QSpinBox()
         self.acq_rate_field.setMinimum(1)
@@ -367,6 +381,7 @@ class ControlPanel(QWidget):
         oscilloscope_group = QGroupBox("Oscilloscope")
         oscilloscope_layout = QVBoxLayout()
         oscilloscope_group.setLayout(oscilloscope_layout)
+
         oscilloscope_layout.addWidget(general_group)
         oscilloscope_layout.addWidget(math3_group)
         oscilloscope_layout.addWidget(math4_group)
@@ -415,7 +430,16 @@ class ControlPanel(QWidget):
                 )
 
     def set_zaber_position_relative(self):
-        self.spectrometer.spectrometer.zaber_controller.axis.move_relative(self.zaber_inc_field.value()) # Temp fix
+        self.spectrometer.spectrometer.zaber_controller.axis.move_relative(
+            self.zaber_inc_field.value()
+        )  # Temp fix
+
+    def _recall_preset(self):
+        preset = self.preset_combo.currentData()
+        if preset:
+            self.spectrometer.spectrometer.oscilloscope_controller.recall_setup(
+                preset.path, self.spectrometer.config.scope_preset.root_path
+            )
 
     def show_more_settings(self):
         self.settings_window = SettingsWindow()

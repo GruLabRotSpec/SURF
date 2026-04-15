@@ -63,14 +63,6 @@ class OscilloscopeController:
         time.sleep(3)
         print("Successfully recalled setup")
 
-    def recall_setup_cavity(self, setup="cavity_ch2000002.set"):
-        self.write_cmd(f'RECALL:SETUP "{setup}"')
-        time.sleep(7)
-
-    def recall_mol_peak(self, setup="cavity000.set"):
-        self.write_cmd(f'RECALL:SETUP "{setup}"')
-        time.sleep(7)
-
     def write_cmd(self, command):
         self._oscilloscope.write(command)
         errorCheck = self._oscilloscope.write("*ESR?")

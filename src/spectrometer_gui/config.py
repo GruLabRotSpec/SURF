@@ -10,7 +10,7 @@ class ValonConfig(BaseModel):
     rf_level: int
     valon_port: str
     synth_power: bool
-    ref_source: Literal["Internal","External"]
+    ref_source: Literal["Internal", "External"]
     ref_freq: float
 
 
@@ -49,12 +49,23 @@ class DelayGeneratorConfig(BaseModel):
     trigger_rate: float
 
 
+class ScopePresetItem(BaseModel):
+    name: str
+    path: str
+
+
+class ScopePreset(BaseModel):
+    root_path: str
+    presets: dict[str, ScopePresetItem] | None = None
+
+
 class Config(BaseModel):
     valon_controller: ValonConfig
     zaber_controller: ZaberConfig
     awg_controller: AWGConfig
     oscilloscope_controller: OscilloscopeConfig
     delay_generator_controller: DelayGeneratorConfig
+    scope_preset: ScopePreset
 
 
 def load_config(config_path: Path) -> Config:
