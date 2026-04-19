@@ -83,6 +83,7 @@ class FrequencyScanPanel(QWidget):
         self.step_size_field.setMinimum(0)
         self.step_size_field.setMaximum(1)
         self.step_size_field.setValue(0.5)
+        self.step_size_field.setSingleStep(0.25)
         self.step_size_field.setDecimals(3)
         self.step_size_field.setSuffix(" MHz")
         form.addRow(step_size_label, self.step_size_field)
@@ -96,10 +97,13 @@ class FrequencyScanPanel(QWidget):
         self.end_freq_field.setValue(10500)
         form.addRow(end_freq_label, self.end_freq_field)
 
-        experiment_group = QGroupBox()
+        experiment_group = QGroupBox("Experiment parameters")
 
         experiment_form = QFormLayout()
         experiment_group.setLayout(experiment_form)
+
+        experiment_info_label = QLabel("These do not affect the spectrometer from the GUI")
+        experiment_form.addRow(experiment_info_label)
 
         sample_name_label = QLabel("Sample name")
         self.sample_name_field = QLineEdit()
