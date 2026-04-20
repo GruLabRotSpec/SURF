@@ -57,27 +57,24 @@ class ControlPanel(QWidget):
         zaber_group.setLayout(zaber_form)
 
         zaber_speed_1_label = QLabel("Scanning speed")
-        self.zaber_speed_1_field = QDoubleSpinBox(decimals=3)
-        self.zaber_speed_1_field.setMinimum(0)
-        self.zaber_speed_1_field.setMaximum(1)
-        self.zaber_speed_1_field.setSingleStep(0.001)
-        self.zaber_speed_1_field.setSuffix(" mm/s")
+        self.zaber_speed_1_field = QDoubleSpinBox(
+            decimals=3, minimum=0, maximum=1, singleStep=0.001, suffix=" mm/s"
+        )
         zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
 
         zaber_speed_2_label = QLabel("Moving speed")
-        self.zaber_speed_2_field = QDoubleSpinBox()
-        self.zaber_speed_2_field.setMinimum(0)
-        self.zaber_speed_2_field.setMaximum(5)
-        self.zaber_speed_2_field.setSingleStep(0.25)
-        self.zaber_speed_2_field.setSuffix(" mm/s")
+        self.zaber_speed_2_field = QDoubleSpinBox(
+            minimum=0, maximum=5, singleStep=0.25, suffix=" mm/s"
+        )
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
 
         zaber_step_size_label = QLabel("Step size")
-        self.zaber_step_size_field = QDoubleSpinBox()
-        self.zaber_step_size_field.setMinimum(0)
-        self.zaber_step_size_field.setMaximum(5)
-        self.zaber_step_size_field.setSingleStep(0.25)
-        self.zaber_step_size_field.setSuffix(" mm")
+        self.zaber_step_size_field = QDoubleSpinBox(
+            minimum=0,
+            maximum=5,
+            singleStep=0.5,
+            suffix=" mm",
+        )
         self.zaber_step_size_field.setEnabled(False)
         zaber_form.addRow(zaber_step_size_label, self.zaber_step_size_field)
 
@@ -99,11 +96,9 @@ class ControlPanel(QWidget):
         self.zaber_slider.setEnabled(False)
         zaber_control_widget_1.addWidget(self.zaber_slider)
 
-        self.zaber_pos_field = QDoubleSpinBox()
-        self.zaber_pos_field.setMinimum(0)
-        self.zaber_pos_field.setMaximum(50)
-        self.zaber_pos_field.setSingleStep(1)
-        self.zaber_pos_field.setSuffix(" mm")
+        self.zaber_pos_field = QDoubleSpinBox(
+            minimum=0, maximum=50, singleStep=1, suffix=" mm"
+        )
         zaber_control_widget_1.addWidget(self.zaber_pos_field)
 
         self.zaber_go_btn = QPushButton()
@@ -128,11 +123,9 @@ class ControlPanel(QWidget):
         self.zaber_move_left_btn.clicked.connect(self.set_zaber_position_relative)
         zaber_control_widget_2.addWidget(self.zaber_move_left_btn)
 
-        self.zaber_inc_field = QDoubleSpinBox()
-        self.zaber_inc_field.setMinimum(-50)
-        self.zaber_inc_field.setMaximum(50)
-        self.zaber_inc_field.setSingleStep(1)
-        self.zaber_inc_field.setSuffix(" mm")
+        self.zaber_inc_field = QDoubleSpinBox(
+            minimum=-50, maximum=50, singleStep=1, suffix=" mm"
+        )
         zaber_control_widget_2.addWidget(self.zaber_inc_field)
 
         self.zaber_move_right_btn = QPushButton()
@@ -175,8 +168,7 @@ class ControlPanel(QWidget):
         awg_form.addRow(run_mode_label, self.run_mode_field)
 
         awg_freq_label = QLabel("Frequency")
-        self.awg_freq_field = QSpinBox()
-        self.awg_freq_field.setSuffix(" MHz")
+        self.awg_freq_field = QSpinBox(suffix=" MHz")
         awg_form.addRow(awg_freq_label, self.awg_freq_field)
 
         self.awg_ch_1_output_on_btn = QRadioButton("On")
@@ -232,10 +224,7 @@ class ControlPanel(QWidget):
         valon_form.addRow(rf_output_label, rf_output_group_widget)
 
         rf_label = QLabel("RF level (power)")
-        self.rf_field = QSpinBox()
-        self.rf_field.setMinimum(0)
-        self.rf_field.setMaximum(20)
-        self.rf_field.setSuffix(" dBm")
+        self.rf_field = QSpinBox(minimum=0, maximum=20, suffix=" dBm")
         valon_form.addRow(rf_label, self.rf_field)
 
         self.synth_power_on_btn = QRadioButton("On")
@@ -259,9 +248,7 @@ class ControlPanel(QWidget):
         valon_form.addRow(ref_source_label, self.ref_source_field)
 
         ref_freq_label = QLabel("Reference frequency")
-        self.ref_freq_field = QDoubleSpinBox()
-        self.ref_freq_field.setValue(10)
-        self.ref_freq_field.setSuffix(" MHz")
+        self.ref_freq_field = QDoubleSpinBox(value=10, suffix=" MHz")
         valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
         left_column.addWidget(valon_group)
@@ -279,9 +266,7 @@ class ControlPanel(QWidget):
         timing_group.setLayout(timing_form)
 
         trigger_rate_label = QLabel("Trigger Rate")
-        self.trigger_rate_field = QDoubleSpinBox()
-        self.trigger_rate_field.setMinimum(0)
-        self.trigger_rate_field.setSuffix(" Hz")
+        self.trigger_rate_field = QDoubleSpinBox(minimum=0, suffix=" Hz")
         timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
 
         right_column.addWidget(timing_group)
@@ -307,23 +292,17 @@ class ControlPanel(QWidget):
         general_form.addRow(preset_label, preset_layout)
 
         acq_rate_label = QLabel("Acquisition rate")
-        self.acq_rate_field = QSpinBox()
-        self.acq_rate_field.setMinimum(1)
-        self.acq_rate_field.setMaximum(10000)
+        self.acq_rate_field = QSpinBox(minimum=1, maximum=10000)
         general_form.addRow(acq_rate_label, self.acq_rate_field)
 
         sample_rate_label = QLabel("Sample rate")
-        self.sample_rate_field = QSpinBox()
-        self.sample_rate_field.setMinimum(0)
-        self.sample_rate_field.setSingleStep(100)
-        self.sample_rate_field.setMaximum(1000)
-        self.sample_rate_field.setSuffix(" MS/s")
+        self.sample_rate_field = QSpinBox(
+            minimum=0, maximum=1000, singleStep=100, suffix=" MS/s"
+        )
         general_form.addRow(sample_rate_label, self.sample_rate_field)
 
         math_averages_label = QLabel("Math averages")
-        self.math_averages_field = QSpinBox()
-        self.math_averages_field.setMinimum(2)
-        self.math_averages_field.setMaximum(1000000)
+        self.math_averages_field = QSpinBox(minimum=2, maximum=1000000)
         general_form.addRow(math_averages_label, self.math_averages_field)
 
         math3_group = QGroupBox("Math 3")
@@ -339,17 +318,13 @@ class ControlPanel(QWidget):
         math3_form.addRow(math3_window_label, self.math3_window_field)
 
         math3_res_label = QLabel("Resolution")
-        self.math3_res_field = QDoubleSpinBox()
-        self.math3_res_field.setMinimum(0)
-        self.math3_res_field.setMaximum(100000)
-        self.math3_res_field.setSuffix(" kHz")
-        self.math3_res_field.setValue(890.0)
+        self.math3_res_field = QDoubleSpinBox(
+            minimum=0, maximum=100000, suffix=" kHz", value=890.0
+        )
         math3_form.addRow(math3_res_label, self.math3_res_field)
 
         math3_gatepos_label = QLabel("Gate position")
-        self.math3_gatepos_field = QDoubleSpinBox()
-        self.math3_gatepos_field.setSuffix(" us")
-        self.math3_gatepos_field.setValue(0.6)
+        self.math3_gatepos_field = QDoubleSpinBox(suffix=" us", value=0.6)
         math3_form.addRow(math3_gatepos_label, self.math3_gatepos_field)
 
         math4_group = QGroupBox("Math 4")
@@ -365,17 +340,13 @@ class ControlPanel(QWidget):
         math4_form.addRow(math4_window_label, self.math4_window_field)
 
         math4_res_label = QLabel("Resolution")
-        self.math4_res_field = QDoubleSpinBox()
-        self.math4_res_field.setMinimum(0)
-        self.math4_res_field.setMaximum(100000)
-        self.math4_res_field.setSuffix(" kHz")
-        self.math4_res_field.setValue(100.0)
+        self.math4_res_field = QDoubleSpinBox(
+            minimum=0, maximum=100000, suffix=" kHz", value=100.0
+        )
         math4_form.addRow(math4_res_label, self.math4_res_field)
 
         math4_gatepos_label = QLabel("Gate position")
-        self.math4_gatepos_field = QDoubleSpinBox()
-        self.math4_gatepos_field.setSuffix(" us")
-        self.math4_gatepos_field.setValue(18.45)
+        self.math4_gatepos_field = QDoubleSpinBox(suffix=" us", value=18.45)
         math4_form.addRow(math4_gatepos_label, self.math4_gatepos_field)
 
         oscilloscope_group = QGroupBox("Oscilloscope")
