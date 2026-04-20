@@ -372,7 +372,8 @@ class ControlPanel(QWidget):
     def on_zaber_position(self, position):
         if position != -1:
             self.zaber_slider.setValue(int(position))
-            self.zaber_pos_field.setValue(position)
+            if not self.zaber_pos_field.hasFocus():
+                self.zaber_pos_field.setValue(position)
             self.zaber_slider.setEnabled(True)
             self.zaber_pos_field.setEnabled(True)
             self.zaber_go_btn.setEnabled(True)

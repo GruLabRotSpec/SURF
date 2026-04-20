@@ -102,7 +102,9 @@ class FrequencyScanPanel(QWidget):
         experiment_form = QFormLayout()
         experiment_group.setLayout(experiment_form)
 
-        experiment_info_label = QLabel("These do not affect the spectrometer from the GUI")
+        experiment_info_label = QLabel(
+            "These do not affect the spectrometer from the GUI"
+        )
         experiment_form.addRow(experiment_info_label)
 
         sample_name_label = QLabel("Sample name")
@@ -233,7 +235,7 @@ class FrequencyScanPanel(QWidget):
     def on_zaber_position(self, position):
         if self.zaber_set_pos_checkbox.isChecked():
             return
-        if position != -1:
+        if position != -1 and not self.zaber_pos_field.hasFocus():
             self.zaber_pos_field.setValue(position)
             self.zaber_set_pos_checkbox.setEnabled(True)
         else:
