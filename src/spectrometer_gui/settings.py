@@ -14,9 +14,20 @@ class LoggingConfig(BaseModel):
     location: str
 
 
+class ScopePresetItem(BaseModel):
+    name: str
+    path: str
+
+
+class ScopePreset(BaseModel):
+    root_path: str
+    presets: dict[str, ScopePresetItem] | None = None
+
+
 class Settings(BaseModel):
     output: OutputConfig
     logging: LoggingConfig
+    scope_preset: ScopePreset
     theme: str = "auto"
 
 

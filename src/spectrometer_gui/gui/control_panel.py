@@ -19,7 +19,6 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController
-from gui.settings_window import SettingsWindow
 from gui.custom_toolbar import CustomToolbar
 
 
@@ -30,6 +29,7 @@ class ControlPanel(QWidget):
         self.spectrometer = spectrometer
 
         self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
+        self.spectrometer.signal.settings_updated.connect(self.on_settings_updated)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -279,11 +279,7 @@ class ControlPanel(QWidget):
         preset_layout = QHBoxLayout()
         preset_layout.setContentsMargins(0, 0, 0, 0)
         self.preset_combo = QComboBox()
-        if self.spectrometer.config.scope_preset.presets:
-            for key, preset in self.spectrometer.config.scope_preset.presets.items():
-                self.preset_combo.addItem(preset.name, preset)
-        else:
-            self.preset_combo.addItem("None")
+        self._populate_preset_dropdown()
         self.recall_btn = QPushButton("Recall")
         self.recall_btn.clicked.connect(self._recall_preset)
         preset_layout.addWidget(self.preset_combo)
@@ -410,20 +406,27 @@ class ControlPanel(QWidget):
         preset = self.preset_combo.currentData()
         if preset:
             self.spectrometer.spectrometer.oscilloscope_controller.recall_setup(
-                preset.path, self.spectrometer.config.scope_preset.root_path
+                preset.path, self.spectrometer.settings.scope_preset.root_path
             )
 
-    def show_more_settings(self):
-        self.settings_window = SettingsWindow()
-        self.settings_window.show()
+    @Slot(object)
+    def on_settings_updated(self, settings):
+        self.spectrometer.settings = settings
+        self._populate_preset_dropdown()
+
+    def _populate_preset_dropdown(self):
+        self.preset_combo.clear()
+        if self.spectrometer.settings.scope_preset.presets:
+            for _, preset in self.spectrometer.settings.scope_preset.presets.items():
+                self.preset_combo.addItem(preset.name, preset)
+        else:
+            self.preset_combo.addItem("None")
 
     def showEvent(self, event: QShowEvent):
         super().showEvent(event)
         self._set_values_in_control_panel()
 
     def _set_values_in_control_panel(self):
-        print(self.spectrometer.config)
-
         # Zaber
         self.zaber_speed_1_field.setValue(
             self.spectrometer.config.zaber_controller.zaber_scanning_speed

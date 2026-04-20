@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QWidget, QTabWidget, QVBoxLayout, QPushButton
+from PySide6.QtCore import Signal
 
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from gui.advanced_settings_panel import AdvancedSettingsPanel
 
 
 class SettingsWindow(QWidget):
+    settings_updated = Signal(Settings)
+
     def __init__(self, settings: Settings, settings_path: Path):
         super().__init__()
 
@@ -36,3 +39,4 @@ class SettingsWindow(QWidget):
     def on_save_clicked(self):
         self.general_settings_panel.update_settings()
         save_settings(self.settings_path, self.settings)
+        self.settings_updated.emit(self.settings)

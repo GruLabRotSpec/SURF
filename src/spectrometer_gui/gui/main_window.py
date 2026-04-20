@@ -52,7 +52,9 @@ class MainWindow(QMainWindow):
         self.menu_bar = self.menuBar()
         self.setup_menu_bar()
 
-        self.controller = SpectrometerController(self.settings, self.config)
+        self.controller = SpectrometerController(
+            self.settings, self.config, self.settings_path
+        )
 
         bottom_bar_panel = BottomBarPanel(self.controller)
         status_panel = StatusPanel(self.controller)
@@ -196,6 +198,9 @@ class MainWindow(QMainWindow):
 
     def show_settings(self):
         self.settings_window = SettingsWindow(self.settings, self.settings_path)
+        self.settings_window.settings_updated.connect(
+            self.controller.signal.settings_updated
+        )
         self.settings_window.show()
 
     def show_about(self):

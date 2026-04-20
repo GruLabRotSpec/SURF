@@ -22,13 +22,15 @@ class ScanSignals(QObject):
     scanning = Signal(bool, ScanType)
     update_graph = Signal(GraphState)
     zaber_position = Signal(float)  # position in mm, or -1 on error
+    settings_updated = Signal(object)  # Settings
 
 
 class SpectrometerController(QObject):
-    def __init__(self, settings: Settings, config: Config):
+    def __init__(self, settings: Settings, config: Config, settings_path=None):
         super().__init__()
         self.spectrometer = Spectrometer(settings, config)
         self.settings = settings  # Used for setting settings
+        self.settings_path = settings_path
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
