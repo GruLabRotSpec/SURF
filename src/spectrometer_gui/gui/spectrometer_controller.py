@@ -1,13 +1,13 @@
 import asyncio
-from enum import Enum
 import traceback
-from PySide6.QtCore import Signal, QObject, QTimer
+import threading
+from enum import Enum
 
-from gui.bottom_bar import BottomBarPanel
-
-from spectrometer import Spectrometer, ScanType, GraphState
-from settings import Settings
 from config import Config
+from gui.bottom_bar import BottomBarPanel
+from PySide6.QtCore import QObject, QTimer, Signal
+from settings import Settings
+from spectrometer import GraphState, ScanType, Spectrometer
 
 
 class DeviceStatus(Enum):
@@ -33,6 +33,7 @@ class SpectrometerController(QObject):
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
         self.current_task = None
+        self.cancel_event = threading.Event()
 
         self.zaber_position_timer = QTimer(self)
         self.zaber_position_timer.timeout.connect(self.emit_zaber_position)
@@ -72,22 +73,23 @@ class SpectrometerController(QObject):
             await asyncio.to_thread(
                 self.spectrometer.scan_frequency,
                 self.signal,
+                self.cancel_event,
                 start_freq,
                 stop_freq,
                 step_size,
                 start_pos,
             )
-            self.bottom_bar.set_status_elements(1, "Scan completed")
-        except asyncio.CancelledError:
-            self.bottom_bar.set_status_elements(1, "Scan cancelled")
+            if self.cancel_event.is_set():
+                self.bottom_bar.set_status_elements(1, "Scan cancelled")
+            else:
+                self.bottom_bar.set_status_elements(1, "Scan completed")
         except Exception as e:
             self.bottom_bar.set_status_elements(1, "Scan failed")
             print(f"Scan Failed: {e}")
             traceback.print_exc()
         finally:
             self.signal.scanning.emit(False, ScanType.NONE)
-            self.current_task = None
-            self.zaber_position_timer.start()
+            self.finish_run()
 
     def run_search(self, freq=9000, step_size=0.5):
         self.zaber_position_timer.stop()
@@ -98,21 +100,27 @@ class SpectrometerController(QObject):
     async def _run_search_async(self, freq, step_size):
         try:
             await asyncio.to_thread(self.spectrometer.cavity_search, freq, step_size)
-            self.bottom_bar.set_status_elements(1, "Search completed")
-        except asyncio.CancelledError:
-            self.bottom_bar.set_status_elements(1, "Search cancelled")
+            if self.cancel_event.is_set():
+                self.bottom_bar.set_status_elements(1, "Search cancelled")
+            else:
+                self.bottom_bar.set_status_elements(1, "Search completed")
         except Exception as e:
             self.bottom_bar.set_status_elements(1, "Search failed")
             print(f"Search Failed: {e}")
             traceback.print_exc()
         finally:
             self.signal.scanning.emit(False, ScanType.NONE)
-            self.current_task = None
-            self.zaber_position_timer.start()
+            self.finish_run()
 
     def cancel_operation(self):
         if self.current_task:
-            self.current_task.cancel()
+            self.bottom_bar.set_status_elements(1, "Canceling....")
+            self.cancel_event.set()
+
+    def finish_run(self):
+        self.current_task = None
+        self.cancel_event.clear()
+        self.zaber_position_timer.start()
 
     async def refresh_device(self, device_id):
         success = await self.init_device_async(device_id)

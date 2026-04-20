@@ -7,6 +7,7 @@ import pandas as pd
 import os
 import concurrent
 import threading
+from threading import Event
 import typing
 from scipy.signal import find_peaks
 
@@ -91,6 +92,7 @@ class Spectrometer:
     def scan_frequency(
         self,
         signals: ScanSignals,
+        canceled: Event,
         start_freq: float,
         stop_freq: float,
         step_size: float = 0.5,
@@ -144,8 +146,8 @@ class Spectrometer:
         )
 
         self.logger.logger.info(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, ",
-            f"each run the oscilloscope will require a time delay of {self._time_delay}",
+            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, "
+            + f"each run the oscilloscope will require a time delay of {self._time_delay}",
         )
 
         iterations = math.ceil(abs(stop_freq_input - start_freq) / step_size) + 1
@@ -210,6 +212,10 @@ class Spectrometer:
                 break
             elif end_position < 0 or start_position < 0:
                 self.logger.logger.info("The zaber has reached home")
+                break
+
+            if canceled.is_set():
+                self.logger.logger.info("Scan Canceled")
                 break
 
             total_frequency = new_freq + self.awg_controller.awg_freq
@@ -293,9 +299,7 @@ class Spectrometer:
             run_number += 1
 
         # Cleanup
-        self.delay_generator_controller.stop_trig()
-        self.oscilloscope_controller.stop_acq()
-        self.zaber_controller.home()
+        self.cleanup()
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
@@ -432,10 +436,16 @@ class Spectrometer:
                     i += 1
                     self.valon_controller.step_up()
 
+        self.cleanup()
+
         self.logger.logger.info(
             "Experiment concluded. You will find your data in .csv file: ",
             f"{self._directory}/{self._filename}.csv",
         )
+
+    def cleanup(self):
+        self.delay_generator_controller.stop_trig()
+        self.oscilloscope_controller.stop_acq()
         self.zaber_controller.home()
 
     def scan_with_acquisition(self, end_pos):
