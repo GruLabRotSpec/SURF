@@ -86,7 +86,7 @@ class Spectrometer:
 
         os.makedirs(base_path)
         os.makedirs(f"{base_path}/{subdirectory}")
-        self.logger.logger.info("folder for data has been created: ", base_path)
+        self.logger.logger.info(f"folder for data has been created: {base_path}")
         return base_path
 
     def scan_frequency(
@@ -136,7 +136,7 @@ class Spectrometer:
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
             self.logger.logger.info(
-                "Successfully named file ", f"{self._directory}/{self._filename}.csv"
+                f"Successfully named file {self._directory}/{self._filename}.csv"
             )
 
         self.delay_generator_controller.set_trig()
@@ -276,10 +276,7 @@ class Spectrometer:
             )
 
             self.logger.logger.info(
-                "run #",
-                run_number,
-                "has been added to: ",
-                f"{self._directory}/{self._filename}.csv",
+                f"run #{run_number} has been added to: {self._directory}/{self._filename}.csv",
             )
 
             # Check for stop Freq
@@ -326,7 +323,7 @@ class Spectrometer:
         if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
             open(f"{self._directory}/{self._filename}.csv", "w+")
             self.logger.logger.info(
-                "Sucessfully named file ", f"{self._directory}/{self._filename}.csv"
+                f"Sucessfully named file {self._directory}/{self._filename}.csv"
             )
 
         self.zaber_controller.home()
@@ -369,7 +366,7 @@ class Spectrometer:
 
             curr_pos = self.zaber_controller.get_pos()
 
-            self.logger.logger.info("Zaber is at position ", curr_pos)
+            self.logger.logger.info(f"Zaber is at position {curr_pos}")
 
             self.delay_generator_controller.start_trig()
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
@@ -379,8 +376,8 @@ class Spectrometer:
                 pos_arr = np.linspace(
                     start_pos_zaber_mm, end_pos_zaber_mm, len(max_lists)
                 )
-                self.logger.logger.info("Length of max: ", len(max_lists))
-                self.logger.logger.info("Length of pos: ", len(pos_arr))
+                self.logger.logger.info(f"Length of max: {len(max_lists)}")
+                self.logger.logger.info(f"Length of pos: {len(pos_arr)}")
 
                 DF = pd.DataFrame(
                     {
@@ -422,10 +419,7 @@ class Spectrometer:
             )
 
             self.logger.logger.info(
-                "run #",
-                i + 1,
-                "has been added to: ",
-                f"{self._directory}/{self._filename}.csv",
+                f"run #{i + 1} has been added to: {self._directory}/{self._filename}.csv",
             )
 
             self.delay_generator_controller.stop_trig()
@@ -439,8 +433,7 @@ class Spectrometer:
         self.cleanup()
 
         self.logger.logger.info(
-            "Experiment concluded. You will find your data in .csv file: ",
-            f"{self._directory}/{self._filename}.csv",
+            f"Experiment concluded. You will find your data in .csv file: {self._directory}/{self._filename}.csv",
         )
 
     def cleanup(self):
@@ -476,7 +469,7 @@ class Spectrometer:
         self.oscilloscope_controller.stop_acq()
 
         curr_pos = self.zaber_controller.get_pos()
-        self.logger.logger.info("Zaber moved to: ", curr_pos, " mm")
+        self.logger.logger.info(f"Zaber moved to: {curr_pos} mm")
 
         return future.result()
 
