@@ -4,7 +4,6 @@ import math
 import time
 import numpy as np
 import pandas as pd
-import os
 import concurrent
 import threading
 from threading import Event
@@ -78,16 +77,16 @@ class Spectrometer:
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
-        base_path = f"{self._folder_name}/{self._filename}_{k}"
+        base_path = Path(self._folder_name) / f"{self._filename}_{k}"
 
-        while os.path.exists(base_path):
+        while base_path.exists():
             k += 1
-            base_path = f"{self._folder_name}/{self._filename}_{k}"
+            base_path = Path(self._folder_name) / f"{self._filename}_{k}"
 
-        os.makedirs(base_path)
-        os.makedirs(f"{base_path}/{subdirectory}")
+        base_path.mkdir(parents=True)
+        (base_path / subdirectory).mkdir(parents=True)
         self.logger.logger.info(f"folder for data has been created: {base_path}")
-        return base_path
+        return str(base_path)
 
     def scan_frequency(
         self,
@@ -122,7 +121,7 @@ class Spectrometer:
         self._directory = self.make_dir("CavityFiles")
         self._run_directory = f"{self._directory}/CavityFiles"
 
-        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
+        if not Path(f"{self._directory}/{self._filename}.csv").exists():
             header_df = pd.DataFrame(
                 columns=[
                     "Frequency (MHz)",
@@ -320,10 +319,10 @@ class Spectrometer:
         self._directory = self.make_dir("CavityRuns")
         self._run_directory = f"{self._directory}/CavityRuns"
 
-        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
-            open(f"{self._directory}/{self._filename}.csv", "w+")
+        if not Path(f"{self._directory}/{self._filename}.csv").exists():
+            Path(f"{self._directory}/{self._filename}.csv").touch()
             self.logger.logger.info(
-                f"Sucessfully named file {self._directory}/{self._filename}.csv"
+                f"Successfully named file {self._directory}/{self._filename}.csv"
             )
 
         self.zaber_controller.home()
@@ -425,10 +424,9 @@ class Spectrometer:
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.stop_acq()
 
-            if step_up_var and stop_freq_var:
-                if new_freq < stop_freq:
-                    i += 1
-                    self.valon_controller.step_up()
+            if step_up_var and stop_freq_var and new_freq < stop_freq:
+                i += 1
+                self.valon_controller.step_up()
 
         self.cleanup()
 

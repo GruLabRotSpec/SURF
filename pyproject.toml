@@ -26,3 +26,35 @@ dependencies = [
 dev = [
     "ruff>=0.15.7",
 ]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # Ruff
+    "RUF",
+    # flake8-builtins
+    "A",
+    # flake8-bugbear
+    "B",
+    # flake8-comprehensions
+    "C4",
+    # flake8-simplify
+    "SIM",
+    # flake8-use-pathlib
+    "PTH",
+    # Numpy
+    "NPY",
+    # Pandas
+    "PD"
+]
+ignore = [
+    # Line Length
+    "E501",
+    # Combine If with Or
+    "SIM114"
+]

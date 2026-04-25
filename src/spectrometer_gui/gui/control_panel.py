@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os
+from pathlib import Path
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
 from PySide6.QtWidgets import (
@@ -81,7 +81,7 @@ class ControlPanel(QWidget):
         zaber_control_widget_1 = QHBoxLayout()
 
         self.zaber_home_btn = QPushButton()
-        icon_path = os.path.join(os.path.dirname(__file__), "icons/house.svg")
+        icon_path = str(Path(__file__).parent / "icons/house.svg")
         self.zaber_home_btn.setIcon(QIcon(icon_path))
         self.zaber_home_btn.setToolTip("Home")
         self.zaber_home_btn.setFixedSize(30, 30)
@@ -103,7 +103,7 @@ class ControlPanel(QWidget):
 
         self.zaber_go_btn = QPushButton()
         self.zaber_go_btn.setIcon(
-            QIcon(os.path.join(os.path.dirname(__file__), "icons/crosshair.svg"))
+            QIcon(str(Path(__file__).parent / "icons/crosshair.svg"))
         )
         self.zaber_go_btn.setToolTip("Go to position")
         self.zaber_go_btn.setFixedSize(30, 30)
@@ -115,7 +115,7 @@ class ControlPanel(QWidget):
         zaber_control_widget_2 = QHBoxLayout()
 
         self.zaber_move_left_btn = QPushButton()
-        icon_path = os.path.join(os.path.dirname(__file__), "icons/chevrons_left.svg")
+        icon_path = str(Path(__file__).parent / "icons/chevrons_left.svg")
         self.zaber_move_left_btn.setIcon(QIcon(icon_path))
         self.zaber_move_left_btn.setToolTip("Move left by increment")
         self.zaber_move_left_btn.setFixedSize(30, 30)
@@ -130,7 +130,7 @@ class ControlPanel(QWidget):
 
         self.zaber_move_right_btn = QPushButton()
         self.zaber_move_right_btn.setIcon(
-            QIcon(os.path.join(os.path.dirname(__file__), "icons/chevrons_right.svg"))
+            QIcon(str(Path(__file__).parent / "icons/chevrons_right.svg"))
         )
         self.zaber_move_right_btn.setToolTip("Move right by increment")
         self.zaber_move_right_btn.setFixedSize(30, 30)
@@ -437,26 +437,26 @@ class ControlPanel(QWidget):
 
         # AWG
         self.awg_on_btn.setChecked(
-            True if self.spectrometer.config.awg_controller.awg_status else False
+            bool(self.spectrometer.config.awg_controller.awg_status)
         )
         self.run_mode_field.setCurrentText(
             self.spectrometer.config.awg_controller.awg_run_mode
         )
         self.awg_freq_field.setValue(self.spectrometer.config.awg_controller.awg_freq)
         self.awg_ch_1_output_on_btn.setChecked(
-            True if self.spectrometer.config.awg_controller.awg_ch_1_output else False
+            bool(self.spectrometer.config.awg_controller.awg_ch_1_output)
         )
         self.awg_ch_2_output_on_btn.setChecked(
-            True if self.spectrometer.config.awg_controller.awg_ch_2_output else False
+            bool(self.spectrometer.config.awg_controller.awg_ch_2_output)
         )
 
         # Valon
         self.rf_output_on_btn.setChecked(
-            True if self.spectrometer.config.valon_controller.rf_output else False
+            bool(self.spectrometer.config.valon_controller.rf_output)
         )
         self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
         self.synth_power_on_btn.setChecked(
-            True if self.spectrometer.config.valon_controller.synth_power else False
+            bool(self.spectrometer.config.valon_controller.synth_power)
         )
         self.ref_source_field.setCurrentText(
             self.spectrometer.config.valon_controller.ref_source
@@ -512,8 +512,8 @@ class ControlPanel(QWidget):
             )
 
             # AWG
-            self.spectrometer.config.awg_controller.awg_status = (
-                True if self.awg_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_status = bool(
+                self.awg_on_btn.isChecked()
             )
             self.spectrometer.config.awg_controller.awg_run_mode = (
                 self.run_mode_field.currentText()
@@ -521,20 +521,20 @@ class ControlPanel(QWidget):
             self.spectrometer.config.awg_controller.awg_freq = (
                 self.awg_freq_field.value()
             )
-            self.spectrometer.config.awg_controller.awg_ch_1_output = (
-                True if self.awg_ch_1_output_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_ch_1_output = bool(
+                self.awg_ch_1_output_on_btn.isChecked()
             )
-            self.spectrometer.config.awg_controller.awg_ch_2_output = (
-                True if self.awg_ch_2_output_on_btn.isChecked() else False
+            self.spectrometer.config.awg_controller.awg_ch_2_output = bool(
+                self.awg_ch_2_output_on_btn.isChecked()
             )
 
             # Valon
-            self.spectrometer.config.valon_controller.rf_output = (
-                True if self.rf_output_on_btn.isChecked() else False
+            self.spectrometer.config.valon_controller.rf_output = bool(
+                self.rf_output_on_btn.isChecked()
             )
             self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
-            self.spectrometer.config.valon_controller.synth_power = (
-                True if self.synth_power_on_btn.isChecked() else False
+            self.spectrometer.config.valon_controller.synth_power = bool(
+                self.synth_power_on_btn.isChecked()
             )
             self.spectrometer.config.valon_controller.ref_source = (
                 self.ref_source_field.currentText()

@@ -14,8 +14,11 @@ from gui.graph_panel import GraphPanel
 
 
 class AnalysisPanel(QWidget):
-    def __init__(self, analysis_data=[]):
+    def __init__(self, analysis_data=None):
         super().__init__()
+
+        if analysis_data is None:
+            analysis_data = []
 
         self.analysis_data = analysis_data
 

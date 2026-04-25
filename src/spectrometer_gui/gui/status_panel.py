@@ -1,5 +1,5 @@
 import asyncio
-import os
+from pathlib import Path
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 )
 
 from gui.spectrometer_controller import SpectrometerController, DeviceStatus
+import contextlib
 
 
 class StatusPanel(QWidget):
@@ -22,6 +23,7 @@ class StatusPanel(QWidget):
         self.spectrometer = spectrometer
         self.device_circles = {}
         self.refresh_buttons = {}
+        self._refresh_task: asyncio.Task | None = None
         self.setup_ui()
 
         # Signals
@@ -83,7 +85,7 @@ class StatusPanel(QWidget):
 
             # Refresh button
             refresh_btn = QPushButton()
-            icon_path = os.path.join(os.path.dirname(__file__), "icons/refresh-cw.svg")
+            icon_path = str(Path(__file__).parent / "icons/refresh-cw.svg")
             refresh_btn.setIcon(QIcon(icon_path))
             refresh_btn.setToolTip("Refresh device connection")
             refresh_btn.setFixedSize(30, 30)
@@ -99,13 +101,13 @@ class StatusPanel(QWidget):
 
     def on_refresh_clicked(self, device_id):
         self.refresh_buttons[device_id].setEnabled(False)
-        asyncio.create_task(self.refresh_device_async(device_id))
+        if self._refresh_task:
+            self._refresh_task.cancel()
+        self._refresh_task = asyncio.create_task(self.refresh_device_async(device_id))
 
     async def refresh_device_async(self, device_id):
-        try:
+        with contextlib.suppress(Exception):
             await self.spectrometer.refresh_device(device_id)
-        except Exception:
-            pass
 
         self.refresh_buttons[device_id].setEnabled(True)
 

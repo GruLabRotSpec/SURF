@@ -1,4 +1,3 @@
-import logging
 import time
 import serial
 from enum import Enum
@@ -37,28 +36,24 @@ class ValonController:
     def update_config(self, config: Config):
         valon_config = config.valon_controller
 
-        self.set_rf_output(
-            1 if valon_config.rf_output else 0
-        )
+        self.set_rf_output(1 if valon_config.rf_output else 0)
         self.set_rf_level(valon_config.rf_level)
-        self.set_synth_power(
-            1 if valon_config.synth_power else 0
-        )
+        self.set_synth_power(1 if valon_config.synth_power else 0)
         self.set_ref_source(valon_config.ref_source)
         self.set_ref_freq(valon_config.ref_freq)
 
     # Write Valon cmds, either writing or querying based on presence of \r
     def write_cmd(self, cmd):
-        #print(f"Valon CMD: {cmd}")
+        # print(f"Valon CMD: {cmd}")
         # Format command with line termination \r, encode (utf-8 I think), send to Valon
         format_cmd = f"{cmd}\r"
         self._connection.reset_input_buffer()
-        #print(format_cmd)
+        # print(format_cmd)
         self._connection.write(format_cmd.encode())
         time.sleep(0.1)
         response_bytes = self._connection.read(1024)
         response = response_bytes.decode().strip()
-        #print(f"Valon Response: {response}")
+        # print(f"Valon Response: {response}")
         return response
 
     def set_settings(self, rf_level):
@@ -114,7 +109,7 @@ class ValonController:
 
     def get_rf_level(self):
         self.write_cmd("PoWeR?")
-    
+
     def set_rf_level(self, level):
         self.write_cmd(f"PoWeR {level}")
 
@@ -135,5 +130,3 @@ class ValonController:
 
     def set_ref_freq(self, freq):
         self.write_cmd(f"REFerence {freq} MHz")
-
-    

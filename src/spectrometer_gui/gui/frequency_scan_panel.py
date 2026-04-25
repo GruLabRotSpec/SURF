@@ -55,20 +55,16 @@ class FrequencyScanPanel(QWidget):
         left_column.addWidget(self.form_panel)
 
         start_freq_label = QLabel("Starting Frequency")
-        self.start_freq_field = QDoubleSpinBox()
-        self.start_freq_field.setMinimum(8000)
-        self.start_freq_field.setMaximum(18000)
-        self.start_freq_field.setDecimals(3)
-        self.start_freq_field.setSuffix(" MHz")
-        self.start_freq_field.setValue(10000)
+        self.start_freq_field = QDoubleSpinBox(
+            minimum=8000, maximum=18000, decimals=3, suffix=" MHz", value=10000
+        )
+        form.addRow(start_freq_label, self.start_freq_field)
 
         zaber_pos_label = QLabel("Zaber Position")
         zaber_pos_layout = QHBoxLayout()
-        self.zaber_pos_field = QDoubleSpinBox()
-        self.zaber_pos_field.setMinimum(0)
-        self.zaber_pos_field.setMaximum(50)
-        self.zaber_pos_field.setDecimals(3)
-        self.zaber_pos_field.setSuffix(" mm")
+        self.zaber_pos_field = QDoubleSpinBox(
+            minimum=0, maximum=50, decimals=3, suffix=" mm"
+        )
         self.zaber_pos_field.setEnabled(False)
         zaber_pos_layout.addWidget(self.zaber_pos_field)
         self.zaber_set_pos_checkbox = QCheckBox("Set Position")
@@ -77,25 +73,16 @@ class FrequencyScanPanel(QWidget):
         zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
         form.addRow(zaber_pos_label, zaber_pos_layout)
 
-        form.addRow(start_freq_label, self.start_freq_field)
-
         step_size_label = QLabel("Freq Step Size")
-        self.step_size_field = QDoubleSpinBox()
-        self.step_size_field.setMinimum(0)
-        self.step_size_field.setMaximum(1)
-        self.step_size_field.setValue(0.5)
-        self.step_size_field.setSingleStep(0.25)
-        self.step_size_field.setDecimals(3)
-        self.step_size_field.setSuffix(" MHz")
+        self.step_size_field = QDoubleSpinBox(
+            minimum=0, maximum=1, value=0.5, singleStep=0.25, decimals=3, suffix=" MHz"
+        )
         form.addRow(step_size_label, self.step_size_field)
 
         end_freq_label = QLabel("Ending Frequency")
-        self.end_freq_field = QDoubleSpinBox()
-        self.end_freq_field.setMinimum(8000)
-        self.end_freq_field.setMaximum(18000)
-        self.end_freq_field.setDecimals(3)
-        self.end_freq_field.setSuffix(" MHz")
-        self.end_freq_field.setValue(10500)
+        self.end_freq_field = QDoubleSpinBox(
+            minimum=8000, maximum=18000, decimals=3, suffix=" MHz", value=10500
+        )
         form.addRow(end_freq_label, self.end_freq_field)
 
         experiment_group = QGroupBox("Experiment parameters")
@@ -113,8 +100,7 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(sample_name_label, self.sample_name_field)
 
         sample_temp_label = QLabel("Sample temp")
-        self.sample_temp_field = QDoubleSpinBox()
-        self.sample_temp_field.setSuffix(" C")
+        self.sample_temp_field = QDoubleSpinBox(suffix=" C")
         experiment_form.addRow(sample_temp_label, self.sample_temp_field)
 
         gas_name_label = QLabel("Gas")
@@ -122,25 +108,21 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(gas_name_label, self.gas_name_field)
 
         gas_width_label = QLabel("Gas width")
-        self.gas_width_field = QDoubleSpinBox()
-        self.gas_width_field.setSuffix(" μs")
+        self.gas_width_field = QDoubleSpinBox(suffix=" μs")
         experiment_form.addRow(gas_width_label, self.gas_width_field)
 
-        gas_width_label = QLabel("Backing pressure")
-        self.gas_width_field = QDoubleSpinBox()
-        self.gas_width_field.setValue(15)
-        self.gas_width_field.setMaximum(25)
-        self.gas_width_field.setSuffix(" psi")
-        experiment_form.addRow(gas_width_label, self.gas_width_field)
+        backing_pressure_label = QLabel("Backing pressure")
+        self.backing_pressure_field = QDoubleSpinBox(
+            value=15, maximum=25, suffix=" psi"
+        )
+        experiment_form.addRow(backing_pressure_label, self.backing_pressure_field)
 
-        gas_width_label = QLabel("Chamber pressure")
-        self.gas_width_field = QDoubleSpinBox()
-        self.gas_width_field.setSuffix(" torr")
-        experiment_form.addRow(gas_width_label, self.gas_width_field)
+        chamber_pressure_label = QLabel("Chamber pressure")
+        self.chamber_pressure_field = QDoubleSpinBox(suffix=" torr")
+        experiment_form.addRow(chamber_pressure_label, self.chamber_pressure_field)
 
         mw_width_label = QLabel("MW width")
-        self.mw_width_field = QDoubleSpinBox()
-        self.mw_width_field.setSuffix(" μs")
+        self.mw_width_field = QDoubleSpinBox(suffix=" μs")
         experiment_form.addRow(mw_width_label, self.mw_width_field)
 
         left_column.addWidget(experiment_group)
@@ -229,7 +211,9 @@ class FrequencyScanPanel(QWidget):
             self.spec_xx.extend(graph_state.fft_x)
             self.spec_yy.extend(graph_state.fft_y)
 
-        points = [QPointF(x, y) for x, y in zip(self.spec_xx, self.spec_yy)]
+        points = [
+            QPointF(x, y) for x, y in zip(self.spec_xx, self.spec_yy, strict=False)
+        ]
         self.axes2_series.replace(points)
 
     @Slot(float)

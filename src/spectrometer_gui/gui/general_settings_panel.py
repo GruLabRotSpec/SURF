@@ -54,7 +54,7 @@ class GeneralSettingsPanel(QWidget):
         logging_group.setLayout(logging_form)
 
         self.logging_toggle = QCheckBox("Enable logging")
-        self.logging_toggle.setChecked(True if settings.logging.enabled else False)
+        self.logging_toggle.setChecked(bool(settings.logging.enabled))
         logging_form.addRow(self.logging_toggle)
         self.logging_toggle.stateChanged.connect(self.on_logging_toggle)
 
@@ -142,9 +142,7 @@ class GeneralSettingsPanel(QWidget):
     def update_settings(self):
         self.settings.output.location = self.output_location_field.text()
         self.settings.output.filename = self.filename_field.text()
-        self.settings.logging.enabled = (
-            True if self.logging_toggle.isChecked() else False
-        )
+        self.settings.logging.enabled = self.logging_toggle.isChecked()
         self.settings.logging.location = self.logging_location_field.text()
         self.settings.theme = self.theme_combo.currentText()
         self.settings.scope_preset.root_path = self.preset_root_path_field.text()
@@ -172,10 +170,10 @@ class GeneralSettingsPanel(QWidget):
         else:
             self.logging_location_browse.setEnabled(False)
 
-    def get_folder_location(self, caption, dir=""):
+    def get_folder_location(self, caption, dir_path=""):
         dialog = QFileDialog
 
-        folder = dialog.getExistingDirectory(self, caption, dir)
+        folder = dialog.getExistingDirectory(self, caption, dir_path)
         return folder
 
     def get_output_location(self):
