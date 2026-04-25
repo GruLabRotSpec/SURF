@@ -13,10 +13,11 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QDoubleSpinBox,
 )
+from PySide6.QtCharts import QChartView, QChart, QLineSeries, QValueAxis
+from PySide6.QtCore import Qt, QPointF
 
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, GraphState
-from gui.graph_panel import GraphPanel
 
 
 class FrequencyScanPanel(QWidget):
@@ -162,9 +163,23 @@ class FrequencyScanPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        graph_panel = GraphPanel()
-        self.graph_panel = graph_panel
-        right_column.addWidget(graph_panel)
+        self.chart_view = QChartView()
+        self.chart = QChart()
+        self.chart.setTitle("Spectrum")
+        self.chart_view.setChart(self.chart)
+
+        self.axes2_series = QLineSeries()
+        self.axes2_x_axis = QValueAxis()
+        self.axes2_x_axis.setTitleText("Frequency (MHz)")
+        self.axes2_y_axis = QValueAxis()
+        self.axes2_y_axis.setTitleText("Relative Intensity (Volts)")
+        self.chart.addSeries(self.axes2_series)
+        self.chart.addAxis(self.axes2_x_axis, Qt.AlignmentFlag.AlignBottom)
+        self.chart.addAxis(self.axes2_y_axis, Qt.AlignmentFlag.AlignLeft)
+        self.axes2_series.attachAxis(self.axes2_x_axis)
+        self.axes2_series.attachAxis(self.axes2_y_axis)
+
+        right_column.addWidget(self.chart_view)
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
@@ -210,26 +225,12 @@ class FrequencyScanPanel(QWidget):
         if graph_state.scan_type != ScanType.FREQUENCY:
             return
 
-        self.graph_panel.graph.axes1.clear()
-        self.graph_panel.graph.axes1.plot(graph_state.pos_array, graph_state.max_list)
-        self.graph_panel.graph.axes1.set_title(
-            f"Zaber Position vs. Intensity @ {graph_state.frequency} MHz"
-        )
-        self.graph_panel.graph.axes1.set_xlabel("Zaber Position (mm)")
-        self.graph_panel.graph.axes1.set_ylabel("Intensity (Volts)")
-
         if graph_state.fft_x:
             self.spec_xx.extend(graph_state.fft_x)
             self.spec_yy.extend(graph_state.fft_y)
 
-        self.graph_panel.graph.axes2.clear()
-        self.graph_panel.graph.axes2.set_title("Spectrum")
-        self.graph_panel.graph.axes2.set_xlabel("Frequency (MHz)")
-        self.graph_panel.graph.axes2.set_ylabel("Relative Intensity (Volts)")
-
-        self.graph_panel.graph.axes2.plot(self.spec_xx, self.spec_yy)
-
-        self.graph_panel.graph.draw()
+        points = [QPointF(x, y) for x, y in zip(self.spec_xx, self.spec_yy)]
+        self.axes2_series.replace(points)
 
     @Slot(float)
     def on_zaber_position(self, position):
