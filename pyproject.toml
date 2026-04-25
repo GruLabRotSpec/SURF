@@ -9,7 +9,6 @@ dependencies = [
     "matplotlib>=3.10.6",
     "numpy>=2.3.3",
     "pandas>=2.3.2",
-    "pip>=25.3",
     "pydantic>=2.12.5",
     "pyqtdarktheme>=2.1.0",
     "pyserial>=3.5",
