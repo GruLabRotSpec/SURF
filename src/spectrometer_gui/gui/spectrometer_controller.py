@@ -1,19 +1,13 @@
 import asyncio
 import traceback
 import threading
-from enum import Enum
 
 from config import Config
 from gui.bottom_bar import BottomBarPanel
+from gui.signal_enums import DeviceStatus
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
 from spectrometer import GraphState, ScanType, Spectrometer
-
-
-class DeviceStatus(Enum):
-    CONNECTING = "connecting"
-    ONLINE = "online"
-    OFFLINE = "offline"
 
 
 class ScanSignals(QObject):
@@ -147,5 +141,6 @@ class SpectrometerController(QObject):
             "awg",
         ]
 
-        for device_name in devices:
-            await self.init_device_async(device_name)
+        await asyncio.gather(
+            *[self.init_device_async(device_name) for device_name in devices]
+        )

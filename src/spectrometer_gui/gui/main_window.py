@@ -65,6 +65,9 @@ class MainWindow(QMainWindow):
         self.analysis_panel = AnalysisPanel()
 
         self.controller.set_bottom_bar(bottom_bar_panel)
+        status_panel.signal_status_changed.connect(
+            bottom_bar_panel.set_spectrometer_status
+        )
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
