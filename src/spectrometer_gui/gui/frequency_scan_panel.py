@@ -1,5 +1,4 @@
 from PySide6.QtCore import Slot
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QGroupBox,
     QCheckBox,
@@ -12,11 +11,13 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QDoubleSpinBox,
 )
-from PySide6.QtCharts import QChartView, QChart, QLineSeries, QValueAxis
-from PySide6.QtCore import Qt, QPointF
+import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, GraphState
+
+pg.setConfigOption("background", "w")
+pg.setConfigOption("foreground", "k")
 
 
 class FrequencyScanPanel(QWidget):
@@ -48,6 +49,8 @@ class FrequencyScanPanel(QWidget):
         layout.setStretch(0, 1)
 
         layout.addWidget(self._create_spectrum_graph())
+        layout.setSpacing(10)
+        layout.setContentsMargins(5, 5, 5, 15)
         layout.setStretch(1, 1)
 
         bottom_hbox = QHBoxLayout()
@@ -163,54 +166,24 @@ class FrequencyScanPanel(QWidget):
     def _create_config_panel(self) -> QWidget:
         return QGroupBox("Config")
 
-    def _create_spectrum_graph(self) -> QChartView:
-        self.spectrum_graph = QChartView()
-        self.spectrum_chart = QChart()
-        self.spectrum_chart.setTitle("Spectrum")
-        self.spectrum_chart.setTitleFont(
-            QFont("Arial", pointSize=12, weight=QFont.Weight.Bold)
-        )
-        self.spectrum_chart.legend().setVisible(False)
-        self.spectrum_graph.setChart(self.spectrum_chart)
-
-        self.spectrum_series = QLineSeries()
-        self.spectrum_x_axis = QValueAxis()
-        self.spectrum_x_axis.setTitleText("Frequency (MHz)")
-        self.spectrum_y_axis = QValueAxis()
-        self.spectrum_y_axis.setTitleText("Relative Intensity (Volts)")
-        self.spectrum_y_axis.setTitleFont(QFont("Arial", pointSize=8))
-        self.spectrum_chart.addSeries(self.spectrum_series)
-        self.spectrum_chart.addAxis(self.spectrum_x_axis, Qt.AlignmentFlag.AlignBottom)
-        self.spectrum_chart.addAxis(self.spectrum_y_axis, Qt.AlignmentFlag.AlignLeft)
-        self.spectrum_series.attachAxis(self.spectrum_x_axis)
-        self.spectrum_series.attachAxis(self.spectrum_y_axis)
+    def _create_spectrum_graph(self) -> QWidget:
+        self.spectrum_graph = pg.PlotWidget(title="Spectrum")
+        self.spectrum_graph.setLabel("bottom", "Frequency (MHz)")
+        self.spectrum_graph.setLabel("left", "Relative Intensity (Volts)")
+        self.spectrum_graph.showGrid(x=True, y=True, alpha=0.3)
+        self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)
+        self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.spectrum_graph
 
-    def _create_cavity_track_graph(self) -> QChartView:
-        self.cavity_track_graph = QChartView()
-        self.cavity_track_chart = QChart()
-        self.cavity_track_chart.setTitle("Cavity Track")
-        self.cavity_track_chart.setTitleFont(
-            QFont("Arial", pointSize=12, weight=QFont.Weight.Bold)
+    def _create_cavity_track_graph(self) -> QWidget:
+        self.cavity_track_graph = pg.PlotWidget(title="Cavity Track")
+        self.cavity_track_graph.setLabel("bottom", "Frequency (MHz)")
+        self.cavity_track_graph.setLabel("left", "Relative Intensity (Volts)")
+        self.cavity_track_graph.showGrid(x=True, y=True, alpha=0.3)
+        self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)
+        self.cavity_track_plot = self.cavity_track_graph.plot(
+            pen=pg.mkPen(color="r", width=1)
         )
-        self.cavity_track_chart.legend().setVisible(False)
-        self.cavity_track_graph.setChart(self.cavity_track_chart)
-
-        self.cavity_track_series = QLineSeries()
-        self.cavity_track_x_axis = QValueAxis()
-        self.cavity_track_x_axis.setTitleText("Frequency (MHz)")
-        self.cavity_track_y_axis = QValueAxis()
-        self.cavity_track_y_axis.setTitleText("Relative Intensity (Volts)")
-        self.cavity_track_y_axis.setTitleFont(QFont("Arial", pointSize=8))
-        self.cavity_track_chart.addSeries(self.cavity_track_series)
-        self.cavity_track_chart.addAxis(
-            self.cavity_track_x_axis, Qt.AlignmentFlag.AlignBottom
-        )
-        self.cavity_track_chart.addAxis(
-            self.cavity_track_y_axis, Qt.AlignmentFlag.AlignLeft
-        )
-        self.cavity_track_series.attachAxis(self.cavity_track_x_axis)
-        self.cavity_track_series.attachAxis(self.cavity_track_y_axis)
         return self.cavity_track_graph
 
     def _create_scan_status_panel(self) -> QWidget:
@@ -223,11 +196,6 @@ class FrequencyScanPanel(QWidget):
         scan_status_form.addRow("Current Freq", self.scan_status_current_freq)
         scan_status_form.addRow("Elapsed Time", self.scan_status_elapsed_time)
         scan_status_form.addRow("Time Remaining", self.scan_status_time_remaining)
-        export_button = QPushButton("Export Graphs")
-        export_hbox = QHBoxLayout()
-        export_hbox.addWidget(export_button)
-        export_hbox.addStretch()
-        scan_status_form.addRow("", export_hbox)
         return self.scan_status_group
 
     @Slot()
@@ -270,10 +238,7 @@ class FrequencyScanPanel(QWidget):
             self.spec_xx.extend(graph_state.fft_x)
             self.spec_yy.extend(graph_state.fft_y)
 
-        points = [
-            QPointF(x, y) for x, y in zip(self.spec_xx, self.spec_yy, strict=False)
-        ]
-        self.spectrum_series.replace(points)
+        self.spectrum_plot.setData(self.spec_xx, self.spec_yy)
 
     @Slot(float)
     def on_zaber_position(self, position):
