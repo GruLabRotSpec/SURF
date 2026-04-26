@@ -194,14 +194,13 @@ class Spectrometer:
             start_position = self.zaber_controller.get_pos()
 
             # Step Zaber & Freq
-            if step_direction == StepDirection.Up:
-                new_freq = valon_freq + step_size * run_number
-                end_position = start_position + self.zaber_controller.step_size
-            elif step_direction == StepDirection.Down:
-                new_freq = valon_freq - step_size * run_number
-                end_position = start_position - self.zaber_controller.step_size
-            else:
-                raise ValueError("Invalid step direction", step_direction)
+            match step_direction:
+                case StepDirection.Up:
+                    new_freq = valon_freq + step_size * run_number
+                    end_position = start_position + self.zaber_controller.step_size
+                case StepDirection.Down:
+                    new_freq = valon_freq - step_size * run_number
+                    end_position = start_position - self.zaber_controller.step_size
 
             # Check for end of zaber
             if end_position > 50 or start_position > 50:
@@ -279,18 +278,22 @@ class Spectrometer:
             )
 
             # Check for stop Freq
-            if new_freq > stop_freq and step_direction == StepDirection.Up:
-                self.logger.logger.info("You have reached the stop frequency")
-                break
-            elif new_freq < stop_freq and step_direction == StepDirection.Down:
-                self.logger.logger.info("You have reached the stop frequency")
-                break
+            match step_direction:
+                case StepDirection.Up:
+                    if new_freq > stop_freq:
+                        self.logger.logger.info("You have reached the stop frequency")
+                        break
+                case StepDirection.Down:
+                    if new_freq < stop_freq:
+                        self.logger.logger.info("You have reached the stop frequency")
+                        break
 
             # Step
-            if step_direction == StepDirection.Up:
-                self.valon_controller.step_up()
-            elif step_direction == StepDirection.Down:
-                self.valon_controller.step_down()
+            match step_direction:
+                case StepDirection.Up:
+                    self.valon_controller.step_up()
+                case StepDirection.Down:
+                    self.valon_controller.step_down()
 
             run_number += 1
 
@@ -531,8 +534,11 @@ class Spectrometer:
             & (spectrum_data["Frequency (MHz)"] <= upper_bound)
         ]
 
-        if step_direction == StepDirection.Down:
-            filtered_spectrum = filtered_spectrum.iloc[::-1]
+        match step_direction:
+            case StepDirection.Down:
+                filtered_spectrum = filtered_spectrum.iloc[::-1]
+            case StepDirection.Up:
+                pass
 
         filtered_spectrum = filtered_spectrum.reset_index(drop=True)
 

@@ -37,18 +37,19 @@ class BottomBarPanel(QWidget):
 
     @Slot(DeviceStatus)
     def set_spectrometer_status(self, status: DeviceStatus):
-        if status == DeviceStatus.ONLINE:
-            self.status_circle.setStyleSheet(
-                "color: #00AA00; font-size: 16px; font-weight: bold;"
-            )
-        elif status == DeviceStatus.OFFLINE:
-            self.status_circle.setStyleSheet(
-                "color: #CC0000; font-size: 16px; font-weight: bold;"
-            )
-        else:
-            self.status_circle.setStyleSheet(
-                "color: gray; font-size: 16px; font-weight: bold;"
-            )
+        match status:
+            case DeviceStatus.ONLINE:
+                self.status_circle.setStyleSheet(
+                    "color: #00AA00; font-size: 16px; font-weight: bold;"
+                )
+            case DeviceStatus.OFFLINE:
+                self.status_circle.setStyleSheet(
+                    "color: #CC0000; font-size: 16px; font-weight: bold;"
+                )
+            case DeviceStatus.CONNECTING:
+                self.status_circle.setStyleSheet(
+                    "color: gray; font-size: 16px; font-weight: bold;"
+                )
 
     @Slot(float, str)
     def set_status_elements(self, progress, text=None):
