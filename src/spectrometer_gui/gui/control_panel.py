@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 from pathlib import Path
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
@@ -22,20 +23,70 @@ from gui.spectrometer_controller import SpectrometerController
 from gui.custom_toolbar import CustomToolbar
 
 
+class ControlType(Enum):
+    CheckBox = 1
+    TextBox = 2
+    SpinBox = 3
+
+
+class ControlRegistry:
+    def __init__(self, spec_controller: SpectrometerController):
+        self._controller = spec_controller
+        self._controls = []
+
+    def register(self, path: str, widget, control_type: ControlType):
+        self._controls.append((path, widget, control_type))
+
+    def load_config(self):
+        for path, widget, control_type in self._controls:
+            keys = path.strip().split(".")
+
+            value = self._controller.config
+
+            for key in keys:
+                value = value.__getattribute__(key)
+
+            match control_type:
+                case ControlType.CheckBox:
+                    widget.setChecked(bool(value))
+                case ControlType.TextBox:
+                    widget.setCurrentText(value)
+                case ControlType.SpinBox:
+                    widget.setValue(value)
+
+    def apply_config(self):
+        for path, widget, control_type in self._controls:
+            keys = path.strip().split(".")
+
+            config = self._controller.config
+
+            for key in keys[:-1]:
+                config = config.__getattribute__(key)
+
+            match control_type:
+                case ControlType.CheckBox:
+                    config.__setattr__(keys[-1], bool(widget.isChecked()))
+                case ControlType.TextBox:
+                    config.__setattr__(keys[-1], widget.currentText())
+                case ControlType.SpinBox:
+                    config.__setattr__(keys[-1], widget.value())
+
+
 class ControlPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
-        self.spectrometer = spectrometer
+        self.spec_controller = spectrometer
+        self.registry = ControlRegistry(self.spec_controller)
 
-        self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
-        self.spectrometer.signal.settings_updated.connect(self.on_settings_updated)
+        self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
+        self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
         toolbar = CustomToolbar()
-        toolbar.update_action.triggered.connect(self._apply_values_in_control_panel)
+        toolbar.update_action.triggered.connect(self.registry.apply_config)
         layout.addWidget(toolbar)
 
         # Bottom columns
@@ -49,8 +100,28 @@ class ControlPanel(QWidget):
         left_column_panel = QWidget()
         left_column_panel.setLayout(left_column)
 
-        # left_column.addStretch(1)
+        left_column.addWidget(self._create_zaber_group())
+        left_column.addWidget(self._create_awg_group())
+        left_column.addWidget(self._create_valon_group())
 
+        # Right Column
+        right_column = QVBoxLayout()
+        right_column_panel = QWidget()
+        right_column_panel.setLayout(right_column)
+
+        right_column.addWidget(self._create_timing_group())
+        right_column.addWidget(self._create_oscilloscope_group())
+
+        bottom_layout.addWidget(left_column_panel)
+        bottom_layout.addWidget(right_column_panel)
+
+        bottom_layout.setStretch(0, 1)
+        bottom_layout.setStretch(1, 1)
+
+        layout.addWidget(bottom_panel)
+        layout.addStretch()
+
+    def _create_zaber_group(self) -> QGroupBox:
         zaber_group = QGroupBox("Zaber")
 
         zaber_form = QFormLayout()
@@ -140,8 +211,20 @@ class ControlPanel(QWidget):
 
         zaber_form.addRow("Position (relative)", zaber_control_widget_2)
 
-        left_column.addWidget(zaber_group)
+        self.registry.register(
+            "zaber_controller.zaber_scanning_speed",
+            self.zaber_speed_1_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "zaber_controller.zaber_moving_speed",
+            self.zaber_speed_2_field,
+            ControlType.SpinBox,
+        )
 
+        return zaber_group
+
+    def _create_awg_group(self) -> QGroupBox:
         awg_group = QGroupBox("Arbitrary Waveform Generator")
 
         awg_form = QFormLayout()
@@ -201,8 +284,35 @@ class ControlPanel(QWidget):
         ch_2_label = QLabel("Channel 2 output")
         awg_form.addRow(ch_2_label, awg_ch_2_output_group_widget)
 
-        left_column.addWidget(awg_group)
+        self.registry.register(
+            "awg_controller.awg_status",
+            self.awg_on_btn,
+            ControlType.CheckBox,
+        )
+        self.registry.register(
+            "awg_controller.awg_run_mode",
+            self.run_mode_field,
+            ControlType.TextBox,
+        )
+        self.registry.register(
+            "awg_controller.awg_freq",
+            self.awg_freq_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "awg_controller.awg_ch_1_output",
+            self.awg_ch_1_output_on_btn,
+            ControlType.CheckBox,
+        )
+        self.registry.register(
+            "awg_controller.awg_ch_2_output",
+            self.awg_ch_2_output_on_btn,
+            ControlType.CheckBox,
+        )
 
+        return awg_group
+
+    def _create_valon_group(self) -> QGroupBox:
         valon_group = QGroupBox("Valon")
 
         valon_form = QFormLayout()
@@ -251,15 +361,35 @@ class ControlPanel(QWidget):
         self.ref_freq_field = QDoubleSpinBox(value=10, suffix=" MHz")
         valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
-        left_column.addWidget(valon_group)
+        self.registry.register(
+            "valon_controller.rf_output",
+            self.rf_output_on_btn,
+            ControlType.CheckBox,
+        )
+        self.registry.register(
+            "valon_controller.rf_level",
+            self.rf_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "valon_controller.synth_power",
+            self.synth_power_on_btn,
+            ControlType.CheckBox,
+        )
+        self.registry.register(
+            "valon_controller.ref_source",
+            self.ref_source_field,
+            ControlType.TextBox,
+        )
+        self.registry.register(
+            "valon_controller.ref_freq",
+            self.ref_freq_field,
+            ControlType.SpinBox,
+        )
 
-        # Right Column
-        right_column = QVBoxLayout()
-        right_column_panel = QWidget()
-        right_column_panel.setLayout(right_column)
+        return valon_group
 
-        # right_column.addStretch(1)
-
+    def _create_timing_group(self) -> QGroupBox:
         timing_group = QGroupBox("Delay Generator")
 
         timing_form = QFormLayout()
@@ -269,9 +399,15 @@ class ControlPanel(QWidget):
         self.trigger_rate_field = QDoubleSpinBox(minimum=0, suffix=" Hz")
         timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
 
-        right_column.addWidget(timing_group)
+        self.registry.register(
+            "delay_generator_controller.trigger_rate",
+            self.trigger_rate_field,
+            ControlType.SpinBox,
+        )
 
-        # Oscilloscope group boxes
+        return timing_group
+
+    def _create_oscilloscope_group(self) -> QGroupBox:
         general_group = QGroupBox("General")
         general_form = QFormLayout()
         general_group.setLayout(general_form)
@@ -323,6 +459,22 @@ class ControlPanel(QWidget):
         self.math3_gatepos_field = QDoubleSpinBox(suffix=" us", value=0.6)
         math3_form.addRow(math3_gatepos_label, self.math3_gatepos_field)
 
+        self.registry.register(
+            "oscilloscope_controller.math3.window",
+            self.math3_window_field,
+            ControlType.TextBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.math3.resolution",
+            self.math3_res_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.math3.gate_position",
+            self.math3_gatepos_field,
+            ControlType.SpinBox,
+        )
+
         math4_group = QGroupBox("Math 4")
         math4_form = QFormLayout()
         math4_group.setLayout(math4_form)
@@ -345,6 +497,22 @@ class ControlPanel(QWidget):
         self.math4_gatepos_field = QDoubleSpinBox(suffix=" us", value=18.45)
         math4_form.addRow(math4_gatepos_label, self.math4_gatepos_field)
 
+        self.registry.register(
+            "oscilloscope_controller.math4.window",
+            self.math4_window_field,
+            ControlType.TextBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.math4.resolution",
+            self.math4_res_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.math4.gate_position",
+            self.math4_gatepos_field,
+            ControlType.SpinBox,
+        )
+
         oscilloscope_group = QGroupBox("Oscilloscope")
         oscilloscope_layout = QVBoxLayout()
         oscilloscope_group.setLayout(oscilloscope_layout)
@@ -353,16 +521,23 @@ class ControlPanel(QWidget):
         oscilloscope_layout.addWidget(math3_group)
         oscilloscope_layout.addWidget(math4_group)
 
-        right_column.addWidget(oscilloscope_group)
+        self.registry.register(
+            "oscilloscope_controller.acq_rate",
+            self.acq_rate_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.sample_rate",
+            self.sample_rate_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "oscilloscope_controller.math_averages",
+            self.math_averages_field,
+            ControlType.SpinBox,
+        )
 
-        bottom_layout.addWidget(left_column_panel)
-        bottom_layout.addWidget(right_column_panel)
-
-        bottom_layout.setStretch(0, 1)
-        bottom_layout.setStretch(1, 1)
-
-        layout.addWidget(bottom_panel)
-        layout.addStretch()
+        return oscilloscope_group
 
     @Slot(float)
     def on_zaber_position(self, position):
@@ -385,202 +560,53 @@ class ControlPanel(QWidget):
             self.zaber_move_right_btn.setEnabled(False)
 
     def set_zaber_position(self, home=False):
-        if self.spectrometer.current_task:
+        if self.spec_controller.current_task:
             print("Cannot move Zaber during a task")
         else:
             print("Attempting to manually move Zaber...")
             new_pos = float(self.zaber_pos_field.value())
             if home:
-                self.spectrometer.spectrometer.zaber_controller.home(False)
+                self.spec_controller.spectrometer.zaber_controller.home(False)
             else:
-                self.spectrometer.spectrometer.zaber_controller.move_to(
+                self.spec_controller.spectrometer.zaber_controller.move_to(
                     new_pos, 1, False
                 )
 
     def set_zaber_position_relative(self):
-        self.spectrometer.spectrometer.zaber_controller.axis.move_relative(
+        self.spec_controller.spectrometer.zaber_controller.axis.move_relative(
             self.zaber_inc_field.value()
         )  # Temp fix
 
     def _recall_preset(self):
         preset = self.preset_combo.currentData()
         if preset:
-            self.spectrometer.spectrometer.oscilloscope_controller.recall_setup(
-                preset.path, self.spectrometer.settings.scope_preset.root_path
+            self.spec_controller.spectrometer.oscilloscope_controller.recall_setup(
+                preset.path, self.spec_controller.settings.scope_preset.root_path
             )
 
     @Slot(object)
     def on_settings_updated(self, settings):
-        self.spectrometer.settings = settings
+        self.spec_controller.settings = settings
         self._populate_preset_dropdown()
 
     def _populate_preset_dropdown(self):
         self.preset_combo.clear()
-        if self.spectrometer.settings.scope_preset.presets:
-            for _, preset in self.spectrometer.settings.scope_preset.presets.items():
+        if self.spec_controller.settings.scope_preset.presets:
+            for _, preset in self.spec_controller.settings.scope_preset.presets.items():
                 self.preset_combo.addItem(preset.name, preset)
         else:
             self.preset_combo.addItem("None")
 
     def showEvent(self, event: QShowEvent):
         super().showEvent(event)
-        self._set_values_in_control_panel()
+        self.registry.load_config()
 
     def _set_values_in_control_panel(self):
-        # Zaber
-        self.zaber_speed_1_field.setValue(
-            self.spectrometer.config.zaber_controller.zaber_scanning_speed
-        )
-        self.zaber_speed_2_field.setValue(
-            self.spectrometer.config.zaber_controller.zaber_moving_speed
-        )
-
-        # AWG
-        self.awg_on_btn.setChecked(
-            bool(self.spectrometer.config.awg_controller.awg_status)
-        )
-        self.run_mode_field.setCurrentText(
-            self.spectrometer.config.awg_controller.awg_run_mode
-        )
-        self.awg_freq_field.setValue(self.spectrometer.config.awg_controller.awg_freq)
-        self.awg_ch_1_output_on_btn.setChecked(
-            bool(self.spectrometer.config.awg_controller.awg_ch_1_output)
-        )
-        self.awg_ch_2_output_on_btn.setChecked(
-            bool(self.spectrometer.config.awg_controller.awg_ch_2_output)
-        )
-
-        # Valon
-        self.rf_output_on_btn.setChecked(
-            bool(self.spectrometer.config.valon_controller.rf_output)
-        )
-        self.rf_field.setValue(self.spectrometer.config.valon_controller.rf_level)
-        self.synth_power_on_btn.setChecked(
-            bool(self.spectrometer.config.valon_controller.synth_power)
-        )
-        self.ref_source_field.setCurrentText(
-            self.spectrometer.config.valon_controller.ref_source
-        )
-        self.ref_freq_field.setValue(self.spectrometer.config.valon_controller.ref_freq)
-
-        # Oscilloscope - Math 4
-        self.math4_window_field.setCurrentText(
-            self.spectrometer.config.oscilloscope_controller.math4.window
-        )
-        self.math4_res_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.math4.resolution
-        )
-        self.math4_gatepos_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.math4.gate_position
-        )
-
-        # Oscilloscope - Math 3
-        self.math3_window_field.setCurrentText(
-            self.spectrometer.config.oscilloscope_controller.math3.window
-        )
-        self.math3_res_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.math3.resolution
-        )
-        self.math3_gatepos_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.math3.gate_position
-        )
-
-        # Oscilloscope - General
-        self.acq_rate_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.acq_rate
-        )
-        self.sample_rate_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.sample_rate
-        )
-        self.math_averages_field.setValue(
-            self.spectrometer.config.oscilloscope_controller.math_averages
-        )
-
-        # Delay generator
-        self.trigger_rate_field.setValue(
-            self.spectrometer.config.delay_generator_controller.trigger_rate
-        )
+        self.registry.load_config()
 
     def _apply_values_in_control_panel(self):
-        if not self.spectrometer.current_task:
-            # Zaber
-            self.spectrometer.config.zaber_controller.zaber_scanning_speed = (
-                self.zaber_speed_1_field.value()
-            )
-            self.spectrometer.config.zaber_controller.zaber_moving_speed = (
-                self.zaber_speed_2_field.value()
-            )
-
-            # AWG
-            self.spectrometer.config.awg_controller.awg_status = bool(
-                self.awg_on_btn.isChecked()
-            )
-            self.spectrometer.config.awg_controller.awg_run_mode = (
-                self.run_mode_field.currentText()
-            )
-            self.spectrometer.config.awg_controller.awg_freq = (
-                self.awg_freq_field.value()
-            )
-            self.spectrometer.config.awg_controller.awg_ch_1_output = bool(
-                self.awg_ch_1_output_on_btn.isChecked()
-            )
-            self.spectrometer.config.awg_controller.awg_ch_2_output = bool(
-                self.awg_ch_2_output_on_btn.isChecked()
-            )
-
-            # Valon
-            self.spectrometer.config.valon_controller.rf_output = bool(
-                self.rf_output_on_btn.isChecked()
-            )
-            self.spectrometer.config.valon_controller.rf_level = self.rf_field.value()
-            self.spectrometer.config.valon_controller.synth_power = bool(
-                self.synth_power_on_btn.isChecked()
-            )
-            self.spectrometer.config.valon_controller.ref_source = (
-                self.ref_source_field.currentText()
-            )
-            self.spectrometer.config.valon_controller.ref_freq = (
-                self.ref_freq_field.value()
-            )
-
-            # Oscilloscope - Math 4
-            self.spectrometer.config.oscilloscope_controller.math4.window = (  # type: ignore[assignment]
-                self.math4_window_field.currentText()
-            )
-            self.spectrometer.config.oscilloscope_controller.math4.resolution = (
-                self.math4_res_field.value()
-            )
-            self.spectrometer.config.oscilloscope_controller.math4.gate_position = (
-                self.math4_gatepos_field.value()
-            )
-
-            # Oscilloscope - Math 3
-            self.spectrometer.config.oscilloscope_controller.math3.window = (  # type: ignore[assignment]
-                self.math3_window_field.currentText()
-            )
-            self.spectrometer.config.oscilloscope_controller.math3.resolution = (
-                self.math3_res_field.value()
-            )
-            self.spectrometer.config.oscilloscope_controller.math3.gate_position = (
-                self.math3_gatepos_field.value()
-            )
-
-            # Oscilloscope - General
-            self.spectrometer.config.oscilloscope_controller.acq_rate = (
-                self.acq_rate_field.value()
-            )
-            self.spectrometer.config.oscilloscope_controller.sample_rate = (
-                self.sample_rate_field.value()
-            )
-            self.spectrometer.config.oscilloscope_controller.math_averages = (
-                self.math_averages_field.value()
-            )
-
-            # Delay generator
-            self.spectrometer.config.delay_generator_controller.trigger_rate = (
-                self.trigger_rate_field.value()
-            )
-
-            self.spectrometer.set_config(self.spectrometer.config)
+        if not self.spec_controller.current_task:
+            self.registry.apply_config()
+            self.spec_controller.set_config(self.spec_controller.config)
         else:
             print("Cannot update control options during a task")
