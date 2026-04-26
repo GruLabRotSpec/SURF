@@ -44,7 +44,7 @@ class ControlRegistry:
             value = self._controller.config
 
             for key in keys:
-                value = value.__getattribute__(key)
+                value = getattr(value, key)
 
             match control_type:
                 case ControlType.CheckBox:
@@ -61,15 +61,15 @@ class ControlRegistry:
             config = self._controller.config
 
             for key in keys[:-1]:
-                config = config.__getattribute__(key)
+                config = getattr(config, key)
 
             match control_type:
                 case ControlType.CheckBox:
-                    config.__setattr__(keys[-1], bool(widget.isChecked()))
+                    setattr(config, keys[-1], bool(widget.isChecked()))
                 case ControlType.TextBox:
-                    config.__setattr__(keys[-1], widget.currentText())
+                    setattr(config, keys[-1], widget.currentText())
                 case ControlType.SpinBox:
-                    config.__setattr__(keys[-1], widget.value())
+                    setattr(config, keys[-1], widget.value())
 
 
 class ControlPanel(QWidget):
