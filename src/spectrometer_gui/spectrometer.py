@@ -1,5 +1,4 @@
 from __future__ import annotations
-from dataclasses import dataclass
 import math
 import time
 import numpy as np
@@ -15,6 +14,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
+from gui.signal_enums import GraphState, ScanType
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -30,25 +30,9 @@ if typing.TYPE_CHECKING:
     from gui.spectrometer_controller import ScanSignals
 
 
-@dataclass
-class GraphState:
-    scan_type: ScanType
-    pos_array: list
-    max_list: list
-    frequency: float
-    fft_x: list
-    fft_y: list
-
-
 class StepDirection(Enum):
     Down = -1
     Up = 1
-
-
-class ScanType(Enum):
-    NONE = 0
-    FREQUENCY = 1
-    CAVITY = 2
 
 
 class Spectrometer:
@@ -236,7 +220,7 @@ class Spectrometer:
 
             max_list = self.scan_with_acquisition(end_position)
 
-            # TODO: Check if we can just grab the actual pos's from the zaber
+            # TODO: Check if we can just grab the actual positions from the zaber
             pos_array = np.linspace(start_position, end_position, len(max_list))
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]

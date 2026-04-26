@@ -2,10 +2,13 @@ from PySide6.QtCore import Slot
 from PySide6.QtWidgets import (
     QGroupBox,
     QCheckBox,
+    QComboBox,
+    QFileDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QSpinBox,
     QVBoxLayout,
     QWidget,
     QLineEdit,
@@ -24,51 +27,44 @@ class FrequencyScanPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
-        self.spec_xx = []
-        self.spec_yy = []
+        self.spectrum_x = []
+        self.spectrum_y = []
 
-        self.spectrometer = spectrometer
+        self.spec_controller = spectrometer
 
-        self.spectrometer.signal.scanning.connect(self.on_scanning)
-        self.spectrometer.signal.update_graph.connect(self.on_update_graph)
-        self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
+        self.spec_controller.signal.scanning.connect(self.on_scanning)
+        self.spec_controller.signal.update_graph.connect(self.on_update_graph)
+        self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
+        self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
 
         top_row_hbox = QHBoxLayout()
-        top_row_hbox.addWidget(self._create_scan_settings_panel())
-        top_row_hbox.addWidget(self._create_experiment_params_panel())
-        top_row_hbox.addWidget(self._create_config_panel())
+        top_row_hbox.addWidget(self._create_experiment_params_panel(), stretch=1)
+        top_row_hbox.addWidget(self._create_scan_settings_panel(), stretch=1)
+        top_row_hbox.addWidget(self._create_digitizer_panel(), stretch=1)
+        top_row_hbox.addWidget(self._create_timing_panel(), stretch=1)
 
-        top_row_hbox.setStretch(0, 1)
-        top_row_hbox.setStretch(1, 1)
-        top_row_hbox.setStretch(2, 1)
-
-        layout.addLayout(top_row_hbox)
-        layout.setStretch(0, 1)
-
-        layout.addWidget(self._create_spectrum_graph())
-        layout.setSpacing(10)
-        layout.setContentsMargins(5, 5, 5, 15)
-        layout.setStretch(1, 1)
+        layout.addLayout(top_row_hbox, stretch=1)
+        layout.addWidget(self._create_spectrum_graph(), stretch=1)
 
         bottom_hbox = QHBoxLayout()
-        bottom_hbox.addStretch()
-        bottom_hbox.addWidget(self._create_cavity_track_graph(), 1)
-        bottom_hbox.addWidget(self._create_scan_status_panel(), 1)
+        bottom_hbox.addWidget(self._create_cavity_track_graph(), stretch=2)
+        bottom_hbox.addWidget(self._create_scan_status_group(), stretch=1)
 
-        layout.addLayout(bottom_hbox)
-        layout.setStretch(2, 1)
+        layout.addLayout(bottom_hbox, stretch=1)
+
+        self.output_folder_field.setText(self.spec_controller.settings.output.filename)
+        self.directory_field.setText(self.spec_controller.settings.output.location)
 
         self.on_update_graph(GraphState(ScanType.FREQUENCY, [], [], 0, [], []))
 
     def _create_scan_settings_panel(self) -> QWidget:
-        scan_settings_vbox = QVBoxLayout()
+        self.scan_settings_group = QGroupBox("Scan")
 
         scan_form = QFormLayout()
-        self.scan_form_panel = QWidget()
-        self.scan_form_panel.setLayout(scan_form)
+        self.scan_settings_group.setLayout(scan_form)
 
         start_freq_label = QLabel("Starting Frequency")
         self.start_freq_field = QDoubleSpinBox(
@@ -88,6 +84,17 @@ class FrequencyScanPanel(QWidget):
         )
         scan_form.addRow(step_size_label, self.step_size_field)
 
+        scanning_speed_label = QLabel("Scanning Speed")
+        self.scanning_speed_field = QDoubleSpinBox(
+            decimals=3,
+            minimum=0,
+            maximum=1,
+            singleStep=0.001,
+            suffix=" mm/s",
+            value=0.003,
+        )
+        scan_form.addRow(scanning_speed_label, self.scanning_speed_field)
+
         zaber_pos_label = QLabel("Zaber Position")
         zaber_pos_layout = QHBoxLayout()
         self.zaber_pos_field = QDoubleSpinBox(
@@ -101,33 +108,10 @@ class FrequencyScanPanel(QWidget):
         zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
         scan_form.addRow(zaber_pos_label, zaber_pos_layout)
 
-        scan_settings_vbox.addWidget(self.scan_form_panel)
-
-        buttons_hbox = QHBoxLayout()
-        buttons_hbox.addStretch()
-
-        self.start_button = QPushButton("Start")
-        self.start_button.clicked.connect(self.start_scan)
-        buttons_hbox.addWidget(self.start_button)
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.clicked.connect(self.cancel_scan)
-        self.cancel_button.setEnabled(False)
-        buttons_hbox.addWidget(self.cancel_button)
-
-        buttons_hbox.addStretch()
-        scan_settings_vbox.addLayout(buttons_hbox)
-
-        scan_settings_widget = QWidget()
-        scan_settings_widget.setLayout(scan_settings_vbox)
-        scan_settings_group = QGroupBox("Scan")
-        scan_settings_group_layout = QHBoxLayout()
-        scan_settings_group.setLayout(scan_settings_group_layout)
-        scan_settings_group_layout.addWidget(scan_settings_widget)
-        return scan_settings_group
+        return self.scan_settings_group
 
     def _create_experiment_params_panel(self) -> QWidget:
-        experiment_group = QGroupBox("Experiment parameters")
+        experiment_group = QGroupBox("Experiment")
 
         experiment_form = QFormLayout()
         experiment_group.setLayout(experiment_form)
@@ -155,7 +139,7 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(backing_pressure_label, self.backing_pressure_field)
 
         chamber_pressure_label = QLabel("Chamber pressure")
-        self.chamber_pressure_field = QDoubleSpinBox(suffix=" torr")
+        self.chamber_pressure_field = QLineEdit(text="1.0e-6 torr")
         experiment_form.addRow(chamber_pressure_label, self.chamber_pressure_field)
 
         mw_width_label = QLabel("MW width")
@@ -163,15 +147,88 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(mw_width_label, self.mw_width_field)
         return experiment_group
 
-    def _create_config_panel(self) -> QWidget:
-        return QGroupBox("Config")
+    def _create_digitizer_panel(self) -> QWidget:
+        digitizer_group = QGroupBox("Digitizer")
+
+        digitizer_form = QFormLayout()
+        digitizer_group.setLayout(digitizer_form)
+
+        preset_layout = QHBoxLayout()
+        preset_layout.setContentsMargins(0, 0, 0, 0)
+        self.preset_combo = QComboBox()
+        self._populate_preset_dropdown()
+        self.recall_btn = QPushButton("Recall")
+        self.recall_btn.clicked.connect(self._recall_preset)
+        preset_layout.addWidget(self.preset_combo)
+        preset_layout.addWidget(self.recall_btn)
+        preset_label = QLabel("Oscilloscope Preset")
+        digitizer_form.addRow(preset_label, preset_layout)
+
+        resolution_label = QLabel("Resolution")
+        self.resolution_field = QSpinBox(
+            minimum=1, maximum=16384, value=100, suffix=" kHz"
+        )
+        digitizer_form.addRow(resolution_label, self.resolution_field)
+
+        acq_window_label = QLabel("Acq Window")
+        self.acq_window_field = QSpinBox(
+            minimum=1, maximum=10000, value=100, suffix=" μs"
+        )
+        digitizer_form.addRow(acq_window_label, self.acq_window_field)
+
+        acq_delay_label = QLabel("Acq Delay")
+        self.acq_delay_field = QSpinBox(
+            minimum=0, maximum=10000, value=50, suffix=" μs"
+        )
+        digitizer_form.addRow(acq_delay_label, self.acq_delay_field)
+
+        apodization_label = QLabel("Apodization")
+        self.apodization_field = QComboBox()
+        self.apodization_field.addItems(["Hanning", "Hamming", "Blackman"])
+        digitizer_form.addRow(apodization_label, self.apodization_field)
+
+        return digitizer_group
+
+    def _create_timing_panel(self) -> QWidget:
+        timing_group = QGroupBox("Timing Sequence")
+
+        timing_form = QFormLayout()
+        timing_group.setLayout(timing_form)
+
+        preset_label = QLabel("Timing Preset")
+        timing_preset_layout = QHBoxLayout()
+        timing_preset_layout.setContentsMargins(0, 0, 0, 0)
+        self.timing_preset_field = QComboBox()
+        timing_preset_layout.addWidget(self.timing_preset_field)
+        self.timing_recall_btn = QPushButton("Recall")
+        timing_preset_layout.addWidget(self.timing_recall_btn)
+        timing_form.addRow(preset_label, timing_preset_layout)
+
+        rep_rate_label = QLabel("Rep Rate")
+        self.rep_rate_field = QSpinBox(minimum=1, maximum=1000, value=5, suffix=" Hz")
+        timing_form.addRow(rep_rate_label, self.rep_rate_field)
+
+        valve_mw_delay_label = QLabel("Valve-mw Delay")
+        self.valve_mw_delay_field = QSpinBox(
+            minimum=0, maximum=10000, value=1300, suffix=" μs"
+        )
+        timing_form.addRow(valve_mw_delay_label, self.valve_mw_delay_field)
+
+        spdt_width_label = QLabel("SPDT Width")
+        self.spdt_width_field = QSpinBox(
+            minimum=1, maximum=10000, value=10, suffix=" μs"
+        )
+        timing_form.addRow(spdt_width_label, self.spdt_width_field)
+
+        return timing_group
 
     def _create_spectrum_graph(self) -> QWidget:
         self.spectrum_graph = pg.PlotWidget(title="Spectrum")
         self.spectrum_graph.setLabel("bottom", "Frequency (MHz)")
         self.spectrum_graph.setLabel("left", "Relative Intensity (Volts)")
         self.spectrum_graph.showGrid(x=True, y=True, alpha=0.3)
-        self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)
+        self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
+        self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.spectrum_graph
 
@@ -180,30 +237,74 @@ class FrequencyScanPanel(QWidget):
         self.cavity_track_graph.setLabel("bottom", "Frequency (MHz)")
         self.cavity_track_graph.setLabel("left", "Relative Intensity (Volts)")
         self.cavity_track_graph.showGrid(x=True, y=True, alpha=0.3)
-        self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)
+        self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
+        self.cavity_track_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.cavity_track_plot = self.cavity_track_graph.plot(
             pen=pg.mkPen(color="r", width=1)
         )
         return self.cavity_track_graph
 
-    def _create_scan_status_panel(self) -> QWidget:
-        self.scan_status_group = QGroupBox("Scan Status")
-        scan_status_form = QFormLayout()
-        self.scan_status_group.setLayout(scan_status_form)
-        self.scan_status_current_freq = QLabel("")
-        self.scan_status_elapsed_time = QLabel("")
-        self.scan_status_time_remaining = QLabel("")
-        scan_status_form.addRow("Current Freq", self.scan_status_current_freq)
-        scan_status_form.addRow("Elapsed Time", self.scan_status_elapsed_time)
-        scan_status_form.addRow("Time Remaining", self.scan_status_time_remaining)
-        return self.scan_status_group
+    def _create_scan_status_group(self) -> QWidget:
+        group = QGroupBox("Scan Status")
+
+        scan_status_vbox = QVBoxLayout()
+        group.setLayout(scan_status_vbox)
+
+        form_vbox = QVBoxLayout()
+        scan_status_vbox.addLayout(form_vbox)
+
+        form = QFormLayout()
+        form_vbox.addLayout(form)
+
+        current_freq_label = QLabel("Current Freq")
+        self.current_freq_field = QLineEdit()
+        self.current_freq_field.setReadOnly(True)
+        form.addRow(current_freq_label, self.current_freq_field)
+
+        elapsed_time_label = QLabel("Elapsed Time")
+        self.elapsed_time_field = QLineEdit()
+        self.elapsed_time_field.setReadOnly(True)
+        form.addRow(elapsed_time_label, self.elapsed_time_field)
+
+        time_remaining_label = QLabel("Time Remaining")
+        self.time_remaining_field = QLineEdit()
+        self.time_remaining_field.setReadOnly(True)
+        form.addRow(time_remaining_label, self.time_remaining_field)
+
+        output_folder_label = QLabel("Output Folder")
+        self.output_folder_field = QLineEdit()
+        form.addRow(output_folder_label, self.output_folder_field)
+
+        directory_label = QLabel("Directory")
+        directory_layout = QHBoxLayout()
+        directory_layout.setContentsMargins(0, 0, 0, 0)
+        self.directory_field = QLineEdit()
+        directory_layout.addWidget(self.directory_field)
+        self.browse_btn = QPushButton("Browse")
+        directory_layout.addWidget(self.browse_btn)
+        self.browse_btn.clicked.connect(self.on_browse_directory)
+        form.addRow(directory_label, directory_layout)
+
+        buttons_hbox = QHBoxLayout()
+        form_vbox.addLayout(buttons_hbox)
+
+        self.start_button = QPushButton("Start")
+        self.start_button.clicked.connect(self.start_scan)
+        buttons_hbox.addWidget(self.start_button)
+
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.cancel_scan)
+        self.cancel_button.setEnabled(False)
+        buttons_hbox.addWidget(self.cancel_button)
+
+        return group
 
     @Slot()
     def start_scan(self):
         start_pos = None
         if self.zaber_set_pos_checkbox.isChecked():
             start_pos = float(self.zaber_pos_field.value())
-        self.spectrometer.run_scan(
+        self.spec_controller.run_scan(
             float(self.start_freq_field.value()),
             float(self.end_freq_field.value()),
             float(self.step_size_field.value()),
@@ -212,13 +313,13 @@ class FrequencyScanPanel(QWidget):
 
     @Slot()
     def cancel_scan(self):
-        self.spectrometer.cancel_operation()
+        self.spec_controller.cancel_operation()
 
     @Slot(bool, ScanType)
     def on_scanning(self, scanning: bool, scan_type: ScanType):
         if scanning:
             self.start_button.setEnabled(False)
-            self.scan_form_panel.setEnabled(False)
+            self.scan_settings_group.setEnabled(False)
 
             if scan_type == ScanType.FREQUENCY:
                 self.cancel_button.setEnabled(True)
@@ -226,7 +327,7 @@ class FrequencyScanPanel(QWidget):
                 self.cancel_button.setEnabled(False)
         else:
             self.start_button.setEnabled(True)
-            self.scan_form_panel.setEnabled(True)
+            self.scan_settings_group.setEnabled(True)
             self.cancel_button.setEnabled(False)
 
     @Slot(GraphState)
@@ -235,15 +336,16 @@ class FrequencyScanPanel(QWidget):
             return
 
         if graph_state.fft_x:
-            self.spec_xx.extend(graph_state.fft_x)
-            self.spec_yy.extend(graph_state.fft_y)
+            self.spectrum_x.extend(graph_state.fft_x)
+            self.spectrum_y.extend(graph_state.fft_y)
 
-        self.spectrum_plot.setData(self.spec_xx, self.spec_yy)
+        self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
 
     @Slot(float)
     def on_zaber_position(self, position):
         if self.zaber_set_pos_checkbox.isChecked():
             return
+
         if position != -1 and not self.zaber_pos_field.hasFocus():
             self.zaber_pos_field.setValue(position)
             self.zaber_set_pos_checkbox.setEnabled(True)
@@ -254,7 +356,32 @@ class FrequencyScanPanel(QWidget):
 
     @Slot(bool)
     def on_zaber_set_pos_toggled(self, checked):
-        if checked:
-            self.zaber_pos_field.setEnabled(True)
-        else:
-            self.zaber_pos_field.setEnabled(False)
+        self.zaber_pos_field.setEnabled(checked)
+
+    def _populate_preset_dropdown(self):
+        self.preset_combo.clear()
+        if self.spec_controller.settings.scope_preset.presets:
+            for _, preset in self.spec_controller.settings.scope_preset.presets.items():
+                self.preset_combo.addItem(preset.name, preset)
+        self.preset_combo.addItem("None")
+
+    def _recall_preset(self):
+        preset = self.preset_combo.currentData()
+        if preset:
+            self.spec_controller.spectrometer.oscilloscope_controller.recall_setup(
+                preset.path, self.spec_controller.settings.scope_preset.root_path
+            )
+            self._populate_preset_dropdown()
+
+    @Slot(object)
+    def on_settings_updated(self, settings):
+        self.spec_controller.settings = settings
+        self._populate_preset_dropdown()
+
+    @Slot()
+    def on_browse_directory(self):
+        folder = QFileDialog.getExistingDirectory(
+            self, "Select Directory", self.directory_field.text()
+        )
+        if folder:
+            self.directory_field.setText(folder)

@@ -127,27 +127,11 @@ class ControlPanel(QWidget):
         zaber_form = QFormLayout()
         zaber_group.setLayout(zaber_form)
 
-        zaber_speed_1_label = QLabel("Scanning speed")
-        self.zaber_speed_1_field = QDoubleSpinBox(
-            decimals=3, minimum=0, maximum=1, singleStep=0.001, suffix=" mm/s"
-        )
-        zaber_form.addRow(zaber_speed_1_label, self.zaber_speed_1_field)
-
         zaber_speed_2_label = QLabel("Moving speed")
         self.zaber_speed_2_field = QDoubleSpinBox(
             minimum=0, maximum=5, singleStep=0.25, suffix=" mm/s"
         )
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
-
-        zaber_step_size_label = QLabel("Step size")
-        self.zaber_step_size_field = QDoubleSpinBox(
-            minimum=0,
-            maximum=5,
-            singleStep=0.5,
-            suffix=" mm",
-        )
-        self.zaber_step_size_field.setEnabled(False)
-        zaber_form.addRow(zaber_step_size_label, self.zaber_step_size_field)
 
         zaber_control_widget_1 = QHBoxLayout()
 
@@ -211,11 +195,6 @@ class ControlPanel(QWidget):
 
         zaber_form.addRow("Position (relative)", zaber_control_widget_2)
 
-        self.registry.register(
-            "zaber_controller.zaber_scanning_speed",
-            self.zaber_speed_1_field,
-            ControlType.SpinBox,
-        )
         self.registry.register(
             "zaber_controller.zaber_moving_speed",
             self.zaber_speed_2_field,

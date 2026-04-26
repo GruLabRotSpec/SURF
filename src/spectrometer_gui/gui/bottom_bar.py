@@ -18,11 +18,22 @@ class BottomBarPanel(QWidget):
         self.bottom_progress_bar.setValue(1)
         layout.addWidget(self.bottom_progress_bar)
 
-        self.bottom_text = QLabel("Idle, ready to scan")
-        layout.addWidget(self.bottom_text)
+        self.status_text = QLabel("Idle")
+        layout.addWidget(self.status_text)
 
-        layout.setStretch(1, 1)
+        self.divider0 = QLabel("|")
+        self.divider0.setStyleSheet("color: gray;")
+        layout.addWidget(self.divider0)
 
+        self.scan_status_current_freq = QLabel("Current Freq: -")
+        self.scan_status_elapsed_time = QLabel("Elapsed: -")
+        self.scan_status_time_remaining = QLabel("Remaining: -")
+
+        layout.addWidget(self.scan_status_current_freq)
+        layout.addWidget(self.scan_status_elapsed_time)
+        layout.addWidget(self.scan_status_time_remaining)
+
+        # layout.setStretch(2, 1)
         layout.addStretch(5)
 
         self.status_circle = QLabel("●")
@@ -60,4 +71,13 @@ class BottomBarPanel(QWidget):
             self.bottom_progress_bar.setValue(progress * 100)
 
         if text is not None:
-            self.bottom_text.setText(text)
+            self.status_text.setText(text)
+
+    def set_scan_current_freq(self, freq: float):
+        self.scan_status_current_freq.setText(f"Current Freq: {freq:.3f} MHz")
+
+    def set_scan_elapsed_time(self, elapsed: str):
+        self.scan_status_elapsed_time.setText(f"Elapsed: {elapsed}")
+
+    def set_scan_time_remaining(self, remaining: str):
+        self.scan_status_time_remaining.setText(f"Remaining: {remaining}")

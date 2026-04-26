@@ -1,4 +1,21 @@
 from enum import Enum
+from dataclasses import dataclass
+
+
+class ScanType(Enum):
+    NONE = 0
+    FREQUENCY = 1
+    CAVITY = 2
+
+
+@dataclass
+class GraphState:
+    scan_type: ScanType
+    pos_array: list
+    max_list: list
+    frequency: float
+    fft_x: list
+    fft_y: list
 
 
 class DeviceStatus(Enum):

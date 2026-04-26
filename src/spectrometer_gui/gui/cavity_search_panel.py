@@ -19,8 +19,8 @@ class CavitySearchPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
-        self.spectrometer = spectrometer
-        self.spectrometer.signal.scanning.connect(self.on_scanning)
+        self.spec_controller = spectrometer
+        self.spec_controller.signal.scanning.connect(self.on_scanning)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -100,12 +100,12 @@ class CavitySearchPanel(QWidget):
 
     def start_search(self):
         # Start search via controller (controller handles async internally)
-        self.spectrometer.run_search(
+        self.spec_controller.run_search(
             int(self.end_freq_field.value()), float(self.step_size_field.value())
         )
 
     def cancel_search(self):
-        self.spectrometer.cancel_operation()
+        self.spec_controller.cancel_operation()
 
     def on_scanning(self, scanning: bool, scan_type: ScanType):
         if scanning:
