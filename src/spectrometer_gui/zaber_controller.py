@@ -2,13 +2,8 @@ from config import Config
 
 from zaber_motion.ascii import Connection
 from zaber_motion.units import Units
-from enum import Enum
 
-
-class ZaberSpeed(Enum):
-    SCANNING = 0
-    MOVING = 1
-
+from gui.signal_enums import ZaberSpeed
 
 class ZaberController:
     def __init__(self) -> None:
