@@ -18,9 +18,11 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QButtonGroup,
 )
+from zaber_motion import Units
 
 from gui.spectrometer_controller import SpectrometerController
 from gui.custom_toolbar import CustomToolbar
+from gui.signal_enums import ZaberSpeed
 
 
 class ControlType(Enum):
@@ -86,7 +88,7 @@ class ControlPanel(QWidget):
         self.setLayout(layout)
 
         toolbar = CustomToolbar()
-        toolbar.update_action.triggered.connect(self.registry.apply_config)
+        toolbar.update_action.triggered.connect(self._apply_values_in_control_panel)
         layout.addWidget(toolbar)
 
         # Bottom columns
@@ -152,7 +154,7 @@ class ControlPanel(QWidget):
         zaber_control_widget_1.addWidget(self.zaber_slider)
 
         self.zaber_pos_field = QDoubleSpinBox(
-            minimum=0, maximum=50, singleStep=1, suffix=" mm"
+            minimum=0, maximum=50, singleStep=1, suffix=" mm", decimals=3
         )
         zaber_control_widget_1.addWidget(self.zaber_pos_field)
 
@@ -179,7 +181,7 @@ class ControlPanel(QWidget):
         zaber_control_widget_2.addWidget(self.zaber_move_left_btn)
 
         self.zaber_inc_field = QDoubleSpinBox(
-            minimum=-50, maximum=50, singleStep=1, suffix=" mm"
+            minimum=-50, maximum=50, singleStep=1, suffix=" mm", decimals=3,
         )
         zaber_control_widget_2.addWidget(self.zaber_inc_field)
 
@@ -402,7 +404,7 @@ class ControlPanel(QWidget):
         preset_label = QLabel("Preset")
         general_form.addRow(preset_label, preset_layout)
 
-        acq_rate_label = QLabel("Acquisition rate")
+        acq_rate_label = QLabel("Acquisitions")
         self.acq_rate_field = QSpinBox(minimum=1, maximum=10000)
         general_form.addRow(acq_rate_label, self.acq_rate_field)
 
@@ -548,12 +550,12 @@ class ControlPanel(QWidget):
                 self.spec_controller.spectrometer.zaber_controller.home(False)
             else:
                 self.spec_controller.spectrometer.zaber_controller.move_to(
-                    new_pos, 1, False
+                    new_pos, ZaberSpeed.MOVING, False
                 )
 
     def set_zaber_position_relative(self):
         self.spec_controller.spectrometer.zaber_controller.axis.move_relative(
-            self.zaber_inc_field.value()
+            self.zaber_inc_field.value(), unit=Units.LENGTH_MILLIMETRES
         )  # Temp fix
 
     def _recall_preset(self):

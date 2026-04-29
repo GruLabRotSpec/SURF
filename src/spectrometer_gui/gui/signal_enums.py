@@ -17,6 +17,9 @@ class GraphState:
     fft_x: list
     fft_y: list
 
+class ZaberSpeed(Enum):
+    SCANNING = 0
+    MOVING = 1
 
 class DeviceStatus(Enum):
     CONNECTING = "connecting"
