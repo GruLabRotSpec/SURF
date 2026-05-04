@@ -18,7 +18,7 @@ class BottomBarPanel(QWidget):
         self.bottom_progress_bar.setValue(1)
         layout.addWidget(self.bottom_progress_bar)
 
-        self.bottom_text = QLabel("Idle, ready to scan")
+        self.bottom_text = QLabel("Idle")
         layout.addWidget(self.bottom_text)
 
         layout.setStretch(1, 1)

@@ -29,6 +29,8 @@ class ControlPanel(QWidget):
 
         self.spectrometer = spectrometer
 
+        self.spectrometer.signal.config_changed.connect(self._set_values_in_control_panel)
+
         self.spectrometer.signal.zaber_position.connect(self.on_zaber_position)
 
         layout = QVBoxLayout()
@@ -421,6 +423,7 @@ class ControlPanel(QWidget):
         super().showEvent(event)
         self._set_values_in_control_panel()
 
+    @Slot()
     def _set_values_in_control_panel(self):
         print(self.spectrometer.config)
 
