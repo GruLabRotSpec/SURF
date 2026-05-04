@@ -141,7 +141,7 @@ class OscilloscopeController:
         self.write_cmd("data:source MATH4")  # channel
         self.write_cmd("wfmoutpre:byt_nr 4")
         recordLength = int(self.query_cmd("horizontal:recordlength?"))
-        self.write_cmd("data:stop {}".format(recordLength))
+        self.write_cmd(f"data:stop {recordLength}")
 
         # acq configuration
         self.write_cmd("acquire:state 0")  # stop

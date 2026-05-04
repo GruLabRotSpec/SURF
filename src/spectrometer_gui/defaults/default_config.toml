@@ -38,14 +38,3 @@ gate_position = 18.45
 
 [delay_generator_controller]
 trigger_rate = 5.0
-
-[scope_preset]
-root_path = "C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab"
-
-[scope_preset.presets.cavity]
-name = "Cavity"
-path = "cavity000.set"
-
-[scope_preset.presets.mol_peak]
-name = "Mol Peak"
-path = "cavity_ch2000002.set"

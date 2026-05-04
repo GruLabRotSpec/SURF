@@ -52,17 +52,21 @@ class MainWindow(QMainWindow):
         self.menu_bar = self.menuBar()
         self.setup_menu_bar()
 
-        self.controller = SpectrometerController(self.settings, self.config)
+        self.spec_controller = SpectrometerController(
+            self.settings, self.config, self.settings_path
+        )
 
-        bottom_bar_panel = BottomBarPanel(self.controller)
-        status_panel = StatusPanel(self.controller)
+        bottom_bar_panel = BottomBarPanel(self.spec_controller)
+        status_panel = StatusPanel(self.spec_controller)
         broadband_panel = BroadbandPanel()
-        frequency_scan = FrequencyScanPanel(self.controller)
-        cavity_search = CavitySearchPanel(self.controller)
-        control_panel = ControlPanel(self.controller)
+        frequency_scan = FrequencyScanPanel(self.spec_controller)
+        cavity_search = CavitySearchPanel(self.spec_controller)
+        control_panel = ControlPanel(self.spec_controller)
         self.analysis_panel = AnalysisPanel()
 
-        self.controller.set_bottom_bar(bottom_bar_panel)
+        status_panel.signal_status_changed.connect(
+            bottom_bar_panel.set_spectrometer_status
+        )
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
@@ -77,7 +81,8 @@ class MainWindow(QMainWindow):
 
         # This runs the first init after QtAsync gets loaded
         QtCore.QTimer.singleShot(
-            100, lambda: asyncio.create_task(self.controller.initialize_all_devices())
+            100,
+            lambda: asyncio.create_task(self.spec_controller.initialize_all_devices()),
         )
 
     def setup_menu_bar(self):
@@ -128,7 +133,7 @@ class MainWindow(QMainWindow):
 
         if filename:
             self.config = load_config(Path(filename))
-            self.controller.set_config(self.config)
+            self.spec_controller.set_config(self.config)
         else:
             QMessageBox.critical(
                 self,
@@ -148,7 +153,7 @@ class MainWindow(QMainWindow):
         )
 
         if filename:
-            save_config(Path(filename), self.controller.config)
+            save_config(Path(filename), self.spec_controller.config)
         else:
             QMessageBox.critical(
                 self,
@@ -196,6 +201,9 @@ class MainWindow(QMainWindow):
 
     def show_settings(self):
         self.settings_window = SettingsWindow(self.settings, self.settings_path)
+        self.settings_window.settings_updated.connect(
+            self.spec_controller.signal.settings_updated
+        )
         self.settings_window.show()
 
     def show_about(self):

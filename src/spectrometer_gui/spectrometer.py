@@ -1,10 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass
 import math
 import time
 import numpy as np
 import pandas as pd
-import os
 import concurrent
 import threading
 from threading import Event
@@ -16,6 +14,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
+from gui.signal_enums import GraphState, ScanType
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -31,25 +30,9 @@ if typing.TYPE_CHECKING:
     from gui.spectrometer_controller import ScanSignals
 
 
-@dataclass
-class GraphState:
-    scan_type: ScanType
-    pos_array: list
-    max_list: list
-    frequency: float
-    fft_x: list
-    fft_y: list
-
-
 class StepDirection(Enum):
     Down = -1
     Up = 1
-
-
-class ScanType(Enum):
-    NONE = 0
-    FREQUENCY = 1
-    CAVITY = 2
 
 
 class Spectrometer:
@@ -78,16 +61,16 @@ class Spectrometer:
 
     def make_dir(self, subdirectory: str) -> str:
         k = 0
-        base_path = f"{self._folder_name}/{self._filename}_{k}"
+        base_path = Path(self._folder_name) / f"{self._filename}_{k}"
 
-        while os.path.exists(base_path):
+        while base_path.exists():
             k += 1
-            base_path = f"{self._folder_name}/{self._filename}_{k}"
+            base_path = Path(self._folder_name) / f"{self._filename}_{k}"
 
-        os.makedirs(base_path)
-        os.makedirs(f"{base_path}/{subdirectory}")
+        base_path.mkdir(parents=True)
+        (base_path / subdirectory).mkdir(parents=True)
         self.logger.logger.info(f"folder for data has been created: {base_path}")
-        return base_path
+        return str(base_path)
 
     def scan_frequency(
         self,
@@ -122,7 +105,7 @@ class Spectrometer:
         self._directory = self.make_dir("CavityFiles")
         self._run_directory = f"{self._directory}/CavityFiles"
 
-        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
+        if not Path(f"{self._directory}/{self._filename}.csv").exists():
             header_df = pd.DataFrame(
                 columns=[
                     "Frequency (MHz)",
@@ -195,14 +178,13 @@ class Spectrometer:
             start_position = self.zaber_controller.get_pos()
 
             # Step Zaber & Freq
-            if step_direction == StepDirection.Up:
-                new_freq = valon_freq + step_size * run_number
-                end_position = start_position + self.zaber_controller.step_size
-            elif step_direction == StepDirection.Down:
-                new_freq = valon_freq - step_size * run_number
-                end_position = start_position - self.zaber_controller.step_size
-            else:
-                raise ValueError("Invalid step direction", step_direction)
+            match step_direction:
+                case StepDirection.Up:
+                    new_freq = valon_freq + step_size * run_number
+                    end_position = start_position + self.zaber_controller.step_size
+                case StepDirection.Down:
+                    new_freq = valon_freq - step_size * run_number
+                    end_position = start_position - self.zaber_controller.step_size
 
             # Check for end of zaber
             if end_position > 50 or start_position > 50:
@@ -238,7 +220,7 @@ class Spectrometer:
 
             max_list = self.scan_with_acquisition(end_position)
 
-            # TODO: Check if we can just grab the actual pos's from the zaber
+            # TODO: Check if we can just grab the actual positions from the zaber
             pos_array = np.linspace(start_position, end_position, len(max_list))
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
@@ -280,18 +262,22 @@ class Spectrometer:
             )
 
             # Check for stop Freq
-            if new_freq > stop_freq and step_direction == StepDirection.Up:
-                self.logger.logger.info("You have reached the stop frequency")
-                break
-            elif new_freq < stop_freq and step_direction == StepDirection.Down:
-                self.logger.logger.info("You have reached the stop frequency")
-                break
+            match step_direction:
+                case StepDirection.Up:
+                    if new_freq > stop_freq:
+                        self.logger.logger.info("You have reached the stop frequency")
+                        break
+                case StepDirection.Down:
+                    if new_freq < stop_freq:
+                        self.logger.logger.info("You have reached the stop frequency")
+                        break
 
             # Step
-            if step_direction == StepDirection.Up:
-                self.valon_controller.step_up()
-            elif step_direction == StepDirection.Down:
-                self.valon_controller.step_down()
+            match step_direction:
+                case StepDirection.Up:
+                    self.valon_controller.step_up()
+                case StepDirection.Down:
+                    self.valon_controller.step_down()
 
             run_number += 1
 
@@ -320,10 +306,10 @@ class Spectrometer:
         self._directory = self.make_dir("CavityRuns")
         self._run_directory = f"{self._directory}/CavityRuns"
 
-        if not os.path.exists(f"{self._directory}/{self._filename}.csv"):
-            open(f"{self._directory}/{self._filename}.csv", "w+")
+        if not Path(f"{self._directory}/{self._filename}.csv").exists():
+            Path(f"{self._directory}/{self._filename}.csv").touch()
             self.logger.logger.info(
-                f"Sucessfully named file {self._directory}/{self._filename}.csv"
+                f"Successfully named file {self._directory}/{self._filename}.csv"
             )
 
         self.zaber_controller.home()
@@ -425,10 +411,9 @@ class Spectrometer:
             self.delay_generator_controller.stop_trig()
             self.oscilloscope_controller.stop_acq()
 
-            if step_up_var and stop_freq_var:
-                if new_freq < stop_freq:
-                    i += 1
-                    self.valon_controller.step_up()
+            if step_up_var and stop_freq_var and new_freq < stop_freq:
+                i += 1
+                self.valon_controller.step_up()
 
         self.cleanup()
 
@@ -533,8 +518,11 @@ class Spectrometer:
             & (spectrum_data["Frequency (MHz)"] <= upper_bound)
         ]
 
-        if step_direction == StepDirection.Down:
-            filtered_spectrum = filtered_spectrum.iloc[::-1]
+        match step_direction:
+            case StepDirection.Down:
+                filtered_spectrum = filtered_spectrum.iloc[::-1]
+            case StepDirection.Up:
+                pass
 
         filtered_spectrum = filtered_spectrum.reset_index(drop=True)
 

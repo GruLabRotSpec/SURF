@@ -49,35 +49,24 @@ class DelayGeneratorConfig(BaseModel):
     trigger_rate: float
 
 
-class ScopePresetItem(BaseModel):
-    name: str
-    path: str
-
-
-class ScopePreset(BaseModel):
-    root_path: str
-    presets: dict[str, ScopePresetItem] | None = None
-
-
 class Config(BaseModel):
     valon_controller: ValonConfig
     zaber_controller: ZaberConfig
     awg_controller: AWGConfig
     oscilloscope_controller: OscilloscopeConfig
     delay_generator_controller: DelayGeneratorConfig
-    scope_preset: ScopePreset
 
 
 def load_config(config_path: Path) -> Config:
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
-    with open(config_path, "rb") as f:
+    with Path.open(config_path, "rb") as f:
         config_dict = tomllib.load(f)
 
     return Config(**config_dict)
 
 
 def save_config(save_path: Path, config: Config):
-    with open(save_path, "wb") as f:
+    with Path.open(save_path, "wb") as f:
         tomli_w.dump(config.model_dump(), f)

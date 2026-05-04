@@ -14,9 +14,20 @@ class LoggingConfig(BaseModel):
     location: str
 
 
+class ScopePresetItem(BaseModel):
+    name: str
+    path: str
+
+
+class ScopePreset(BaseModel):
+    root_path: str
+    presets: dict[str, ScopePresetItem] | None = None
+
+
 class Settings(BaseModel):
     output: OutputConfig
     logging: LoggingConfig
+    scope_preset: ScopePreset
     theme: str = "auto"
 
 
@@ -32,12 +43,12 @@ def load_settings(settings_path) -> Settings:
                 f"Config file not found: {toml_path} and no default_settings.toml found"
             )
 
-    with open(toml_path, "rb") as f:
+    with Path.open(toml_path, "rb") as f:
         settings_dict = tomllib.load(f)
 
     return Settings(**settings_dict)
 
 
 def save_settings(save_path: Path, settings: Settings):
-    with open(save_path, "wb") as f:
+    with Path.open(save_path, "wb") as f:
         tomli_w.dump(settings.model_dump(), f)
