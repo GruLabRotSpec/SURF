@@ -209,3 +209,23 @@ class MainWindow(QMainWindow):
     def show_about(self):
         self.about_window = AboutWindow()
         self.about_window.show()
+
+    def closeEvent(self, event):
+        print("Preparing to quit...")
+
+        if self.spec_controller.current_task:
+            quit_selection = QMessageBox.warning(
+                self,
+                "Quit During Task",
+                "Quit and cancel the current task? Unsaved changes will be lost.",
+                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Ok,
+            )
+
+            if quit_selection == QMessageBox.StandardButton.Ok:
+                # Cleanup and cancel running tasks
+                self.spec_controller.cancel_operation()
+
+                event.accept()
+            else:
+                print("Quit cancelled")
+                event.ignore()
