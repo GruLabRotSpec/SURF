@@ -94,9 +94,6 @@ class MainWindow(QMainWindow):
         )
         open_spectra_action.triggered.connect(self.open_spectra)
 
-        quit_action = file_menu.addAction("Show Error")
-        quit_action.triggered.connect(self.show_error)
-
         open_config_action = file_menu.addAction("Open control options from file...")
         open_config_action.triggered.connect(self.open_config)
 
@@ -190,14 +187,6 @@ class MainWindow(QMainWindow):
                         f"Unable to open the file: {e}",
                         QMessageBox.StandardButton.Ok,
                     )
-
-    def show_error(self):
-        QMessageBox.critical(
-            self,
-            "Critical Error",
-            "You triggered a Critical Error!",
-            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Abort,
-        )
 
     def show_settings(self):
         self.settings_window = SettingsWindow(self.settings, self.settings_path)
