@@ -6,13 +6,17 @@ from typing import Literal
 
 
 class ValonConfig(BaseModel):
+    rf_output: bool
     rf_level: int
     valon_port: str
+    synth_power: bool
+    ref_source: Literal["Internal", "External"]
+    ref_freq: float
 
 
 class ZaberConfig(BaseModel):
-    zaber_speed: float  # TODO: Limit the speed to the possible range
-    zaber_homing_speed: float
+    zaber_scanning_speed: float
+    zaber_moving_speed: float
     zaber_step_size: float
     zaber_port: str
 
@@ -25,14 +29,20 @@ class AWGConfig(BaseModel):
     awg_ch_2_output: bool
 
 
+class MathConfig(BaseModel):
+    window: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
+    resolution: float
+    gate_position: float
+
+
 class OscilloscopeConfig(BaseModel):
     channel: str
-    resolution: float
-    sample_rate: int
-    window_type: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
-    gate_position: float
-    math_averages: int
     acq_rate: int
+    sample_rate: int
+    math_averages: int
+    visa_address: str
+    math3: MathConfig
+    math4: MathConfig
 
 
 class DelayGeneratorConfig(BaseModel):
@@ -51,12 +61,12 @@ def load_config(config_path: Path) -> Config:
     if not config_path.exists():
         raise FileNotFoundError(f"Config file not found: {config_path}")
 
-    with open(config_path, "rb") as f:
+    with Path.open(config_path, "rb") as f:
         config_dict = tomllib.load(f)
 
     return Config(**config_dict)
 
 
 def save_config(save_path: Path, config: Config):
-    with open(save_path, "wb") as f:
+    with Path.open(save_path, "wb") as f:
         tomli_w.dump(config.model_dump(), f)

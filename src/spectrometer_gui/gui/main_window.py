@@ -15,6 +15,7 @@ import pandas as pd
 from gui.settings_window import SettingsWindow
 from gui.about_window import AboutWindow
 
+from gui.broadband_panel import BroadbandPanel
 from gui.frequency_scan_panel import FrequencyScanPanel
 from gui.cavity_search_panel import CavitySearchPanel
 from gui.control_panel import ControlPanel
@@ -23,7 +24,9 @@ from gui.status_panel import StatusPanel
 from gui.bottom_bar import BottomBarPanel
 from gui.spectrometer_controller import SpectrometerController
 
+from settings import load_settings
 from config import load_config, save_config
+from gui.theme import apply_theme
 
 
 class MainWindow(QMainWindow):
@@ -31,7 +34,12 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.app = app
-        self.config = load_config(Path("./defaults.toml"))
+        self.settings_path = Path("./settings.toml")  # Change path later
+        self.settings = load_settings(self.settings_path)
+        apply_theme(self.settings.theme)
+        self.config = load_config(
+            Path(__file__).parent.parent / "defaults" / "default_config.toml"
+        )
 
         self.setWindowTitle("Gru GUI")
 
@@ -44,19 +52,25 @@ class MainWindow(QMainWindow):
         self.menu_bar = self.menuBar()
         self.setup_menu_bar()
 
-        self.controller = SpectrometerController(self.config)
+        self.spec_controller = SpectrometerController(
+            self.settings, self.config, self.settings_path
+        )
 
-        bottom_bar_panel = BottomBarPanel(self.controller)
-        status_panel = StatusPanel(self.controller)
-        frequency_scan = FrequencyScanPanel(self.controller)
-        cavity_search = CavitySearchPanel(self.controller)
-        control_panel = ControlPanel(self.controller)
+        bottom_bar_panel = BottomBarPanel(self.spec_controller)
+        status_panel = StatusPanel(self.spec_controller)
+        broadband_panel = BroadbandPanel()
+        frequency_scan = FrequencyScanPanel(self.spec_controller)
+        cavity_search = CavitySearchPanel(self.spec_controller)
+        control_panel = ControlPanel(self.spec_controller)
         self.analysis_panel = AnalysisPanel()
 
-        self.controller.set_bottom_bar(bottom_bar_panel)
+        status_panel.signal_status_changed.connect(
+            bottom_bar_panel.set_spectrometer_status
+        )
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(status_panel, "Status")
+        self.tab_widget.addTab(broadband_panel, "Broadband")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
         self.tab_widget.addTab(cavity_search, "Cavity Search")
         self.tab_widget.addTab(control_panel, "Control")
@@ -67,7 +81,8 @@ class MainWindow(QMainWindow):
 
         # This runs the first init after QtAsync gets loaded
         QtCore.QTimer.singleShot(
-            100, lambda: asyncio.create_task(self.controller.initialize_all_devices())
+            100,
+            lambda: asyncio.create_task(self.spec_controller.initialize_all_devices()),
         )
 
     def setup_menu_bar(self):
@@ -78,9 +93,6 @@ class MainWindow(QMainWindow):
             "Open emission spectra for analysis..."
         )
         open_spectra_action.triggered.connect(self.open_spectra)
-
-        quit_action = file_menu.addAction("Show Error")
-        quit_action.triggered.connect(self.show_error)
 
         open_config_action = file_menu.addAction("Open control options from file...")
         open_config_action.triggered.connect(self.open_config)
@@ -118,7 +130,7 @@ class MainWindow(QMainWindow):
 
         if filename:
             self.config = load_config(Path(filename))
-            self.controller.set_config(self.config)
+            self.spec_controller.set_config(self.config)
         else:
             QMessageBox.critical(
                 self,
@@ -138,7 +150,7 @@ class MainWindow(QMainWindow):
         )
 
         if filename:
-            save_config(Path(filename), self.controller.config)
+            save_config(Path(filename), self.spec_controller.config)
         else:
             QMessageBox.critical(
                 self,
@@ -176,18 +188,33 @@ class MainWindow(QMainWindow):
                         QMessageBox.StandardButton.Ok,
                     )
 
-    def show_error(self):
-        QMessageBox.critical(
-            self,
-            "Critical Error",
-            "You triggered a Critical Error!",
-            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Abort,
-        )
-
     def show_settings(self):
-        self.settings_window = SettingsWindow()
+        self.settings_window = SettingsWindow(self.settings, self.settings_path)
+        self.settings_window.settings_updated.connect(
+            self.spec_controller.signal.settings_updated
+        )
         self.settings_window.show()
 
     def show_about(self):
         self.about_window = AboutWindow()
         self.about_window.show()
+
+    def closeEvent(self, event):
+        print("Preparing to quit...")
+
+        if self.spec_controller.current_task:
+            quit_selection = QMessageBox.warning(
+                self,
+                "Quit During Task",
+                "Quit and cancel the current task? Unsaved changes will be lost.",
+                QMessageBox.StandardButton.Cancel | QMessageBox.StandardButton.Ok,
+            )
+
+            if quit_selection == QMessageBox.StandardButton.Ok:
+                # Cleanup and cancel running tasks
+                self.spec_controller.cancel_operation()
+
+                event.accept()
+            else:
+                print("Quit cancelled")
+                event.ignore()

@@ -9,6 +9,12 @@ build/
 .envrc
 .idea
 
+# User Data
+settings.toml
+
 # Data
 Cavity Data/
 Cavity Scan/
+
+# Logs
+**/*.log

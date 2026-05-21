@@ -1,6 +1,6 @@
 import asyncio
-import os
-from PySide6.QtCore import Slot
+from pathlib import Path
+from PySide6.QtCore import Slot, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -12,22 +12,35 @@ from PySide6.QtWidgets import (
     QGroupBox,
 )
 
-from gui.spectrometer_controller import SpectrometerController, DeviceStatus
+from gui.spectrometer_controller import SpectrometerController
+from gui.signal_enums import DeviceStatus
+import contextlib
 
 
 class StatusPanel(QWidget):
+    signal_status_changed = Signal(DeviceStatus)
+
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
 
         self.spectrometer = spectrometer
         self.device_circles = {}
         self.refresh_buttons = {}
+        self._refresh_task: asyncio.Task | None = None
+        self._device_statuses: dict[str, DeviceStatus] = {}
         self.setup_ui()
 
         # Signals
         self.spectrometer.signal.device_status_changed.connect(
             self.on_device_status_changed
         )
+
+    def _get_spectrometer_status(self) -> DeviceStatus:
+        if any(s == DeviceStatus.OFFLINE for s in self._device_statuses.values()):
+            return DeviceStatus.OFFLINE
+        if any(s == DeviceStatus.CONNECTING for s in self._device_statuses.values()):
+            return DeviceStatus.CONNECTING
+        return DeviceStatus.ONLINE
 
     def setup_ui(self):
         layout = QHBoxLayout()
@@ -55,7 +68,6 @@ class StatusPanel(QWidget):
 
         status_group.setLayout(status_layout)
 
-        # Device status rows
         devices = [
             ("zaber", "Zaber Controller"),
             ("oscilloscope", "Oscilloscope Controller"),
@@ -78,12 +90,10 @@ class StatusPanel(QWidget):
             row_layout.addWidget(name_label)
             row_layout.addStretch()
 
-            # Status circle
             row_layout.addWidget(status_label)
 
-            # Refresh button
             refresh_btn = QPushButton()
-            icon_path = os.path.join(os.path.dirname(__file__), "icons/refresh-cw.svg")
+            icon_path = str(Path(__file__).parent / "icons/refresh-cw.svg")
             refresh_btn.setIcon(QIcon(icon_path))
             refresh_btn.setToolTip("Refresh device connection")
             refresh_btn.setFixedSize(30, 30)
@@ -99,30 +109,35 @@ class StatusPanel(QWidget):
 
     def on_refresh_clicked(self, device_id):
         self.refresh_buttons[device_id].setEnabled(False)
-        asyncio.create_task(self.refresh_device_async(device_id))
+        if self._refresh_task:
+            self._refresh_task.cancel()
+        self._refresh_task = asyncio.create_task(self.refresh_device_async(device_id))
 
     async def refresh_device_async(self, device_id):
-        try:
+        with contextlib.suppress(Exception):
             await self.spectrometer.refresh_device(device_id)
-        except Exception:
-            pass
 
         self.refresh_buttons[device_id].setEnabled(True)
 
     def update_circle(self, device_id: str, status: DeviceStatus):
+        self._device_statuses[device_id] = status
         circle = self.device_circles[device_id]
         if circle:
-            if status == DeviceStatus.ONLINE:
-                circle.setStyleSheet(
-                    "color: #00AA00; font-size: 16px; font-weight: bold;"
-                )
-            elif status == DeviceStatus.OFFLINE:
-                circle.setStyleSheet(
-                    "color: #CC0000; font-size: 16px; font-weight: bold;"
-                )
-            else:  # CONNECTING
-                circle.setStyleSheet("color: gray; font-size: 16px; font-weight: bold;")
+            match status:
+                case DeviceStatus.ONLINE:
+                    circle.setStyleSheet(
+                        "color: #00AA00; font-size: 16px; font-weight: bold;"
+                    )
+                case DeviceStatus.OFFLINE:
+                    circle.setStyleSheet(
+                        "color: #CC0000; font-size: 16px; font-weight: bold;"
+                    )
+                case DeviceStatus.CONNECTING:
+                    circle.setStyleSheet(
+                        "color: gray; font-size: 16px; font-weight: bold;"
+                    )
 
     @Slot(str, DeviceStatus)
     def on_device_status_changed(self, device_id, status):
         self.update_circle(device_id, status)
+        self.signal_status_changed.emit(self._get_spectrometer_status())

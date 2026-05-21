@@ -62,7 +62,6 @@ class DelayGeneratorController:
         write_string = "DT 3,2,0"
         self._write_cmd(write_string)
 
-    def set_trig(self, freq):
-        write_string = "TM 0; TR 0, " + str(freq)
+    def set_trig(self):
+        write_string = "TM 0; TR 0, " + str(self.trigger_rate)
         self._write_cmd(write_string)
-        print("Activating internal trigger at ", str(freq))

@@ -1,7 +1,13 @@
 import time
 import serial
+from enum import Enum
 
 from config import Config
+
+
+class RefSource(Enum):
+    INTERNAL = "INTERNAL"
+    EXTERNAL = "EXTERNAL"
 
 
 class ValonController:
@@ -22,21 +28,32 @@ class ValonController:
 
         self._connection = con
 
+        self.update_config(config)
+
     def is_initialized(self) -> bool:
         return self._connection.is_open if hasattr(self, "_connection") else False
 
+    def update_config(self, config: Config):
+        valon_config = config.valon_controller
+
+        self.set_rf_output(1 if valon_config.rf_output else 0)
+        self.set_rf_level(valon_config.rf_level)
+        self.set_synth_power(1 if valon_config.synth_power else 0)
+        self.set_ref_source(valon_config.ref_source)
+        self.set_ref_freq(valon_config.ref_freq)
+
     # Write Valon cmds, either writing or querying based on presence of \r
     def write_cmd(self, cmd):
+        # print(f"Valon CMD: {cmd}")
         # Format command with line termination \r, encode (utf-8 I think), send to Valon
-        format_cmd = f"{cmd}"
-        format_cmd += "\r"
+        format_cmd = f"{cmd}\r"
         self._connection.reset_input_buffer()
-        print(format_cmd)
+        # print(format_cmd)
         self._connection.write(format_cmd.encode())
         time.sleep(0.1)
         response_bytes = self._connection.read(1024)
         response = response_bytes.decode().strip()
-        print(response)
+        # print(f"Valon Response: {response}")
         return response
 
     def set_settings(self, rf_level):
@@ -82,3 +99,34 @@ class ValonController:
     def frequency_step_cw(self, step_size):
         self.write_cmd(f"FrequencyStep {step_size}M")
         self.write_cmd("Frequency")
+
+    # Other methods
+    def get_rf_output(self):
+        self.write_cmd("OEN?")
+
+    def set_rf_output(self, status):
+        self.write_cmd(f"OEN {status}")
+
+    def get_rf_level(self):
+        self.write_cmd("PoWeR?")
+
+    def set_rf_level(self, level):
+        self.write_cmd(f"PoWeR {level}")
+
+    def get_synth_power(self):
+        self.write_cmd("PDN?")
+
+    def set_synth_power(self, status):
+        self.write_cmd(f"PDN {status}")
+
+    def get_ref_source(self):
+        self.write_cmd("REFS?")
+
+    def set_ref_source(self, source: RefSource):
+        self.write_cmd(f"REF {source}")
+
+    def get_ref_freq(self):
+        self.write_cmd("REF? MHz")
+
+    def set_ref_freq(self, freq):
+        self.write_cmd(f"REFerence {freq} MHz")
