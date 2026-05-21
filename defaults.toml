@@ -1,0 +1,28 @@
+[valon_controller]
+rf_level = 10.0
+valon_port = "COM3"
+
+[zaber_controller]
+zaber_speed = 0.003
+zaber_homing_speed = 2.0
+zaber_step_size = 0.07
+zaber_port = "COM5"
+
+[awg_controller]
+awg_status = true
+awg_freq = 30.0
+awg_run_mode = "Triggered"
+awg_ch_1_output = false
+awg_ch_2_output = true
+
+[oscilloscope_controller]
+channel = "CH4"
+resolution = 100.0
+sample_rate = 500
+window_type = "Rectangular"
+gate_position = 18.45
+math_averages = 1000000
+acq_rate = 300
+
+[delay_generator_controller]
+trigger_rate = 5.0

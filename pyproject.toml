@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pyqtdarktheme>=2.1.0",
     "pyqtgraph>=0.14.0",
+    "pip>=25.3",
     "pyserial>=3.5",
     "pyside6>=6.9.2",
     "pythonnet>=3.0.5",

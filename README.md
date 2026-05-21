@@ -1,7 +1,7 @@
 # GRULab_pythoncode
 This repository contains the code necessary to (mostly) operate the Fourier-transform microwave (FTMW) spectrometer at "Gru Lab"
 
-[python_code_updates.docx](https://github.com/user-attachments/files/17403094/python_code_updates.docx)
+***REMOVED***
 
 ## Contributing
 See CONTRIBUTING.md (coming soon)
