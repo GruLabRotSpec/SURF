@@ -342,6 +342,10 @@ class ControlPanel(QWidget):
         self.ref_freq_field = QDoubleSpinBox(value=10, suffix=" MHz")
         valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
+        freq_label = QLabel("Frequency")
+        self.freq_field = QDoubleSpinBox(value=30, suffix=" MHz", minimum=10, maximum=19000)
+        valon_form.addRow(freq_label, self.freq_field)
+
         self.registry.register(
             "valon_controller.rf_output",
             self.rf_output_on_btn,
@@ -365,6 +369,11 @@ class ControlPanel(QWidget):
         self.registry.register(
             "valon_controller.ref_freq",
             self.ref_freq_field,
+            ControlType.SpinBox,
+        )
+        self.registry.register(
+            "valon_controller.freq",
+            self.freq_field,
             ControlType.SpinBox,
         )
 
