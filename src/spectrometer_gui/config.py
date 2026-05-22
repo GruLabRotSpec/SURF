@@ -12,6 +12,7 @@ class ValonConfig(BaseModel):
     synth_power: bool
     ref_source: Literal["Internal", "External"]
     ref_freq: float
+    freq: float
 
 
 class ZaberConfig(BaseModel):

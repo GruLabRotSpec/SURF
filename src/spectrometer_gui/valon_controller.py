@@ -41,6 +41,7 @@ class ValonController:
         self.set_synth_power(1 if valon_config.synth_power else 0)
         self.set_ref_source(valon_config.ref_source)
         self.set_ref_freq(valon_config.ref_freq)
+        self.set_freq(valon_config.freq)
 
     # Write Valon cmds, either writing or querying based on presence of \r
     def write_cmd(self, cmd):
@@ -130,3 +131,9 @@ class ValonController:
 
     def set_ref_freq(self, freq):
         self.write_cmd(f"REFerence {freq} MHz")
+
+    def get_freq(self):
+        self.write_cmd("Frequency")
+
+    def set_freq(self, freq):
+        self.write_cmd(f"Frequency {freq} MHz")
