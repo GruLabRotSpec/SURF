@@ -10,9 +10,10 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
+import pyqtgraph as pg
+
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType
-from gui.graph_panel import GraphPanel
 
 
 class CavitySearchPanel(QWidget):
@@ -89,8 +90,7 @@ class CavitySearchPanel(QWidget):
 
         right_column.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        graph_panel = GraphPanel()
-        right_column.addWidget(graph_panel)
+        right_column.addWidget(self._create_spectrum_graph())
 
         layout.addWidget(left_column_panel)
         layout.addWidget(right_column_panel)
@@ -120,3 +120,11 @@ class CavitySearchPanel(QWidget):
             self.start_button.setEnabled(True)
             self.form_panel.setEnabled(True)
             self.cancel_button.setEnabled(False)
+
+    def _create_spectrum_graph(self) -> QWidget:
+        self.spectrum_graph = pg.PlotWidget()
+        self.spectrum_graph.showGrid(x=True, y=True, alpha=0.3)
+        self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
+        self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
+        self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
+        return self.spectrum_graph
