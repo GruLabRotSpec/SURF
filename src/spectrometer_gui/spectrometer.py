@@ -14,6 +14,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
+from experiment import Experiment, save_experiment
 from gui.signal_enums import GraphState, ScanType
 
 from delay_generator_controller import DelayGeneratorController
@@ -76,6 +77,7 @@ class Spectrometer:
         self,
         signals: ScanSignals,
         canceled: Event,
+        experiment: Experiment,
         start_freq: float,
         stop_freq: float,
         step_size: float = 0.5,
@@ -117,6 +119,10 @@ class Spectrometer:
             header_df.to_csv(f"{self._directory}/{self._filename}.csv", index=False)
             save_config(
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
+            )
+            # Create file for experiment options
+            save_experiment(
+                Path(f"{self._directory}/{self._filename}_experiment.toml"), experiment
             )
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"

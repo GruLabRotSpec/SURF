@@ -305,6 +305,7 @@ class FrequencyScanPanel(QWidget):
         if self.zaber_set_pos_checkbox.isChecked():
             start_pos = float(self.zaber_pos_field.value())
         self.spec_controller.run_scan(
+            self.experiment,
             float(self.start_freq_field.value()),
             float(self.end_freq_field.value()),
             float(self.step_size_field.value()),

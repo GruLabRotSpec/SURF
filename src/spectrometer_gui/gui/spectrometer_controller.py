@@ -51,22 +51,23 @@ class SpectrometerController(QObject):
             self.signal.zaber_position.emit(-1)
 
     def run_scan(
-        self, start_freq=None, stop_freq=11200.0, step_size=0.5, start_pos=None
+        self, experiment, start_freq=None, stop_freq=11200.0, step_size=0.5, start_pos=None
     ):
         self.zaber_position_timer.stop()
         self.signal.progress.emit(-1, "Starting scan...")
         self.signal.scanning.emit(True, ScanType.FREQUENCY)
         self.current_task = asyncio.create_task(
-            self._run_scan_async(start_freq, stop_freq, step_size, start_pos)
+            self._run_scan_async(experiment, start_freq, stop_freq, step_size, start_pos)
         )
 
-    async def _run_scan_async(self, start_freq, stop_freq, step_size, start_pos=None):
+    async def _run_scan_async(self, experiment, start_freq, stop_freq, step_size, start_pos=None):
         # TODO: Actually support proper progress
         try:
             await asyncio.to_thread(
                 self.spectrometer.scan_frequency,
                 self.signal,
                 self.cancel_event,
+                experiment,
                 start_freq,
                 stop_freq,
                 step_size,
