@@ -115,7 +115,7 @@ class MainWindow(QMainWindow):
         # Help Menu
         help_menu = self.menu_bar.addMenu("&Help")
 
-        about_action = help_menu.addAction("About")
+        about_action = help_menu.addAction("&About")
         about_action.triggered.connect(self.show_about)
 
     def open_config(self):
