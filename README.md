@@ -1,20 +1,10 @@
-# GRULab_pythoncode
-This repository contains the code necessary to (mostly) operate the Fourier-transform microwave (FTMW) spectrometer at "Gru Lab"
+# SURF (formerly GruGUI)
+**Spectroscopy User and Research Framework (SURF)** is a GUI to operate most features of the Fourier-transform microwave (FTMW) spectrometer at GruLAB.
 
-***REMOVED***
+[Design and performance of an L-shaped Fourier transform microwave spectrometer (L-FTMW): Fabry–Perot cavity spectrometer setup](https://doi.org/10.1063/5.0311736)
 
-## Contributing
-See CONTRIBUTING.md (coming soon)
+## Documentation
+See the `docs` folder for more information, including development setup information.
 
 ## Licensing
 See LICENSE.md (coming soon)
-
-## Resources
-For those less familiar with software development, some resources are listed below:
-- Software versioning
-  - [Semantic Versioning](https://semver.org/)
-- Version control with Git and GitHub
-  - [GitHub's Git Guide](https://github.com/git-guides)
-  - [GitHub Desktop](https://desktop.github.com/download/)
-- Python
-  - [Introduction to Python Programming by OpenStax](https://assets.openstax.org/oscms-prodcms/media/documents/Introduction_to_Python_Programming_-_WEB.pdf)
