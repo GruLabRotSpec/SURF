@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 import pandas as pd
 
 from gui.settings_window import SettingsWindow
+from gui.help_window import HelpWindow
 from gui.about_window import AboutWindow
 
 from gui.broadband_panel import BroadbandPanel
@@ -115,6 +116,9 @@ class MainWindow(QMainWindow):
         # Help Menu
         help_menu = self.menu_bar.addMenu("&Help")
 
+        help_action = help_menu.addAction("&Help")
+        help_action.triggered.connect(self.show_help)
+
         about_action = help_menu.addAction("&About")
         about_action.triggered.connect(self.show_about)
 
@@ -194,6 +198,10 @@ class MainWindow(QMainWindow):
             self.spec_controller.signal.settings_updated
         )
         self.settings_window.show()
+
+    def show_help(self):
+        self.help_window = HelpWindow()
+        self.help_window.show()
 
     def show_about(self):
         self.about_window = AboutWindow()
