@@ -1,5 +1,4 @@
 from __future__ import annotations
-from enum import Enum
 from pathlib import Path
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
@@ -17,6 +16,8 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QRadioButton,
     QButtonGroup,
+    QCheckBox,
+    QLineEdit,
 )
 from zaber_motion import Units
 
@@ -25,53 +26,56 @@ from gui.custom_toolbar import CustomToolbar
 from gui.signal_enums import ZaberSpeed
 
 
-class ControlType(Enum):
-    CheckBox = 1
-    TextBox = 2
-    SpinBox = 3
-
-
 class ControlRegistry:
-    def __init__(self, spec_controller: SpectrometerController):
+    def __init__(self, spec_controller):
         self._controller = spec_controller
-        self._controls = []
+        self._controls: list[tuple[str, object]] = []
 
-    def register(self, path: str, widget, control_type: ControlType):
-        self._controls.append((path, widget, control_type))
+    def register(self, path: str, widget):
+        self._controls.append((path, widget))
+
+    def _resolve(self, path: str) -> tuple[object, str]:
+        keys = path.strip().split(".")
+        obj = self._controller.config
+        for key in keys[:-1]:
+            obj = getattr(obj, key)
+        return obj, keys[-1]
+
+    @staticmethod
+    def _get_value(widget):
+        if isinstance(widget, (QSpinBox, QDoubleSpinBox)):
+            return widget.value()
+        elif isinstance(widget, QComboBox):
+            return widget.currentText()
+        elif isinstance(widget, (QCheckBox, QRadioButton)):
+            return widget.isChecked()
+        elif isinstance(widget, QLineEdit):
+            return widget.text()
+        else:
+            raise TypeError(f"Unsupported widget type: {type(widget)}")
+
+    @staticmethod
+    def _set_value(widget, value):
+        if isinstance(widget, (QSpinBox, QDoubleSpinBox)):
+            widget.setValue(value)
+        elif isinstance(widget, QComboBox):
+            widget.setCurrentText(str(value))
+        elif isinstance(widget, (QCheckBox, QRadioButton)):
+            widget.setChecked(bool(value))
+        elif isinstance(widget, QLineEdit):
+            widget.setText(str(value))
+        else:
+            raise TypeError(f"Unsupported widget type: {type(widget)}")
 
     def load_config(self):
-        for path, widget, control_type in self._controls:
-            keys = path.strip().split(".")
-
-            value = self._controller.config
-
-            for key in keys:
-                value = getattr(value, key)
-
-            match control_type:
-                case ControlType.CheckBox:
-                    widget.setChecked(bool(value))
-                case ControlType.TextBox:
-                    widget.setCurrentText(value)
-                case ControlType.SpinBox:
-                    widget.setValue(value)
+        for path, widget in self._controls:
+            obj, key = self._resolve(path)
+            self._set_value(widget, getattr(obj, key))
 
     def apply_config(self):
-        for path, widget, control_type in self._controls:
-            keys = path.strip().split(".")
-
-            config = self._controller.config
-
-            for key in keys[:-1]:
-                config = getattr(config, key)
-
-            match control_type:
-                case ControlType.CheckBox:
-                    setattr(config, keys[-1], bool(widget.isChecked()))
-                case ControlType.TextBox:
-                    setattr(config, keys[-1], widget.currentText())
-                case ControlType.SpinBox:
-                    setattr(config, keys[-1], widget.value())
+        for path, widget in self._controls:
+            obj, key = self._resolve(path)
+            setattr(obj, key, self._get_value(widget))
 
 
 class ControlPanel(QWidget):
@@ -181,7 +185,11 @@ class ControlPanel(QWidget):
         zaber_control_widget_2.addWidget(self.zaber_move_left_btn)
 
         self.zaber_inc_field = QDoubleSpinBox(
-            minimum=-50, maximum=50, singleStep=1, suffix=" mm", decimals=3,
+            minimum=-50,
+            maximum=50,
+            singleStep=1,
+            suffix=" mm",
+            decimals=3,
         )
         zaber_control_widget_2.addWidget(self.zaber_inc_field)
 
@@ -198,9 +206,7 @@ class ControlPanel(QWidget):
         zaber_form.addRow("Position (relative)", zaber_control_widget_2)
 
         self.registry.register(
-            "zaber_controller.zaber_moving_speed",
-            self.zaber_speed_2_field,
-            ControlType.SpinBox,
+            "zaber_controller.zaber_moving_speed", self.zaber_speed_2_field
         )
 
         return zaber_group
@@ -268,27 +274,22 @@ class ControlPanel(QWidget):
         self.registry.register(
             "awg_controller.awg_status",
             self.awg_on_btn,
-            ControlType.CheckBox,
         )
         self.registry.register(
             "awg_controller.awg_run_mode",
             self.run_mode_field,
-            ControlType.TextBox,
         )
         self.registry.register(
             "awg_controller.awg_freq",
             self.awg_freq_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "awg_controller.awg_ch_1_output",
             self.awg_ch_1_output_on_btn,
-            ControlType.CheckBox,
         )
         self.registry.register(
             "awg_controller.awg_ch_2_output",
             self.awg_ch_2_output_on_btn,
-            ControlType.CheckBox,
         )
 
         return awg_group
@@ -343,38 +344,34 @@ class ControlPanel(QWidget):
         valon_form.addRow(ref_freq_label, self.ref_freq_field)
 
         freq_label = QLabel("Frequency")
-        self.freq_field = QDoubleSpinBox(value=30, suffix=" MHz", minimum=10, maximum=19000)
+        self.freq_field = QDoubleSpinBox(
+            value=30, suffix=" MHz", minimum=10, maximum=19000
+        )
         valon_form.addRow(freq_label, self.freq_field)
 
         self.registry.register(
             "valon_controller.rf_output",
             self.rf_output_on_btn,
-            ControlType.CheckBox,
         )
         self.registry.register(
             "valon_controller.rf_level",
             self.rf_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "valon_controller.synth_power",
             self.synth_power_on_btn,
-            ControlType.CheckBox,
         )
         self.registry.register(
             "valon_controller.ref_source",
             self.ref_source_field,
-            ControlType.TextBox,
         )
         self.registry.register(
             "valon_controller.ref_freq",
             self.ref_freq_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "valon_controller.freq",
             self.freq_field,
-            ControlType.SpinBox,
         )
 
         return valon_group
@@ -392,7 +389,6 @@ class ControlPanel(QWidget):
         self.registry.register(
             "delay_generator_controller.trigger_rate",
             self.trigger_rate_field,
-            ControlType.SpinBox,
         )
 
         return timing_group
@@ -452,17 +448,14 @@ class ControlPanel(QWidget):
         self.registry.register(
             "oscilloscope_controller.math3.window",
             self.math3_window_field,
-            ControlType.TextBox,
         )
         self.registry.register(
             "oscilloscope_controller.math3.resolution",
             self.math3_res_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "oscilloscope_controller.math3.gate_position",
             self.math3_gatepos_field,
-            ControlType.SpinBox,
         )
 
         math4_group = QGroupBox("Math 4")
@@ -490,17 +483,14 @@ class ControlPanel(QWidget):
         self.registry.register(
             "oscilloscope_controller.math4.window",
             self.math4_window_field,
-            ControlType.TextBox,
         )
         self.registry.register(
             "oscilloscope_controller.math4.resolution",
             self.math4_res_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "oscilloscope_controller.math4.gate_position",
             self.math4_gatepos_field,
-            ControlType.SpinBox,
         )
 
         oscilloscope_group = QGroupBox("Oscilloscope")
@@ -514,17 +504,14 @@ class ControlPanel(QWidget):
         self.registry.register(
             "oscilloscope_controller.acq_rate",
             self.acq_rate_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "oscilloscope_controller.sample_rate",
             self.sample_rate_field,
-            ControlType.SpinBox,
         )
         self.registry.register(
             "oscilloscope_controller.math_averages",
             self.math_averages_field,
-            ControlType.SpinBox,
         )
 
         return oscilloscope_group
