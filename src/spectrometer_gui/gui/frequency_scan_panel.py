@@ -16,6 +16,13 @@ from PySide6.QtWidgets import (
 )
 import pyqtgraph as pg
 
+from frequency_scan_settings import (
+    Experiment,
+    ScanParameters,
+    DigitizerSettings,
+    TimingSettings,
+    FrequencyScanSettings,
+)
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, GraphState
 
@@ -299,17 +306,45 @@ class FrequencyScanPanel(QWidget):
 
         return group
 
+    def get_scan_settings(self) -> FrequencyScanSettings:
+        zaber_pos = None
+        if self.zaber_set_pos_checkbox.isChecked():
+            zaber_pos = float(self.zaber_pos_field.value())
+
+        return FrequencyScanSettings(
+            experiment=Experiment(
+                sample_name=self.sample_name_field.text(),
+                sample_temp=float(self.sample_temp_field.value()),
+                gas_name=self.gas_name_field.text(),
+                gas_width=float(self.gas_width_field.value()),
+                backing_pressure=float(self.backing_pressure_field.value()),
+                chamber_pressure=self.chamber_pressure_field.text(),
+                mw_width=float(self.mw_width_field.value()),
+            ),
+            scan_parameters=ScanParameters(
+                start_freq=float(self.start_freq_field.value()),
+                end_freq=float(self.end_freq_field.value()),
+                step_size=float(self.step_size_field.value()),
+                scanning_speed=float(self.scanning_speed_field.value()),
+                zaber_pos=zaber_pos,
+            ),
+            digitizer_settings=DigitizerSettings(
+                resolution=int(self.resolution_field.value()),
+                acq_window=int(self.acq_window_field.value()),
+                acq_delay=int(self.acq_delay_field.value()),
+                apodization=self.apodization_field.currentText(),
+            ),
+            timing_settings=TimingSettings(
+                rep_rate=int(self.rep_rate_field.value()),
+                valve_mw_delay=int(self.valve_mw_delay_field.value()),
+                spdt_width=int(self.spdt_width_field.value()),
+            ),
+        )
+
     @Slot()
     def start_scan(self):
-        start_pos = None
-        if self.zaber_set_pos_checkbox.isChecked():
-            start_pos = float(self.zaber_pos_field.value())
-        self.spec_controller.run_scan(
-            float(self.start_freq_field.value()),
-            float(self.end_freq_field.value()),
-            float(self.step_size_field.value()),
-            start_pos,
-        )
+        settings = self.get_scan_settings()
+        self.spec_controller.run_scan(settings)
 
     @Slot()
     def cancel_scan(self):

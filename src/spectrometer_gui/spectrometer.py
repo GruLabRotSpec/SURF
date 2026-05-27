@@ -1,10 +1,12 @@
 from __future__ import annotations
 import math
 import time
+import tomli_w
 import numpy as np
 import pandas as pd
 import concurrent
 import threading
+from dataclasses import asdict
 from threading import Event
 import typing
 from scipy.signal import find_peaks
@@ -27,6 +29,7 @@ import logging
 from logger import CustomLogger
 
 if typing.TYPE_CHECKING:
+    from frequency_scan_settings import FrequencyScanSettings
     from gui.spectrometer_controller import ScanSignals
 
 
@@ -76,11 +79,16 @@ class Spectrometer:
         self,
         signals: ScanSignals,
         canceled: Event,
-        start_freq: float,
-        stop_freq: float,
-        step_size: float = 0.5,
-        start_pos: float | None = None,
+        settings: FrequencyScanSettings,
     ):
+        # TODO: Digitizer & Timing from the freq scan panel gui
+        # are not actually hooked up to anything right now.
+
+        start_freq = settings.scan_parameters.start_freq
+        stop_freq = settings.scan_parameters.end_freq
+        step_size = settings.scan_parameters.step_size
+        start_pos = settings.scan_parameters.zaber_pos
+
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -118,6 +126,8 @@ class Spectrometer:
             save_config(
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
+            with Path.open(Path(f"{self._directory}/scan_settings.toml"), "wb") as f:
+                tomli_w.dump(asdict(settings), f)
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"
             )
