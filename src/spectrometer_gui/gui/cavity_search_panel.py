@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QDoubleSpinBox,
+    QComboBox
 )
 
 import pyqtgraph as pg
@@ -44,6 +45,11 @@ class CavitySearchPanel(QWidget):
 
         left_column.addWidget(self.form_panel)
 
+        cavity_type_label = QLabel("Cavity Type")
+        cavity_type_field = QComboBox()
+        cavity_type_field.addItems(["Continuous", "Pulsed"])
+        form.addRow(cavity_type_label, cavity_type_field)
+
         start_freq_label = QLabel("Starting Frequency")
         start_freq_field = QDoubleSpinBox()
         start_freq_field.setMinimum(8000)
@@ -53,14 +59,6 @@ class CavitySearchPanel(QWidget):
         start_freq_field.setSuffix(" MHz")
         form.addRow(start_freq_label, start_freq_field)
 
-        step_size_label = QLabel("Step Size")
-        self.step_size_field = QDoubleSpinBox()
-        self.step_size_field.setMinimum(0)
-        self.step_size_field.setValue(0.5)
-        self.step_size_field.setDecimals(3)
-        self.step_size_field.setSuffix(" MHz")
-        form.addRow(step_size_label, self.step_size_field)
-
         end_freq_label = QLabel("Ending Frequency")
         self.end_freq_field = QDoubleSpinBox()
         self.end_freq_field.setMinimum(8000)
@@ -69,6 +67,10 @@ class CavitySearchPanel(QWidget):
         self.end_freq_field.setDecimals(3)
         self.end_freq_field.setSuffix(" MHz")
         form.addRow(end_freq_label, self.end_freq_field)
+
+        zaber_speed_label = QLabel("Zaber Scanning Speed")
+        self.zaber_speed_field = QDoubleSpinBox(maximum=5.00, decimals=2, suffix=" mm/s")
+        form.addRow(zaber_speed_label, self.zaber_speed_field)
 
         start_button = QPushButton("Start")
         start_button.clicked.connect(self.start_search)
