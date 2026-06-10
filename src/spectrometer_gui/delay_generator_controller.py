@@ -65,3 +65,12 @@ class DelayGeneratorController:
     def set_trig(self):
         write_string = "TM 0; TR 0, " + str(self.trigger_rate)
         self._write_cmd(write_string)
+    def SPDT_switch(self,width):    #in us # TODO: connect with second SRS
+        width = float(width) + 0.2
+        write_string = f"DT 5,6,{width}E-6" #goes to second SRS
+        self._write_cmd(write_string)
+
+    def gas_MW_delay(self,delay):   # TODO: connect with second SRS
+        delay = float(delay)
+        write_string = f"DT 6,1{delay}E-3"    #in ms ; same command should go to both
+        self._write_cmd(write_string)
