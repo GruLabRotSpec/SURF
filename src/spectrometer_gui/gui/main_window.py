@@ -43,7 +43,7 @@ class MainWindow(QMainWindow):
             Path(__file__).parent.parent / "defaults" / "default_config.toml"
         )
 
-        self.setWindowTitle("Gru GUI")
+        self.setWindowTitle("SURF")
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
