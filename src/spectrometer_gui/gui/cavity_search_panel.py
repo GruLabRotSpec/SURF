@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QDoubleSpinBox,
-    QComboBox
+    QComboBox,
 )
 
 import pyqtgraph as pg
@@ -46,9 +46,9 @@ class CavitySearchPanel(QWidget):
         left_column.addWidget(self.form_panel)
 
         cavity_type_label = QLabel("Cavity Type")
-        cavity_type_field = QComboBox()
-        cavity_type_field.addItems(["Continuous", "Pulsed"])
-        form.addRow(cavity_type_label, cavity_type_field)
+        self.cavity_type_field = QComboBox()
+        self.cavity_type_field.addItems(["Continuous", "Pulsed"])
+        form.addRow(cavity_type_label, self.cavity_type_field)
 
         start_freq_label = QLabel("Starting Frequency")
         start_freq_field = QDoubleSpinBox()
@@ -69,7 +69,9 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         zaber_speed_label = QLabel("Zaber Scanning Speed")
-        self.zaber_speed_field = QDoubleSpinBox(maximum=5.00, decimals=2, suffix=" mm/s")
+        self.zaber_speed_field = QDoubleSpinBox(
+            maximum=5.00, decimals=2, suffix=" mm/s"
+        )
         form.addRow(zaber_speed_label, self.zaber_speed_field)
 
         start_button = QPushButton("Start")
@@ -103,7 +105,9 @@ class CavitySearchPanel(QWidget):
     def start_search(self):
         # Start search via controller (controller handles async internally)
         self.spec_controller.run_search(
-            int(self.end_freq_field.value()), float(self.step_size_field.value())
+            self.cavity_type_field.currentText(),
+            int(self.end_freq_field.value()),
+            float(1),  # Replace later
         )
 
     def cancel_search(self):

@@ -286,18 +286,17 @@ class Spectrometer:
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
-    def cavity_search(self, stop_freq, step_size):
+    def cavity_search(self, cavity_type, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
         stop_freqinput = stop_freq
 
         valon_freq = stop_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
 
-        # Toggle switch
-        self.switch_controller.set_switch_cavity()
-
-        # Set tuning settings
-        self.oscilloscope_controller.set_math3()
+        if cavity_type == "Continuous":
+            self.set_cavity_continuous()
+        else:
+            self.set_cavity_pulsed()
 
         self._directory = ""
         self._folder_name = "Cavity Scan"
@@ -590,3 +589,15 @@ class Spectrometer:
             "switch": _is_initialized(self.switch_controller),
             "awg": _is_initialized(self.awg_controller),
         }
+
+    def set_cavity_pulsed(self):
+        self.switch_controller.set_switch_pulsed()
+        self.oscilloscope_controller.set_math3()
+        self.awg_controller.set_run_mode(mode="Triggered")
+        self.delay_generator_controller.set_frequency(300)
+
+    def set_cavity_continuous(self):
+        self.switch_controller.set_switch_continuous()
+        self.oscilloscope_controller.set_math3_cont()
+        self.awg_controller.set_run_mode(mode="Continuous")
+        self.delay_generator_controller.set_frequency(300)
