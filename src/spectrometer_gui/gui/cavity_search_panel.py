@@ -125,6 +125,8 @@ class CavitySearchPanel(QWidget):
 
     def _create_spectrum_graph(self) -> QWidget:
         self.spectrum_graph = pg.PlotWidget()
+        self.spectrum_graph.setLabel("bottom", "Position (mm)")
+        self.spectrum_graph.setLabel("left", "Relative Intensity (Volts)")
         self.spectrum_graph.showGrid(x=True, y=True, alpha=0.3)
         self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
