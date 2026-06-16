@@ -81,7 +81,7 @@ class Spectrometer:
         canceled: Event,
         settings: FrequencyScanSettings,
     ):
-        # TODO: Digitizer & Timing from the freq scan panel gui
+        # TODO: Digitizer from the freq scan panel gui
         # are not actually hooked up to anything right now.
 
         start_freq = settings.scan_parameters.start_freq
@@ -131,6 +131,10 @@ class Spectrometer:
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"
             )
+
+        # Custom timing
+        self.delay_generator_controller.SPDT_switch(settings.scan_parameters.spdt_width)
+        self.delay_generator_controller.gas_MW_delay(settings.scan_parameters.valve_mw_delay)
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
