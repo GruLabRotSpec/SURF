@@ -327,8 +327,6 @@ class FrequencyScanPanel(QWidget):
                 step_size=float(self.step_size_field.value()),
                 scanning_speed=float(self.scanning_speed_field.value()),
                 zaber_pos=zaber_pos,
-                spdt_width=float(self.spdt_width_field.value()),
-                valve_mw_delay=float(self.valve_mw_delay_field.value()),
             ),
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),
