@@ -15,7 +15,7 @@ class AWGController:
         self.initialized = False
 
     def initialize(self, config: Config):
-        self._visa_address = "GPIB1::2::INSTR"
+        self._visa_address = "GPIB1::3::INSTR"
         self._rm = visa.ResourceManager()
         self._awg = self._rm.open_resource(self._visa_address)
         self.update_config(config)
