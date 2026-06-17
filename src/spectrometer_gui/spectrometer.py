@@ -136,8 +136,8 @@ class Spectrometer:
             )
 
         # Custom timing
-        self.delay_generator_controller.SPDT_switch(settings.scan_parameters.spdt_width)
-        self.delay_generator_controller.gas_MW_delay(settings.scan_parameters.valve_mw_delay)
+        self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
+        self.delay_generator_controller.gas_MW_delay(settings.timing_settings.valve_mw_delay)
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
