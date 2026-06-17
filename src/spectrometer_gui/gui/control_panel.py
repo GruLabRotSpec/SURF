@@ -345,7 +345,7 @@ class ControlPanel(QWidget):
 
         freq_label = QLabel("Frequency")
         self.freq_field = QDoubleSpinBox(
-            value=30, suffix=" MHz", minimum=10, maximum=19000
+            value=8000, suffix=" MHz", minimum=7970, maximum=18000
         )
         valon_form.addRow(freq_label, self.freq_field)
 
@@ -405,7 +405,9 @@ class ControlPanel(QWidget):
             "delay_generator_controller.trigger_rate",
             self.trigger_rate_field,
         )
-
+        self.registry.register(
+            "delay_generator_controller.trigger_state", self.trigger_state_int_btn
+        )
 
 
         return timing_group

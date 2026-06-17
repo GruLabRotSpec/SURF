@@ -332,7 +332,7 @@ class Spectrometer:
         self.zaber_controller.home()
 
         self.logger.logger.info("Zaber has arrived at home position 0 mm")
-        # stop_freq = stop_freqinput - self.__awg_freq
+       
         try:
             step_size = float(step_size)
             step_up_var = True
@@ -396,14 +396,7 @@ class Spectrometer:
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
-            # plt.plot(x, y)
-            # plt.plot(x[peaks], y[peaks], "x")
-            # plt.title("Zaber Position vs. Intensity")
-            # plt.xlabel("Zaber Position (mm)")
-            # plt.ylabel("Intensity (Volts)")
-            # plt.show(block=False)
-            # plt.pause(10)
-            # plt.close()
+
 
             df1 = pd.DataFrame(
                 {

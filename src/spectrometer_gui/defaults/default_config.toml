@@ -38,4 +38,5 @@ resolution = 100.0
 gate_position = 18.45
 
 [delay_generator_controller]
-trigger_rate = 5.0
+trigger_rate = 20
+trigger_state = "INT"

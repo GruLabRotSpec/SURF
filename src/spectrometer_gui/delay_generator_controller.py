@@ -1,5 +1,5 @@
 import pyvisa as visa
-
+import logger
 from config import Config
 
 
@@ -92,3 +92,12 @@ class DelayGeneratorController:
     def _open_all_devices(self, timeout: int = 10000) -> None:
         for device in self._devices:
             self._open_device(device, timeout)
+
+
+    def set_trigger_state(self,trigger_state):
+        if trigger_state == 'INT':
+            self.start_trig()
+        elif self.trigger_state == 'EXT':
+            self.stop_trig()
+        else: 
+            self.logger.logger.info("Trigger State Invalid. Must be INT or EXT ")
