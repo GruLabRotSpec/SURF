@@ -127,7 +127,7 @@ class Spectrometer:
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
             with Path.open(Path(f"{self._directory}/scan_settings.toml"), "wb") as f:
-                tomli_w.dump(asdict(settings), f)
+                tomli_w.dump(settings.model_dump(exclude_none=True), f)
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"
             )
