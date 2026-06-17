@@ -42,7 +42,7 @@ class SpectrometerController(QObject):
     def set_config(self, config: Config):
         self.config = config
         self.spectrometer.update_config(config)
-        self.signal.config_changed.emit()
+        #self.signal.config_changed.emit()
 
     def emit_zaber_position(self):
         try:
