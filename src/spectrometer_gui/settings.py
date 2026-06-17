@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import tomllib
 import tomli_w
 from pathlib import Path
@@ -21,7 +21,7 @@ class ScopePresetItem(BaseModel):
 
 class ScopePreset(BaseModel):
     root_path: str
-    presets: dict[str, ScopePresetItem] | None = None
+    presets: dict[str, ScopePresetItem] = Field(default_factory=dict)
 
 
 class Settings(BaseModel):
