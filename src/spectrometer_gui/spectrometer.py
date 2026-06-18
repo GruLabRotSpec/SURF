@@ -142,11 +142,11 @@ class Spectrometer:
         self.delay_generator_controller.set_trig()
         self._time_delay = (
             self.oscilloscope_controller.acq_rate
-            / self.delay_generator_controller.trigger_rate
+            / self.delay_generator_controller._trigger_rate
         )
 
         self.logger.logger.info(
-            f"At a trigger rate of {self.delay_generator_controller.trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, "
+            f"At a trigger rate of {self.delay_generator_controller._trigger_rate} with {self.oscilloscope_controller.acq_rate} acquisitions, "
             + f"each run the oscilloscope will require a time delay of {self._time_delay}",
         )
 

@@ -14,7 +14,7 @@ class DelayGeneratorController:
         }
         self._rm = visa.ResourceManager()
         self._frequency = 0
-        self.trigger_rate = 5
+        self._trigger_state = 'EXT'
         self._delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
 
         self._open_all_devices()
@@ -22,7 +22,7 @@ class DelayGeneratorController:
         self.stop_pulse()
 
         # Turn on external trigger
-        #self._write_cmd("dg_1", "TM 1; TL 1")
+        # self._write_cmd("dg_1", "TM 1; TL 1")
 
         self.update_config(config)
 
@@ -36,9 +36,9 @@ class DelayGeneratorController:
         ddg_config = config.delay_generator_controller
         self.start_trig(ddg_config.trigger_rate)
         self.set_trigger_state(ddg_config.trigger_state)
-        
-        #self.trigger_rate = config.delay_generator_controller.trigger_rate
-        #self.trigger_state = config.delay_generator_controller.trigger_state
+
+        # self.trigger_rate = config.delay_generator_controller.trigger_rate
+        # self.trigger_state = config.delay_generator_controller.trigger_state
 
     # Writes a command to the delay generator and returns the output
     def _write_cmd(self, name, command):
@@ -55,7 +55,7 @@ class DelayGeneratorController:
         print("Activating internal trigger at ", self._frequency)
         return self._frequency
 
-    def start_trig(self,trigger_rate):
+    def start_trig(self, trigger_rate):
         self._trigger_rate = float(trigger_rate)
         write_str = "TR 0, " + str(trigger_rate)
         self._write_cmd("dg_1", write_str)
@@ -77,7 +77,7 @@ class DelayGeneratorController:
         self._write_cmd("dg_1", write_string)
 
     def set_trig(self):
-        write_string = "TM 0; TR 0, " + str(self.trigger_rate)
+        write_string = "TM 0; TR 0, " + str(self._trigger_rate)
         self._write_cmd("dg_1", write_string)
 
     def SPDT_switch(self, width):
@@ -102,11 +102,10 @@ class DelayGeneratorController:
         for device in self._devices:
             self._open_device(device, timeout)
 
-
-    def set_trigger_state(self,trigger_state):
-        if trigger_state == 'INT':
-            self.start_trig()
-        elif self.trigger_state == 'EXT':
+    def set_trigger_state(self, trigger_state):
+        self._trigger_state = trigger_state
+        if trigger_state == "INT":
+            self.start_trig(self._trigger_rate)
+        elif trigger_state == "EXT":
             self.stop_trig()
-        else: 
-            self.logger.logger.info("Trigger State Invalid. Must be INT or EXT ")
+        return self._trigger_state
