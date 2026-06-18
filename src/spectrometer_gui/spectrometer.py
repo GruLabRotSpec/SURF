@@ -127,8 +127,14 @@ class Spectrometer:
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
             with Path.open(Path(f"{self._directory}/scan_settings.toml"), "wb") as f:
+
                 def _asdict_no_none(obj):
-                    return asdict(obj, dict_factory=lambda items: {k: v for k, v in items if v is not None})
+                    return asdict(
+                        obj,
+                        dict_factory=lambda items: {
+                            k: v for k, v in items if v is not None
+                        },
+                    )
 
                 tomli_w.dump(_asdict_no_none(settings), f)
             self.logger.logger.info(
@@ -137,7 +143,9 @@ class Spectrometer:
 
         # Custom timing
         self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
-        self.delay_generator_controller.gas_MW_delay(settings.timing_settings.valve_mw_delay)
+        self.delay_generator_controller.gas_MW_delay(
+            settings.timing_settings.valve_mw_delay
+        )
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
@@ -179,14 +187,38 @@ class Spectrometer:
         self.delay_generator_controller.set_trig()
 
         # collect data
-        _, _ = self.fft_from_scope(valon_freq)
+        frequency_values, intensity_values = self.fft_from_scope(valon_freq)
 
         # stop scope and pulse valve
         self.oscilloscope_controller.stop_acq()
         self.delay_generator_controller.stop_pulse()
 
+        _, filtered_spectrum = self.process_frequency_data(
+                settings.scan_parameters.start_freq,
+                step_size,
+                frequency_values,
+                intensity_values,
+                curr_pos,
+                step_direction,
+            )
+
+        signals.update_graph.emit(
+                GraphState(
+                    ScanType.FREQUENCY,
+                    [],
+                    [],
+                    settings.scan_parameters.start_freq,
+                    filtered_spectrum["Frequency (MHz)"].to_list(),
+                    filtered_spectrum["Intensity"].to_list(),
+                )
+            )
+
+        self.logger.logger.info(
+                f"run #1 has been added to: {self._directory}/{self._filename}.csv",
+            )
+
         ### All Other Runs ###
-        run_number = 1
+        run_number = 2
         while True:
             self.oscilloscope_controller.set_math3()
             time.sleep(2)  # TODO: Figure out how to remove this
@@ -233,7 +265,9 @@ class Spectrometer:
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
 
-            self.delay_generator_controller.start_trig(self.delay_generator_controller._trigger_rate)
+            self.delay_generator_controller.start_trig(
+                self.delay_generator_controller._trigger_rate
+            )
 
             max_list = self.scan_with_acquisition(end_position)
 
@@ -332,7 +366,7 @@ class Spectrometer:
         self.zaber_controller.home()
 
         self.logger.logger.info("Zaber has arrived at home position 0 mm")
-       
+
         try:
             step_size = float(step_size)
             step_up_var = True
@@ -371,7 +405,9 @@ class Spectrometer:
 
             self.logger.logger.info(f"Zaber is at position {curr_pos}")
 
-            self.delay_generator_controller.start_trig(self.delay_generator_controller._trigger_rate)
+            self.delay_generator_controller.start_trig(
+                self.delay_generator_controller._trigger_rate
+            )
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
             self.delay_generator_controller.stop_trig()
 
@@ -395,8 +431,6 @@ class Spectrometer:
             # threshold = input('Threshold for peak selection (in V): ')
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
-
-
 
             df1 = pd.DataFrame(
                 {
@@ -478,7 +512,7 @@ class Spectrometer:
             freq_span,
         ) = self.oscilloscope_controller.grab_fft_params()
 
-        start = freq_cent - freq_span / 2 / 1000000
+        start = (freq_cent - (freq_span / 2)) / 1000000
 
         fft_y_values = np.array(wave_values, dtype="float")
         fft_x_values = (
