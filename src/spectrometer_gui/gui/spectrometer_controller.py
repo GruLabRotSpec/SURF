@@ -28,6 +28,7 @@ class SpectrometerController(QObject):
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
+        self.config_signal = Signal()
         self.current_task = None
         self.cancel_event = threading.Event()
 
@@ -42,7 +43,7 @@ class SpectrometerController(QObject):
     def set_config(self, config: Config):
         self.config = config
         self.spectrometer.update_config(config)
-        self.signal.config_changed.emit()
+        self.config_signal.config_changed.emit()
 
     def emit_zaber_position(self):
         try:

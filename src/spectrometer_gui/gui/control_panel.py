@@ -87,6 +87,7 @@ class ControlPanel(QWidget):
 
         self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
         self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
+        self.spec_controller.config_signal.connect(self._set_values_in_control_panel)
 
         layout = QVBoxLayout()
         self.setLayout(layout)
