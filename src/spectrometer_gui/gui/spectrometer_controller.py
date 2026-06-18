@@ -19,6 +19,10 @@ class ScanSignals(QObject):
     settings_updated = Signal(object)  # Settings
 
 
+class MiscSignals(QObject):
+    config_updated = Signal()
+
+
 class SpectrometerController(QObject):
     def __init__(self, settings: Settings, config: Config, settings_path=None):
         super().__init__()
@@ -28,7 +32,7 @@ class SpectrometerController(QObject):
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
-        self.config_signal = Signal()
+        self.misc_signals = MiscSignals()
         self.current_task = None
         self.cancel_event = threading.Event()
 
@@ -43,7 +47,7 @@ class SpectrometerController(QObject):
     def set_config(self, config: Config):
         self.config = config
         self.spectrometer.update_config(config)
-        self.config_signal.config_changed.emit()
+        self.misc_signals.config_updated.emit()
 
     def emit_zaber_position(self):
         try:
