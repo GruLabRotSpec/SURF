@@ -95,7 +95,7 @@ class FrequencyScanPanel(QWidget):
         self.scanning_speed_field = QDoubleSpinBox(
             decimals=3,
             minimum=0,
-            maximum=1,
+            maximum=2,
             singleStep=0.001,
             suffix=" mm/s",
             value=0.003,
@@ -136,12 +136,12 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(gas_name_label, self.gas_name_field)
 
         gas_width_label = QLabel("Gas width")
-        self.gas_width_field = QDoubleSpinBox(suffix=" μs")
+        self.gas_width_field = QDoubleSpinBox(suffix=" μs",value=600, maximum=2000,)
         experiment_form.addRow(gas_width_label, self.gas_width_field)
 
         backing_pressure_label = QLabel("Backing pressure")
         self.backing_pressure_field = QDoubleSpinBox(
-            value=15, maximum=25, suffix=" psi"
+            value=15, maximum=100,minimum=0, suffix=" psi"
         )
         experiment_form.addRow(backing_pressure_label, self.backing_pressure_field)
 
@@ -327,8 +327,6 @@ class FrequencyScanPanel(QWidget):
                 step_size=float(self.step_size_field.value()),
                 scanning_speed=float(self.scanning_speed_field.value()),
                 zaber_pos=zaber_pos,
-                spdt_width=float(self.spdt_width_field.value()),
-                valve_mw_delay=float(self.valve_mw_delay_field.value()),
             ),
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),

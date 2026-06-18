@@ -19,8 +19,6 @@ class ScanParameters:
     step_size: float
     scanning_speed: float
     zaber_pos: float | None
-    spdt_width: float
-    valve_mw_delay: float
 
 
 @dataclass

@@ -383,6 +383,21 @@ class ControlPanel(QWidget):
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
 
+        self.trigger_state_int_btn = QRadioButton("INT")
+        self.trigger_state_ext_btn = QRadioButton("EXT")
+        self.trigger_state_ext_btn.setChecked(True)
+
+        self.trigger_state_group = QButtonGroup()
+        self.trigger_state_group.addButton(self.trigger_state_int_btn)
+        self.trigger_state_group.addButton(self.trigger_state_ext_btn)
+
+        trigger_state_group_widget = QHBoxLayout()
+        trigger_state_group_widget.addWidget(self.trigger_state_int_btn)
+        trigger_state_group_widget.addWidget(self.trigger_state_ext_btn)
+
+        trigger_state_label = QLabel('Trigger State')
+        timing_form.addRow(trigger_state_label,trigger_state_group_widget)
+
         trigger_rate_label = QLabel("Trigger Rate")
         self.trigger_rate_field = QDoubleSpinBox(minimum=0, suffix=" Hz")
         timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
@@ -391,6 +406,8 @@ class ControlPanel(QWidget):
             "delay_generator_controller.trigger_rate",
             self.trigger_rate_field,
         )
+
+
 
         return timing_group
 
