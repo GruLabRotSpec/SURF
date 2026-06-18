@@ -14,6 +14,7 @@ class DelayGeneratorController:
         }
         self._rm = visa.ResourceManager()
         self._frequency = 0
+        self.trigger_rate = 5
         self._delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
 
         self._open_all_devices()
@@ -21,7 +22,7 @@ class DelayGeneratorController:
         self.stop_pulse()
 
         # Turn on external trigger
-        self._write_cmd("dg_1", "TM 1; TL 1")
+        #self._write_cmd("dg_1", "TM 1; TL 1")
 
         self.update_config(config)
 
@@ -31,7 +32,13 @@ class DelayGeneratorController:
         return self.initialized  # TODO: Verify the resource is still open
 
     def update_config(self, config: Config):
-        self.trigger_rate = config.delay_generator_controller.trigger_rate
+
+        ddg_config = config.delay_generator_controller
+        self.start_trig(ddg_config.trigger_rate)
+        self.set_trigger_state(ddg_config.trigger_state)
+        
+        #self.trigger_rate = config.delay_generator_controller.trigger_rate
+        #self.trigger_state = config.delay_generator_controller.trigger_state
 
     # Writes a command to the delay generator and returns the output
     def _write_cmd(self, name, command):
@@ -48,12 +55,14 @@ class DelayGeneratorController:
         print("Activating internal trigger at ", self._frequency)
         return self._frequency
 
-    def start_trig(self):
-        write_str = "TR 0, " + str(self._frequency)
+    def start_trig(self,trigger_rate):
+        self._trigger_rate = float(trigger_rate)
+        write_str = "TR 0, " + str(trigger_rate)
         self._write_cmd("dg_1", write_str)
         write_str = "TM 0"
         self._write_cmd("dg_1", write_str)
-        print("Activating internal trigger at ", str(self._frequency))
+        print("Activating internal trigger at ", str(trigger_rate))
+        return self._trigger_rate
 
     def stop_trig(self):
         write_string = "TM 1; TL 1"
