@@ -7,6 +7,9 @@ class ScanType(Enum):
     FREQUENCY = 1
     CAVITY = 2
 
+class CavitySearchType(Enum):
+    CONTINUOUS = "continuous"
+    PULSED = "pulsed"
 
 @dataclass
 class GraphState:
@@ -16,6 +19,11 @@ class GraphState:
     frequency: float
     fft_x: list
     fft_y: list
+
+@dataclass
+class CavityGraphState:
+    x_peaks: list
+    y_peaks: list
 
 class ZaberSpeed(Enum):
     SCANNING = 0

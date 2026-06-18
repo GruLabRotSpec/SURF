@@ -6,7 +6,7 @@ from config import Config
 from gui.signal_enums import DeviceStatus
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
-from spectrometer import GraphState, ScanType, Spectrometer
+from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer
 
 
 class ScanSignals(QObject):
@@ -18,6 +18,10 @@ class ScanSignals(QObject):
     settings_updated = Signal(object)  # Settings
 
 
+class SearchSignals(QObject):
+    update_graph = Signal(CavityGraphState)
+
+
 class SpectrometerController(QObject):
     def __init__(self, settings: Settings, config: Config, settings_path=None):
         super().__init__()
@@ -27,6 +31,7 @@ class SpectrometerController(QObject):
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
+        self.search_signals: SearchSignals = SearchSignals()
         self.current_task = None
         self.cancel_event = threading.Event()
 
@@ -95,7 +100,7 @@ class SpectrometerController(QObject):
     async def _run_search_async(self, cavity_type, freq, step_size):
         try:
             await asyncio.to_thread(
-                self.spectrometer.cavity_search, cavity_type, freq, step_size
+                self.spectrometer.cavity_search, self.search_signals, cavity_type, freq, step_size
             )
             if self.cancel_event.is_set():
                 self.signal.progress.emit(1, "Search cancelled")

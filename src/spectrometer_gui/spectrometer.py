@@ -14,7 +14,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import GraphState, ScanType
+from gui.signal_enums import GraphState, ScanType, CavityGraphState
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -27,7 +27,7 @@ import logging
 from logger import CustomLogger
 
 if typing.TYPE_CHECKING:
-    from gui.spectrometer_controller import ScanSignals
+    from gui.spectrometer_controller import ScanSignals, SearchSignals
 
 
 class StepDirection(Enum):
@@ -286,7 +286,7 @@ class Spectrometer:
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
-    def cavity_search(self, cavity_type, stop_freq, step_size):
+    def cavity_search(self, signals: SearchSignals, cavity_type, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
         stop_freqinput = stop_freq
 
@@ -378,14 +378,12 @@ class Spectrometer:
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
-            # plt.plot(x, y)
-            # plt.plot(x[peaks], y[peaks], "x")
-            # plt.title("Zaber Position vs. Intensity")
-            # plt.xlabel("Zaber Position (mm)")
-            # plt.ylabel("Intensity (Volts)")
-            # plt.show(block=False)
-            # plt.pause(10)
-            # plt.close()
+            signals.update_graph.emit(
+                CavityGraphState(
+                    x[peaks],
+                    y[peaks]
+                )
+            )
 
             df1 = pd.DataFrame(
                 {

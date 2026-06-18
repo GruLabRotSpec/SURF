@@ -1,4 +1,5 @@
 from PySide6 import QtCore
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -14,12 +15,16 @@ from PySide6.QtWidgets import (
 import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType
+from spectrometer import ScanType, CavityGraphState
 
 
 class CavitySearchPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
+
+        # Placeholder for graph data
+        self.x_data = []
+        self.y_data = []
 
         self.spec_controller = spectrometer
         self.spec_controller.signal.scanning.connect(self.on_scanning)
@@ -136,3 +141,10 @@ class CavitySearchPanel(QWidget):
         self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.spectrum_graph
+
+    @Slot(CavityGraphState)
+    def update_graph(self, graph_state: CavityGraphState):
+        self.x_data.extend(graph_state.x_peaks)
+        self.y_data.extend(graph_state.y_peaks)
+
+        self.spectrum_plot.setData(self.x_data, self.y_data)
