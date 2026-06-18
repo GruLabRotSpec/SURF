@@ -233,7 +233,7 @@ class Spectrometer:
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
 
-            self.delay_generator_controller.start_trig()
+            self.delay_generator_controller.start_trig(self.delay_generator_controller._trigger_rate)
 
             max_list = self.scan_with_acquisition(end_position)
 
@@ -371,7 +371,7 @@ class Spectrometer:
 
             self.logger.logger.info(f"Zaber is at position {curr_pos}")
 
-            self.delay_generator_controller.start_trig()
+            self.delay_generator_controller.start_trig(self.delay_generator_controller._trigger_rate)
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
             self.delay_generator_controller.stop_trig()
 

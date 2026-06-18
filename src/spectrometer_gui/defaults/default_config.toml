@@ -10,7 +10,7 @@ freq = 8000
 [zaber_controller]
 zaber_scanning_speed = 0.003
 zaber_moving_speed = 2.0
-zaber_step_size = 0.07
+zaber_step_size = 0.04
 zaber_port = "COM5"
 
 [awg_controller]
@@ -35,7 +35,7 @@ gate_position = 1.0
 [oscilloscope_controller.math4]
 window = "Hanning"
 resolution = 100.0
-gate_position = 18.45
+gate_position = 22
 
 [delay_generator_controller]
 trigger_rate = 15
