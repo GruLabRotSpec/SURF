@@ -36,6 +36,8 @@ class FrequencyScanPanel(QWidget):
 
         self.spectrum_x = []
         self.spectrum_y = []
+        self.cavity_track_x = []
+        self.cavity_track_y = []
 
         self.spec_controller = spectrometer
 
@@ -374,7 +376,11 @@ class FrequencyScanPanel(QWidget):
             self.spectrum_x.extend(graph_state.fft_x)
             self.spectrum_y.extend(graph_state.fft_y)
 
+            self.cavity_track_x.extend(graph_state.frequency)
+            self.cavity_track_x.extend(max(graph_state.max_list))
+
         self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
+        self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
 
     @Slot(float)
     def on_zaber_position(self, position):
