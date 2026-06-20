@@ -38,16 +38,16 @@ class OscilloscopeController:
 
         self.write_cmd(f"HORizontal:MODE:SAMPLERate {oscill_config.sample_rate}e6")
 
+        self.channel = oscill_config.channel
+        self.acq_rate = oscill_config.acq_rate
+        self.config = config
+
         # Math 3
         self._update_math3()
         self._update_math3_cont()
 
         # Math 4
         self._update_math4()
-
-        self.channel = oscill_config.channel
-        self.acq_rate = oscill_config.acq_rate
-        self.config = config
 
     def recall_setup(
         self,
