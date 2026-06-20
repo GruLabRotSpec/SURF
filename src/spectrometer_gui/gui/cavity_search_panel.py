@@ -13,15 +13,17 @@ from PySide6.QtWidgets import (
 import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType
+from spectrometer import ScanType, CavityTrack, GraphState
 
 
 class CavitySearchPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
-
+        self.cavity_X = []
+        self.cavity_Y = []
         self.spec_controller = spectrometer
         self.spec_controller.signal.scanning.connect(self.on_scanning)
+        self.spec_controller.signal.update_cavitytrack.connect(self.update_graph)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -128,3 +130,9 @@ class CavitySearchPanel(QWidget):
         self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.spectrum_graph
+    
+    def update_graph(self, Graph: GraphState):
+
+        self.spectrum_plot.setData(Graph.cavitypos,Graph.cavityINT)
+        
+        return

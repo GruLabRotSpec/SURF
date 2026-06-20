@@ -16,7 +16,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import GraphState, ScanType
+from gui.signal_enums import GraphState, ScanType, CavityTrack 
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -300,8 +300,8 @@ class Spectrometer:
             signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    pos_array.tolist(),
-                    max_list,
+                    [total_frequency],
+                    [max(max_list)],
                     new_freq,
                     filtered_spectrum["Frequency (MHz)"].to_list(),
                     filtered_spectrum["Intensity"].to_list(),
@@ -337,7 +337,7 @@ class Spectrometer:
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
-    def cavity_search(self, stop_freq, step_size):
+    def cavity_search(self, stop_freq, step_size, signals:ScanSignals):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
         stop_freqinput = stop_freq
 
@@ -391,7 +391,7 @@ class Spectrometer:
 
         while run_bool:
             new_freq = valon_freq + step_size * i + self.awg_controller.awg_freq
-            self.logger.logger.info(f"The new Valon Frequency is: {new_freq}")
+            self.logger.logger.info(f"The new frequency is: {new_freq}")
 
             start_pos_zaber_mm = 0
             end_pos_zaber_mm = 50
@@ -458,6 +458,8 @@ class Spectrometer:
             if step_up_var and stop_freq_var and new_freq < stop_freq:
                 i += 1
                 self.valon_controller.step_up()
+            else:
+                run_bool=False
 
         self.cleanup()
 

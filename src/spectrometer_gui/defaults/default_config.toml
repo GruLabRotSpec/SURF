@@ -8,7 +8,7 @@ ref_freq = 10.00
 freq = 8000
 
 [zaber_controller]
-zaber_scanning_speed = 0.003
+zaber_scanning_speed = 1
 zaber_moving_speed = 2.0
 zaber_step_size = 0.04
 zaber_port = "COM5"

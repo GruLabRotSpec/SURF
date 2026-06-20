@@ -36,6 +36,8 @@ class FrequencyScanPanel(QWidget):
 
         self.spectrum_x = []
         self.spectrum_y = []
+        self.cavity_track_X = []
+        self.cavity_track_Y = []
 
         self.spec_controller = spectrometer
 
@@ -246,9 +248,7 @@ class FrequencyScanPanel(QWidget):
         self.cavity_track_graph.showGrid(x=True, y=True, alpha=0.3)
         self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.cavity_track_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
-        self.cavity_track_plot = self.cavity_track_graph.plot(
-            pen=pg.mkPen(color="r", width=1)
-        )
+        self.cavity_track_plot = self.cavity_track_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.cavity_track_graph
 
     def _create_scan_status_group(self) -> QWidget:
@@ -374,8 +374,13 @@ class FrequencyScanPanel(QWidget):
             self.spectrum_x.extend(graph_state.fft_x)
             self.spectrum_y.extend(graph_state.fft_y)
 
-        self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
+            self.cavity_track_X.extend(graph_state.cavityFREQ)
+            self.cavity_track_Y.extend(graph_state.cavityINT)
 
+        self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
+        self.cavity_track_plot.setData(self.cavity_track_X,self.cavity_track_Y)
+
+        
     @Slot(float)
     def on_zaber_position(self, position):
         if self.zaber_set_pos_checkbox.isChecked():
