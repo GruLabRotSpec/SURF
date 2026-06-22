@@ -303,7 +303,7 @@ class Spectrometer:
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
-    def cavity_search(self, stop_freq, step_size, signals: ScanSignals):
+    def cavity_search(self, stop_freq, step_size):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
         stop_freqinput = stop_freq
 
@@ -395,8 +395,6 @@ class Spectrometer:
             # threshold = input('Threshold for peak selection (in V): ')
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
-
-            signals.update_graph.emit(GraphState(ScanType.CAVITY,pos_arr.tolist(),max_lists.tolist(),new_freq,[], []))
 
             # plt.plot(x, y)
             # plt.plot(x[peaks], y[peaks], "x")
