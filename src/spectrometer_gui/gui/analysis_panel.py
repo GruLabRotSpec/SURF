@@ -13,10 +13,14 @@ from PySide6.QtGui import QFont, QCursor
 
 import pyqtgraph as pg
 
+from settings import Settings
+
 
 class AnalysisPanel(QWidget):
-    def __init__(self, analysis_data=None):
+    def __init__(self, settings: Settings, analysis_data=None):
         super().__init__()
+        
+        self.settings = settings
 
         if analysis_data is None:
             analysis_data = []
@@ -77,7 +81,7 @@ class AnalysisPanel(QWidget):
                 self.analysis_data.iloc[:, 0], 
                 self.analysis_data.iloc[:, 1],
                 pen = pg.mkPen(color="b", width=1),
-                symbol='o',
+                symbol='o' if self.settings.analysis.show_points else None,
                 symbolSize=10,
                 symbolBrush='b'
             )

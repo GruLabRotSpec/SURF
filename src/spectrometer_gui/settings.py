@@ -24,12 +24,15 @@ class ScopePreset(BaseModel):
     presets: dict[str, ScopePresetItem] = Field(default_factory=dict)
 
 
+class AnalysisSettings(BaseModel):
+    show_points: bool = False
+
 class Settings(BaseModel):
     output: OutputConfig
     logging: LoggingConfig
     scope_preset: ScopePreset
     theme: str = "auto"
-
+    analysis: AnalysisSettings
 
 def load_settings(settings_path) -> Settings:
     toml_path = Path(settings_path)

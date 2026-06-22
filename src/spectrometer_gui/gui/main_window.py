@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         frequency_scan = FrequencyScanPanel(self.spec_controller)
         cavity_search = CavitySearchPanel(self.spec_controller)
         control_panel = ControlPanel(self.spec_controller)
-        self.analysis_panel = AnalysisPanel()
+        self.analysis_panel = AnalysisPanel(self.settings)
 
         status_panel.signal_status_changed.connect(
             bottom_bar_panel.set_spectrometer_status

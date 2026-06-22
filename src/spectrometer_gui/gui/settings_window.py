@@ -24,11 +24,11 @@ class SettingsWindow(QWidget):
         self.setLayout(layout)
 
         self.general_settings_panel = GeneralSettingsPanel(settings)
-        advanced_settings_panel = AdvancedSettingsPanel(settings)
+        self.advanced_settings_panel = AdvancedSettingsPanel(settings)
 
         self.tab_widget = QTabWidget(self)
         self.tab_widget.addTab(self.general_settings_panel, "General")
-        self.tab_widget.addTab(advanced_settings_panel, "Advanced")
+        self.tab_widget.addTab(self.advanced_settings_panel, "Advanced")
 
         layout.addWidget(self.tab_widget)
 
@@ -38,5 +38,6 @@ class SettingsWindow(QWidget):
 
     def on_save_clicked(self):
         self.general_settings_panel.update_settings()
+        self.advanced_settings_panel.update_settings()
         save_settings(self.settings_path, self.settings)
         self.settings_updated.emit(self.settings)
