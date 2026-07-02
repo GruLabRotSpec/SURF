@@ -1,7 +1,7 @@
 theme = "auto"
 
 [output]
-location = "~/Documents/"
+location = "C:\Users\GRU LAB\Documents\github_2\GRULab_pythoncode\test"
 filename = "my_scan"
 
 [logging]
