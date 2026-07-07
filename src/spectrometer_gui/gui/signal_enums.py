@@ -11,11 +11,16 @@ class ScanType(Enum):
 @dataclass
 class GraphState:
     scan_type: ScanType
-    pos_array: list
-    max_list: list
-    frequency: float
+    cavityFREQ: list
+    cavityINT: list
+    cavitypos: list
     fft_x: list
     fft_y: list
+
+class CavityTrack:
+    frequency: float
+    pos:list
+    intensity: list
 
 class ZaberSpeed(Enum):
     SCANNING = 0

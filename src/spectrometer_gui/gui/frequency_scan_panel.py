@@ -224,7 +224,7 @@ class FrequencyScanPanel(QWidget):
         timing_form.addRow(valve_mw_delay_label, self.valve_mw_delay_field)
 
         spdt_width_label = QLabel("SPDT Width")
-        self.spdt_width_field = QSpinBox(
+        self.spdt_width_field = QDoubleSpinBox(
             minimum=1, maximum=10000, value=10, suffix=" μs"
         )
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
@@ -337,7 +337,7 @@ class FrequencyScanPanel(QWidget):
             timing_settings=TimingSettings(
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
-                spdt_width=int(self.spdt_width_field.value()),
+                spdt_width=self.spdt_width_field.value(),
             ),
         )
 

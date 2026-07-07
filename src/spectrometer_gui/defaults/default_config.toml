@@ -8,7 +8,7 @@ ref_freq = 10.00
 freq = 8000
 
 [zaber_controller]
-zaber_scanning_speed = 1
+zaber_scanning_speed = 0.003
 zaber_moving_speed = 2.0
 zaber_step_size = 0.04
 zaber_port = "COM5"
@@ -22,7 +22,7 @@ awg_ch_2_output = true
 
 [oscilloscope_controller]
 channel = "CH4"
-acq_rate = 500
+acq_rate = 1500
 sample_rate = 500
 math_averages = 1000000
 visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
@@ -35,7 +35,7 @@ gate_position = 1.0
 [oscilloscope_controller.math4]
 window = "Hanning"
 resolution = 100.0
-gate_position = 22
+gate_position = 22.5
 
 [delay_generator_controller]
 trigger_rate = 15

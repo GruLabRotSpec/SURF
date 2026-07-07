@@ -405,9 +405,7 @@ class Spectrometer:
 
             self.logger.logger.info(f"Zaber is at position {curr_pos}")
 
-            self.delay_generator_controller.start_trig(
-                self.delay_generator_controller._trigger_rate
-            )
+
             max_list.append(self.scan_with_acquisition(end_pos_zaber_mm))
             self.delay_generator_controller.stop_trig()
 
@@ -428,6 +426,20 @@ class Spectrometer:
                 x = DF["Zaber Position (mm)"]
                 y = DF["Intensity (Volts)"]
 
+                signals.update_graph.emit(
+                    CavityTrack(2,new_freq,max_lists,pos_arr,[],[]
+
+                    ))
+                
+                # signals.update_graph.emit(
+                # GraphState(
+                #     ScanType.FREQUENCY,
+                #     [total_frequency],
+                #     [max(max_list)],
+                #     new_freq,
+                #     filtered_spectrum["Frequency (MHz)"].to_list(),
+                #     filtered_spectrum["Intensity"].to_list(),
+           
             # threshold = input('Threshold for peak selection (in V): ')
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
