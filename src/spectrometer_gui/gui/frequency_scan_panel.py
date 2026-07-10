@@ -16,6 +16,13 @@ from PySide6.QtWidgets import (
 )
 import pyqtgraph as pg
 
+from frequency_scan_settings import (
+    Experiment,
+    ScanParameters,
+    DigitizerSettings,
+    TimingSettings,
+    FrequencyScanSettings,
+)
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, GraphState
 
@@ -29,6 +36,8 @@ class FrequencyScanPanel(QWidget):
 
         self.spectrum_x = []
         self.spectrum_y = []
+        self.cavity_track_x = []
+        self.cavity_track_y = []
 
         self.spec_controller = spectrometer
 
@@ -88,7 +97,7 @@ class FrequencyScanPanel(QWidget):
         self.scanning_speed_field = QDoubleSpinBox(
             decimals=3,
             minimum=0,
-            maximum=1,
+            maximum=2,
             singleStep=0.001,
             suffix=" mm/s",
             value=0.003,
@@ -129,12 +138,12 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(gas_name_label, self.gas_name_field)
 
         gas_width_label = QLabel("Gas width")
-        self.gas_width_field = QDoubleSpinBox(suffix=" μs")
+        self.gas_width_field = QDoubleSpinBox(suffix=" μs",value=600, maximum=2000,)
         experiment_form.addRow(gas_width_label, self.gas_width_field)
 
         backing_pressure_label = QLabel("Backing pressure")
         self.backing_pressure_field = QDoubleSpinBox(
-            value=15, maximum=25, suffix=" psi"
+            value=15, maximum=100,minimum=0, suffix=" psi"
         )
         experiment_form.addRow(backing_pressure_label, self.backing_pressure_field)
 
@@ -299,17 +308,45 @@ class FrequencyScanPanel(QWidget):
 
         return group
 
+    def get_scan_settings(self) -> FrequencyScanSettings:
+        zaber_pos = None
+        if self.zaber_set_pos_checkbox.isChecked():
+            zaber_pos = float(self.zaber_pos_field.value())
+
+        return FrequencyScanSettings(
+            experiment=Experiment(
+                sample_name=self.sample_name_field.text(),
+                sample_temp=float(self.sample_temp_field.value()),
+                gas_name=self.gas_name_field.text(),
+                gas_width=float(self.gas_width_field.value()),
+                backing_pressure=float(self.backing_pressure_field.value()),
+                chamber_pressure=self.chamber_pressure_field.text(),
+                mw_width=float(self.mw_width_field.value()),
+            ),
+            scan_parameters=ScanParameters(
+                start_freq=float(self.start_freq_field.value()),
+                end_freq=float(self.end_freq_field.value()),
+                step_size=float(self.step_size_field.value()),
+                scanning_speed=float(self.scanning_speed_field.value()),
+                zaber_pos=zaber_pos,
+            ),
+            digitizer_settings=DigitizerSettings(
+                resolution=int(self.resolution_field.value()),
+                acq_window=int(self.acq_window_field.value()),
+                acq_delay=int(self.acq_delay_field.value()),
+                apodization=self.apodization_field.currentText(),
+            ),
+            timing_settings=TimingSettings(
+                rep_rate=int(self.rep_rate_field.value()),
+                valve_mw_delay=int(self.valve_mw_delay_field.value()),
+                spdt_width=int(self.spdt_width_field.value()),
+            ),
+        )
+
     @Slot()
     def start_scan(self):
-        start_pos = None
-        if self.zaber_set_pos_checkbox.isChecked():
-            start_pos = float(self.zaber_pos_field.value())
-        self.spec_controller.run_scan(
-            float(self.start_freq_field.value()),
-            float(self.end_freq_field.value()),
-            float(self.step_size_field.value()),
-            start_pos,
-        )
+        settings = self.get_scan_settings()
+        self.spec_controller.run_scan(settings)
 
     @Slot()
     def cancel_scan(self):
@@ -339,7 +376,11 @@ class FrequencyScanPanel(QWidget):
             self.spectrum_x.extend(graph_state.fft_x)
             self.spectrum_y.extend(graph_state.fft_y)
 
+            self.cavity_track_x.extend(graph_state.frequency)
+            self.cavity_track_x.extend(max(graph_state.max_list))
+
         self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
+        self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
 
     @Slot(float)
     def on_zaber_position(self, position):

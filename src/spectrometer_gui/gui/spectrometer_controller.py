@@ -3,6 +3,7 @@ import traceback
 import threading
 
 from config import Config
+from frequency_scan_settings import FrequencyScanSettings
 from gui.signal_enums import DeviceStatus
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
@@ -20,6 +21,8 @@ class ScanSignals(QObject):
 
 class SearchSignals(QObject):
     update_graph = Signal(CavityGraphState)
+class MiscSignals(QObject):
+    config_updated = Signal()
 
 
 class SpectrometerController(QObject):
@@ -32,6 +35,7 @@ class SpectrometerController(QObject):
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
         self.search_signals: SearchSignals = SearchSignals()
+        self.misc_signals = MiscSignals()
         self.current_task = None
         self.cancel_event = threading.Event()
 
@@ -46,7 +50,7 @@ class SpectrometerController(QObject):
     def set_config(self, config: Config):
         self.config = config
         self.spectrometer.update_config(config)
-        self.signal.config_changed.emit()
+        self.misc_signals.config_updated.emit()
 
     def emit_zaber_position(self):
         try:
@@ -55,27 +59,20 @@ class SpectrometerController(QObject):
         except Exception:
             self.signal.zaber_position.emit(-1)
 
-    def run_scan(
-        self, start_freq=None, stop_freq=11200.0, step_size=0.5, start_pos=None
-    ):
+    def run_scan(self, settings: FrequencyScanSettings):
         self.zaber_position_timer.stop()
         self.signal.progress.emit(-1, "Starting scan...")
         self.signal.scanning.emit(True, ScanType.FREQUENCY)
-        self.current_task = asyncio.create_task(
-            self._run_scan_async(start_freq, stop_freq, step_size, start_pos)
-        )
+        self.current_task = asyncio.create_task(self._run_scan_async(settings))
 
-    async def _run_scan_async(self, start_freq, stop_freq, step_size, start_pos=None):
+    async def _run_scan_async(self, settings: FrequencyScanSettings):
         # TODO: Actually support proper progress
         try:
             await asyncio.to_thread(
                 self.spectrometer.scan_frequency,
                 self.signal,
                 self.cancel_event,
-                start_freq,
-                stop_freq,
-                step_size,
-                start_pos,
+                settings,
             )
             if self.cancel_event.is_set():
                 self.signal.progress.emit(1, "Scan cancelled")

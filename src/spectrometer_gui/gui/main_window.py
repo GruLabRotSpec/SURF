@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 from PySide6 import QtCore
+from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
@@ -42,7 +43,7 @@ class MainWindow(QMainWindow):
             Path(__file__).parent.parent / "defaults" / "default_config.toml"
         )
 
-        self.setWindowTitle("Gru GUI")
+        self.setWindowTitle("SURF")
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -63,7 +64,7 @@ class MainWindow(QMainWindow):
         frequency_scan = FrequencyScanPanel(self.spec_controller)
         cavity_search = CavitySearchPanel(self.spec_controller)
         control_panel = ControlPanel(self.spec_controller)
-        self.analysis_panel = AnalysisPanel()
+        self.analysis_panel = AnalysisPanel(self.settings)
 
         status_panel.signal_status_changed.connect(
             bottom_bar_panel.set_spectrometer_status
@@ -90,33 +91,47 @@ class MainWindow(QMainWindow):
         # File Menu
         file_menu = self.menu_bar.addMenu("&File")
 
+        open_config_action = file_menu.addAction("&Open control options from file...")
+        open_config_action.setShortcut(QKeySequence.StandardKey.Open)
+        open_config_action.triggered.connect(self.open_config)
+
         open_spectra_action = file_menu.addAction(
-            "Open emission spectra for analysis..."
+            "Open &emission spectra for analysis..."
         )
         open_spectra_action.triggered.connect(self.open_spectra)
 
-        open_config_action = file_menu.addAction("Open control options from file...")
-        open_config_action.triggered.connect(self.open_config)
+        file_menu.addSeparator()
 
-        save_config_action = file_menu.addAction("Save control options to file...")
+        save_config_action = file_menu.addAction("&Save control options to file...")
+        save_config_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         save_config_action.triggered.connect(self.save_config)
 
-        error_action = file_menu.addAction("Quit")
-        error_action.triggered.connect(self.quit_app)
+        file_menu.addSeparator()
+
+        quit_action = file_menu.addAction("&Quit")
+        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        quit_action.setStatusTip("Quit the application")
+        quit_action.triggered.connect(self.quit_app)
 
         # Edit Menu
         edit_menu = self.menu_bar.addMenu("&Edit")
 
-        settings_action = edit_menu.addAction("Settings")
+        settings_action = edit_menu.addAction("&Settings")
         settings_action.triggered.connect(self.show_settings)
 
         # View Menu
-        self.menu_bar.addMenu("&View")
+        view_menu = self.menu_bar.addMenu("&View")
+
+        fullscreen_action = view_menu.addAction("&Fullscreen")
+        fullscreen_action.setShortcut(QKeySequence.StandardKey.FullScreen)
+        fullscreen_action.setCheckable(True)
+        fullscreen_action.triggered.connect(self.view_fullscreen)
 
         # Help Menu
         help_menu = self.menu_bar.addMenu("&Help")
 
         help_action = help_menu.addAction("&Help")
+        help_action.setShortcut(QKeySequence.StandardKey.HelpContents)
         help_action.triggered.connect(self.show_help)
 
         about_action = help_menu.addAction("&About")
@@ -198,6 +213,12 @@ class MainWindow(QMainWindow):
             self.spec_controller.signal.settings_updated
         )
         self.settings_window.show()
+
+    def view_fullscreen(self):
+        if self.isFullScreen():
+            self.showNormal()
+        else:
+            self.showFullScreen()
 
     def show_help(self):
         self.help_window = HelpWindow()

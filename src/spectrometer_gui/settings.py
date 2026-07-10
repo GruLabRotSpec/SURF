@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import tomllib
 import tomli_w
 from pathlib import Path
@@ -21,15 +21,18 @@ class ScopePresetItem(BaseModel):
 
 class ScopePreset(BaseModel):
     root_path: str
-    presets: dict[str, ScopePresetItem] | None = None
+    presets: dict[str, ScopePresetItem] = Field(default_factory=dict)
 
+
+class AnalysisSettings(BaseModel):
+    show_points: bool = False
 
 class Settings(BaseModel):
     output: OutputConfig
     logging: LoggingConfig
     scope_preset: ScopePreset
     theme: str = "auto"
-
+    analysis: AnalysisSettings
 
 def load_settings(settings_path) -> Settings:
     toml_path = Path(settings_path)

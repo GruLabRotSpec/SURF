@@ -1,10 +1,12 @@
 from __future__ import annotations
 import math
 import time
+import tomli_w
 import numpy as np
 import pandas as pd
 import concurrent
 import threading
+from dataclasses import asdict
 from threading import Event
 import typing
 from scipy.signal import find_peaks
@@ -28,6 +30,7 @@ from logger import CustomLogger
 
 if typing.TYPE_CHECKING:
     from gui.spectrometer_controller import ScanSignals, SearchSignals
+    from frequency_scan_settings import FrequencyScanSettings
 
 
 class StepDirection(Enum):
@@ -76,11 +79,16 @@ class Spectrometer:
         self,
         signals: ScanSignals,
         canceled: Event,
-        start_freq: float,
-        stop_freq: float,
-        step_size: float = 0.5,
-        start_pos: float | None = None,
+        settings: FrequencyScanSettings,
     ):
+        # TODO: Digitizer from the freq scan panel gui
+        # are not actually hooked up to anything right now.
+
+        start_freq = settings.scan_parameters.start_freq
+        stop_freq = settings.scan_parameters.end_freq
+        step_size = settings.scan_parameters.step_size
+        start_pos = settings.scan_parameters.zaber_pos
+
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -118,9 +126,18 @@ class Spectrometer:
             save_config(
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
+            with Path.open(Path(f"{self._directory}/scan_settings.toml"), "wb") as f:
+                def _asdict_no_none(obj):
+                    return asdict(obj, dict_factory=lambda items: {k: v for k, v in items if v is not None})
+
+                tomli_w.dump(_asdict_no_none(settings), f)
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"
             )
+
+        # Custom timing
+        self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
+        self.delay_generator_controller.gas_MW_delay(settings.timing_settings.valve_mw_delay)
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (

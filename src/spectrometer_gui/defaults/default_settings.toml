@@ -22,3 +22,6 @@ path = "2cavity_scan_peak001.set"
 [scope_preset.presets.pulse]
 name = "Pulse"
 path = "3cavitypulsed.set"
+
+[analysis]
+show_points = true
