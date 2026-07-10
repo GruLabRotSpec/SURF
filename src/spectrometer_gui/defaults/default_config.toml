@@ -37,5 +37,11 @@ window = "Hanning"
 resolution = 100.0
 gate_position = 18.45
 
+[oscilloscope_controller.math3_cont]
+window = "Rectangular"
+resolution = 334
+gate_position = 2.5
+scale = 300 
+
 [delay_generator_controller]
 trigger_rate = 5.0

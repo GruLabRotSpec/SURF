@@ -1,4 +1,5 @@
 from PySide6 import QtCore
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFormLayout,
@@ -8,17 +9,22 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QDoubleSpinBox,
+    QComboBox,
 )
 
 import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType
+from spectrometer import ScanType, CavityGraphState
 
 
 class CavitySearchPanel(QWidget):
     def __init__(self, spectrometer: SpectrometerController):
         super().__init__()
+
+        # Placeholder for graph data
+        self.x_data = []
+        self.y_data = []
 
         self.spec_controller = spectrometer
         self.spec_controller.signal.scanning.connect(self.on_scanning)
@@ -44,6 +50,11 @@ class CavitySearchPanel(QWidget):
 
         left_column.addWidget(self.form_panel)
 
+        cavity_type_label = QLabel("Cavity Type")
+        self.cavity_type_field = QComboBox()
+        self.cavity_type_field.addItems(["Continuous", "Pulsed"])
+        form.addRow(cavity_type_label, self.cavity_type_field)
+
         start_freq_label = QLabel("Starting Frequency")
         start_freq_field = QDoubleSpinBox()
         start_freq_field.setMinimum(8000)
@@ -53,14 +64,6 @@ class CavitySearchPanel(QWidget):
         start_freq_field.setSuffix(" MHz")
         form.addRow(start_freq_label, start_freq_field)
 
-        step_size_label = QLabel("Step Size")
-        self.step_size_field = QDoubleSpinBox()
-        self.step_size_field.setMinimum(0)
-        self.step_size_field.setValue(0.5)
-        self.step_size_field.setDecimals(3)
-        self.step_size_field.setSuffix(" MHz")
-        form.addRow(step_size_label, self.step_size_field)
-
         end_freq_label = QLabel("Ending Frequency")
         self.end_freq_field = QDoubleSpinBox()
         self.end_freq_field.setMinimum(8000)
@@ -69,6 +72,12 @@ class CavitySearchPanel(QWidget):
         self.end_freq_field.setDecimals(3)
         self.end_freq_field.setSuffix(" MHz")
         form.addRow(end_freq_label, self.end_freq_field)
+
+        zaber_speed_label = QLabel("Zaber Scanning Speed")
+        self.zaber_speed_field = QDoubleSpinBox(
+            maximum=5.00, decimals=2, suffix=" mm/s"
+        )
+        form.addRow(zaber_speed_label, self.zaber_speed_field)
 
         start_button = QPushButton("Start")
         start_button.clicked.connect(self.start_search)
@@ -101,7 +110,9 @@ class CavitySearchPanel(QWidget):
     def start_search(self):
         # Start search via controller (controller handles async internally)
         self.spec_controller.run_search(
-            int(self.end_freq_field.value()), float(self.step_size_field.value())
+            self.cavity_type_field.currentText(),
+            int(self.end_freq_field.value()),
+            float(1),  # Replace later
         )
 
     def cancel_search(self):
@@ -123,8 +134,17 @@ class CavitySearchPanel(QWidget):
 
     def _create_spectrum_graph(self) -> QWidget:
         self.spectrum_graph = pg.PlotWidget()
+        self.spectrum_graph.setLabel("bottom", "Position (mm)")
+        self.spectrum_graph.setLabel("left", "Relative Intensity (Volts)")
         self.spectrum_graph.showGrid(x=True, y=True, alpha=0.3)
         self.spectrum_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.spectrum_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.spectrum_plot = self.spectrum_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.spectrum_graph
+
+    @Slot(CavityGraphState)
+    def update_graph(self, graph_state: CavityGraphState):
+        self.x_data.extend(graph_state.x_peaks)
+        self.y_data.extend(graph_state.y_peaks)
+
+        self.spectrum_plot.setData(self.x_data, self.y_data)

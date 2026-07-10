@@ -36,6 +36,13 @@ class MathConfig(BaseModel):
     gate_position: float
 
 
+class MathContConfig(BaseModel):
+    window: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
+    resolution: float
+    gate_position: float
+    scale: float
+
+
 class OscilloscopeConfig(BaseModel):
     channel: str
     acq_rate: int
@@ -44,6 +51,7 @@ class OscilloscopeConfig(BaseModel):
     visa_address: str
     math3: MathConfig
     math4: MathConfig
+    math3_cont: MathConfig
 
 
 class DelayGeneratorConfig(BaseModel):
