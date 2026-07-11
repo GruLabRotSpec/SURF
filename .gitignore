@@ -18,3 +18,4 @@ Cavity Scan/
 
 # Logs
 **/*.log
+*.csv
