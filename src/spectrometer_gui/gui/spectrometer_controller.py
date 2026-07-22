@@ -7,7 +7,7 @@ from frequency_scan_settings import FrequencyScanSettings
 from gui.signal_enums import DeviceStatus
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
-from spectrometer import GraphState, ScanType, Spectrometer
+from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer
 
 
 class ScanSignals(QObject):
@@ -19,6 +19,8 @@ class ScanSignals(QObject):
     settings_updated = Signal(object)  # Settings
 
 
+class SearchSignals(QObject):
+    update_graph = Signal(CavityGraphState)
 class MiscSignals(QObject):
     config_updated = Signal()
 
@@ -32,6 +34,7 @@ class SpectrometerController(QObject):
         self.config = config
         self.bottom_bar = None
         self.signal: ScanSignals = ScanSignals()
+        self.search_signals: SearchSignals = SearchSignals()
         self.misc_signals = MiscSignals()
         self.current_task = None
         self.cancel_event = threading.Event()
@@ -83,15 +86,19 @@ class SpectrometerController(QObject):
             self.signal.scanning.emit(False, ScanType.NONE)
             self.finish_run()
 
-    def run_search(self, freq=9000, step_size=0.5):
+    def run_search(self, cavity_type, freq=9000, step_size=0.5):
         self.zaber_position_timer.stop()
         self.signal.progress.emit(0, "Starting search...")
         self.signal.scanning.emit(True, ScanType.CAVITY)
-        self.current_task = asyncio.create_task(self._run_search_async(freq, step_size))
+        self.current_task = asyncio.create_task(
+            self._run_search_async(cavity_type, freq, step_size)
+        )
 
-    async def _run_search_async(self, freq, step_size):
+    async def _run_search_async(self, cavity_type, freq, step_size):
         try:
-            await asyncio.to_thread(self.spectrometer.cavity_search, freq, step_size)
+            await asyncio.to_thread(
+                self.spectrometer.cavity_search, self.search_signals, cavity_type, freq, step_size
+            )
             if self.cancel_event.is_set():
                 self.signal.progress.emit(1, "Search cancelled")
             else:

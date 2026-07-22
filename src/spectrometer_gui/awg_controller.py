@@ -7,7 +7,7 @@ from config import Config
 
 class RunMode(Enum):
     Triggered = "TRIGgered"
-    Continous = "CONTinuous"
+    Continuous = "CONTinuous"
 
 
 class AWGController:

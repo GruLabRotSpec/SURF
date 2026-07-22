@@ -24,10 +24,10 @@ class SwitchController:
     def is_initialized(self) -> bool:
         return self.initialized  # TODO: Verify the connection is still open?
 
-    def set_switch_cavity(self):
+    def set_switch_continuous(self):
         self._status = self._MyPTE1.Set_Switch("A", 1)
 
-    def set_switch_freq(self):
+    def set_switch_pulsed(self):
         self._status = self._MyPTE1.Set_Switch("A", 0)
 
     def get_status(self):
