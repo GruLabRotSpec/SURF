@@ -22,6 +22,7 @@ from frequency_scan_settings import (
     DigitizerSettings,
     TimingSettings,
     FrequencyScanSettings,
+    OutputSettings
 )
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, GraphState
@@ -341,6 +342,10 @@ class FrequencyScanPanel(QWidget):
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
                 spdt_width=int(self.spdt_width_field.value()),
             ),
+            output_settings=OutputSettings(
+                filename=self.output_folder_field.text(),
+                location=self.directory_field.text()
+            )
         )
 
     @Slot()

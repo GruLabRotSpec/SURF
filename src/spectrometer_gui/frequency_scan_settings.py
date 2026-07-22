@@ -37,8 +37,15 @@ class TimingSettings:
 
 
 @dataclass
+class OutputSettings:
+    filename: str
+    location: str
+
+
+@dataclass
 class FrequencyScanSettings:
     experiment: Experiment
     scan_parameters: ScanParameters
     digitizer_settings: DigitizerSettings
     timing_settings: TimingSettings
+    output_settings: OutputSettings

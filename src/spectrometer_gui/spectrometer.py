@@ -81,6 +81,11 @@ class Spectrometer:
         canceled: Event,
         settings: FrequencyScanSettings,
     ):
+
+        # Override default output
+        self._folder_name = settings.output_settings.location
+        self._filename = settings.output_settings.filename
+
         # TODO: Digitizer from the freq scan panel gui
         # are not actually hooked up to anything right now.
 
