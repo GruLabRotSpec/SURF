@@ -141,6 +141,7 @@ class Spectrometer:
             )
 
         # Custom timing
+        self.delay_generator_controller.trigger_rate = settings.timing_settings.rep_rate
         self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
         self.delay_generator_controller.gas_MW_delay(settings.timing_settings.valve_mw_delay)
 
