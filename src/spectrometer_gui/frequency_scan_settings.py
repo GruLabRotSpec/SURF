@@ -33,7 +33,7 @@ class DigitizerSettings:
 class TimingSettings:
     rep_rate: int
     valve_mw_delay: int
-    spdt_width: int
+    spdt_width: float
 
 
 @dataclass
