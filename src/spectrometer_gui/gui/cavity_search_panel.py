@@ -28,6 +28,7 @@ class CavitySearchPanel(QWidget):
 
         self.spec_controller = spectrometer
         self.spec_controller.signal.scanning.connect(self.on_scanning)
+        self.spec_controller.signal.update_cavitytrack.connect(self.update_graph)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
