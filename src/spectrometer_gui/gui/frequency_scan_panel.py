@@ -130,7 +130,7 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(sample_name_label, self.sample_name_field)
 
         sample_temp_label = QLabel("Sample temp")
-        self.sample_temp_field = QDoubleSpinBox(suffix=" C")
+        self.sample_temp_field = QDoubleSpinBox(suffix=" C", maximum=300)
         experiment_form.addRow(sample_temp_label, self.sample_temp_field)
 
         gas_name_label = QLabel("Gas")

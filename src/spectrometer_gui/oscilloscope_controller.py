@@ -171,8 +171,8 @@ class OscilloscopeController:
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
         self.write_cmd("cursor:source MATH3")
-        self.write_cmd("cursor:VBARs:Position1 29.99E6")
-        self.write_cmd("cursor:VBARs:Position2 30.01E6")
+        self.write_cmd("cursor:VBARs:Position1 29.95E6")
+        self.write_cmd("cursor:VBARs:Position2 30.05E6")
         self.write_cmd("MEASUREment:MEAS1:SOURCE MATH3")
         self.write_cmd("measurement:meas1:type max")
         self.write_cmd("measurement:gating cursor")
@@ -181,9 +181,11 @@ class OscilloscopeController:
         self.write_cmd('HORizontal:MODE:SCAle 500E-9')
         self.write_cmd(f"MATH3:SPECTral:RESBw {oscill_config.math3.resolution}e3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
+        self.write_cmd("MATH4:SPECTral:SPAN 40E6")
+
         self.write_cmd(f"MATH3:SPECTral:GATEPOS {oscill_config.math3.gate_position}e-6")
         self.write_cmd("MATH3:NUMAvg 2")
-        self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")
+        self.write_cmd("MATH3:VERTICAL:SCALE 100E-3")
 
         self.start_acq()
 
@@ -194,11 +196,11 @@ class OscilloscopeController:
         self.write_cmd("SELECT:MATH4 1")
 
         self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.math4.window}")
-        self.write_cmd('HORizontal:MODE:SCAle 5E-6')
+        self.write_cmd('HORizontal:MODE:SCAle 10E-6')
         self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.math4.resolution}e3")
         self.write_cmd("MATH4:SPECTral:CENTER 30E6")
         self.write_cmd("MATH4:SPECTral:SPAN 20E6")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.math4.gate_position}e-6")
         self.write_cmd(f"MATH4:NUMAvg {oscill_config.math_averages}")
-        self.write_cmd("MATH4:VERTICAL:SCALE 500E-6")
+        self.write_cmd("MATH4:VERTICAL:SCALE 100E-6")
         self.write_cmd(f"{self.channel}:SCAle 1")

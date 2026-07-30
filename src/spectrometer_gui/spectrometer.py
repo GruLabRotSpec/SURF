@@ -218,7 +218,7 @@ class Spectrometer:
             )
 
         ### All Other Runs ###
-        run_number = 2
+        run_number = 1
         while True:
             self.oscilloscope_controller.set_math3()
             time.sleep(2)  # TODO: Figure out how to remove this
@@ -230,9 +230,11 @@ class Spectrometer:
             match step_direction:
                 case StepDirection.Up:
                     new_freq = valon_freq + step_size * run_number
+                    start_position = start_position - 0.02
                     end_position = start_position + self.zaber_controller.step_size
                 case StepDirection.Down:
                     new_freq = valon_freq - step_size * run_number
+                    start_position = start_position + 0.02
                     end_position = start_position - self.zaber_controller.step_size
 
             # Check for end of zaber
