@@ -105,7 +105,7 @@ class Spectrometer:
         self.update_config(self.config)
 
         # Toggle switch
-        self.switch_controller.set_switch_freq()
+        self.switch_controller.set_switch_pulsed()
 
         # Move zaber to start position if specified
         if start_pos is not None:
@@ -211,9 +211,9 @@ class Spectrometer:
         signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    [],
-                    [],
                     settings.scan_parameters.start_freq,
+                    [],
+                    [],
                     filtered_spectrum["Frequency (MHz)"].to_list(),
                     filtered_spectrum["Intensity"].to_list(),
                 )
@@ -308,14 +308,14 @@ class Spectrometer:
             signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    [total_frequency],
-                    [max(max_list)],
-                    new_freq,
-                    filtered_spectrum["Frequency (MHz)"].to_list(),
-                    filtered_spectrum["Intensity"].to_list(),
+                    cavityFREQ=[total_frequency],
+                    cavityINT=[max(max_list)],
+                    cavitypos=max_pos,
+                    fft_x=filtered_spectrum["Frequency (MHz)"].to_list(),
+                    fft_y=filtered_spectrum["Intensity"].to_list(),
                 )
             )
-
+            
             self.logger.logger.info(
                 f"run #{run_number} has been added to: {self._directory}/{self._filename}.csv",
             )
