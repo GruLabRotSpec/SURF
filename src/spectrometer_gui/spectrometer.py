@@ -105,7 +105,7 @@ class Spectrometer:
         self.update_config(self.config)
 
         # Toggle switch
-        self.switch_controller.set_switch_freq()
+        self.switch_controller.set_switch_pulsed()
 
         # Move zaber to start position if specified
         if start_pos is not None:
@@ -132,8 +132,14 @@ class Spectrometer:
                 Path(f"{self._directory}/{self._filename}_config.toml"), self.config
             )
             with Path.open(Path(f"{self._directory}/scan_settings.toml"), "wb") as f:
+
                 def _asdict_no_none(obj):
-                    return asdict(obj, dict_factory=lambda items: {k: v for k, v in items if v is not None})
+                    return asdict(
+                        obj,
+                        dict_factory=lambda items: {
+                            k: v for k, v in items if v is not None
+                        },
+                    )
 
                 tomli_w.dump(_asdict_no_none(settings), f)
             self.logger.logger.info(
@@ -143,7 +149,9 @@ class Spectrometer:
         # Custom timing
         self.delay_generator_controller.trigger_rate = settings.timing_settings.rep_rate
         self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
-        self.delay_generator_controller.gas_MW_delay(settings.timing_settings.valve_mw_delay)
+        self.delay_generator_controller.gas_MW_delay(
+            settings.timing_settings.valve_mw_delay
+        )
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
@@ -401,12 +409,7 @@ class Spectrometer:
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
-            signals.update_graph.emit(
-                CavityGraphState(
-                    x[peaks],
-                    y[peaks]
-                )
-            )
+            signals.update_graph.emit(CavityGraphState(x[peaks], y[peaks]))
 
             df1 = pd.DataFrame(
                 {
