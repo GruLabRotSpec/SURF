@@ -56,7 +56,7 @@ class OscilloscopeConfig(BaseModel):
 
 class DelayGeneratorConfig(BaseModel):
     trigger_rate: float
-
+    trigger_state: Literal['INT','EXT']
 
 class Config(BaseModel):
     valon_controller: ValonConfig

@@ -131,7 +131,7 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(sample_name_label, self.sample_name_field)
 
         sample_temp_label = QLabel("Sample temp")
-        self.sample_temp_field = QDoubleSpinBox(suffix=" C")
+        self.sample_temp_field = QDoubleSpinBox(suffix=" C", maximum=300)
         experiment_form.addRow(sample_temp_label, self.sample_temp_field)
 
         gas_name_label = QLabel("Gas")
@@ -225,7 +225,7 @@ class FrequencyScanPanel(QWidget):
         timing_form.addRow(valve_mw_delay_label, self.valve_mw_delay_field)
 
         spdt_width_label = QLabel("SPDT Width")
-        self.spdt_width_field = QSpinBox(
+        self.spdt_width_field = QDoubleSpinBox(
             minimum=1, maximum=10000, value=10, suffix=" μs"
         )
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
@@ -249,9 +249,7 @@ class FrequencyScanPanel(QWidget):
         self.cavity_track_graph.showGrid(x=True, y=True, alpha=0.3)
         self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.cavity_track_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
-        self.cavity_track_plot = self.cavity_track_graph.plot(
-            pen=pg.mkPen(color="r", width=1)
-        )
+        self.cavity_track_plot = self.cavity_track_graph.plot(pen=pg.mkPen(color="b", width=1))
         return self.cavity_track_graph
 
     def _create_scan_status_group(self) -> QWidget:
@@ -340,7 +338,7 @@ class FrequencyScanPanel(QWidget):
             timing_settings=TimingSettings(
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
-                spdt_width=int(self.spdt_width_field.value()),
+                spdt_width=self.spdt_width_field.value(),
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
