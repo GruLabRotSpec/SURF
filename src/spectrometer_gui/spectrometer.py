@@ -16,7 +16,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import GraphState, ScanType, CavityGraphState
+from gui.signal_enums import GraphState, ScanType, CavityGraphState, CavityTrackState
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -212,8 +212,6 @@ class Spectrometer:
                 GraphState(
                     ScanType.FREQUENCY,
                     settings.scan_parameters.start_freq,
-                    [],
-                    [],
                     filtered_spectrum["Frequency (MHz)"].to_list(),
                     filtered_spectrum["Intensity"].to_list(),
                 )
@@ -308,14 +306,19 @@ class Spectrometer:
             signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    cavityFREQ=[total_frequency],
-                    cavityINT=[max(max_list)],
-                    cavitypos=max_pos,
-                    fft_x=filtered_spectrum["Frequency (MHz)"].to_list(),
-                    fft_y=filtered_spectrum["Intensity"].to_list(),
+                    total_frequency,
+                    filtered_spectrum["Frequency (MHz)"].to_list(),
+                    filtered_spectrum["Intensity"].to_list(),
                 )
             )
-            
+            signals.update_cavityTrack.emit(
+                CavityTrackState(
+                    ScanType.FREQUENCY,
+                    [total_frequency],
+                    [max(max_list)],
+                    [max_pos]
+                )
+            )
             self.logger.logger.info(
                 f"run #{run_number} has been added to: {self._directory}/{self._filename}.csv",
             )
@@ -433,8 +436,8 @@ class Spectrometer:
                 x = DF["Zaber Position (mm)"]
                 y = DF["Intensity (Volts)"]
 
-                signals.update_graph.emit(
-                    CavityGraphState(2,new_freq,max_lists,pos_arr,[],[]
+                signals.update_cavitymap.emit(
+                    CavityGraphState(2,new_freq,pos_arr,max_lists
 
                     ))
                 
@@ -451,7 +454,7 @@ class Spectrometer:
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
-            signals.update_graph.emit(CavityGraphState(x[peaks], y[peaks]))
+            #signals.update_graph.emit(CavityGraphState(x[peaks], y[peaks]))
 
             df1 = pd.DataFrame(
                 {

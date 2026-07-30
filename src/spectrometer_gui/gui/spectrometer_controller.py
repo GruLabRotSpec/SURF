@@ -7,7 +7,7 @@ from frequency_scan_settings import FrequencyScanSettings
 from gui.signal_enums import DeviceStatus
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
-from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer
+from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer, CavityTrackState
 
 
 class ScanSignals(QObject):
@@ -15,13 +15,13 @@ class ScanSignals(QObject):
     progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
     update_graph = Signal(GraphState)
-    update_cavitytrack = Signal(CavityGraphState)
+    update_cavityTrack = Signal(CavityTrackState)
     zaber_position = Signal(float)  # position in mm, or -1 on error
     settings_updated = Signal(object)  # Settings
 
 
 class SearchSignals(QObject):
-    update_graph = Signal(CavityGraphState)
+    update_cavitymap = Signal(CavityGraphState)
 class MiscSignals(QObject):
     config_updated = Signal()
 

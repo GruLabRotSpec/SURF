@@ -22,10 +22,10 @@ from frequency_scan_settings import (
     DigitizerSettings,
     TimingSettings,
     FrequencyScanSettings,
-    OutputSettings
+    OutputSettings,
 )
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType, GraphState
+from spectrometer import ScanType, GraphState, CavityTrackState
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -44,6 +44,7 @@ class FrequencyScanPanel(QWidget):
 
         self.spec_controller.signal.scanning.connect(self.on_scanning)
         self.spec_controller.signal.update_graph.connect(self.on_update_graph)
+        self.spec_controller.signal.update_cavityTrack.connect(self.on_update_cavityTrack)
         self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
         self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
 
@@ -68,7 +69,7 @@ class FrequencyScanPanel(QWidget):
         self.output_folder_field.setText(self.spec_controller.settings.output.filename)
         self.directory_field.setText(self.spec_controller.settings.output.location)
 
-        self.on_update_graph(GraphState(ScanType.FREQUENCY, [], [], 0, [], []))
+        self.on_update_graph(GraphState(ScanType.FREQUENCY,[], [], []))
 
     def _create_scan_settings_panel(self) -> QWidget:
         self.scan_settings_group = QGroupBox("Scan")
@@ -139,12 +140,16 @@ class FrequencyScanPanel(QWidget):
         experiment_form.addRow(gas_name_label, self.gas_name_field)
 
         gas_width_label = QLabel("Gas width")
-        self.gas_width_field = QDoubleSpinBox(suffix=" μs",value=600, maximum=2000,)
+        self.gas_width_field = QDoubleSpinBox(
+            suffix=" μs",
+            value=600,
+            maximum=2000,
+        )
         experiment_form.addRow(gas_width_label, self.gas_width_field)
 
         backing_pressure_label = QLabel("Backing pressure")
         self.backing_pressure_field = QDoubleSpinBox(
-            value=15, maximum=100,minimum=0, suffix=" psi"
+            value=15, maximum=100, minimum=0, suffix=" psi"
         )
         experiment_form.addRow(backing_pressure_label, self.backing_pressure_field)
 
@@ -249,7 +254,9 @@ class FrequencyScanPanel(QWidget):
         self.cavity_track_graph.showGrid(x=True, y=True, alpha=0.3)
         self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.cavity_track_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
-        self.cavity_track_plot = self.cavity_track_graph.plot(pen=pg.mkPen(color="b", width=1))
+        self.cavity_track_plot = self.cavity_track_graph.plot(
+            pen=pg.mkPen(color="b", width=1)
+        )
         return self.cavity_track_graph
 
     def _create_scan_status_group(self) -> QWidget:
@@ -342,8 +349,8 @@ class FrequencyScanPanel(QWidget):
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
-                location=self.directory_field.text()
-            )
+                location=self.directory_field.text(),
+            ),
         )
 
     @Slot()
@@ -379,11 +386,22 @@ class FrequencyScanPanel(QWidget):
             self.spectrum_x.extend(graph_state.fft_x)
             self.spectrum_y.extend(graph_state.fft_y)
 
-            self.cavity_track_x.extend([graph_state.cavityFREQ])
-            self.cavity_track_x.extend([graph_state.cavityINT])
 
         self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
+
+    @Slot(CavityTrackState)
+    def on_update_cavityTrack(self, graph_state: CavityTrackState):
+        if graph_state.scan_type != ScanType.FREQUENCY:
+            return        
+
+        if graph_state.cavityFreq:
+
+            self.cavity_track_x.extend(graph_state.cavityFreq)
+            self.cavity_track_y.extend(graph_state.cavityInt)
+
         self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
+           
+
 
     @Slot(float)
     def on_zaber_position(self, position):

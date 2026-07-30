@@ -12,18 +12,23 @@ class CavitySearchType(Enum):
     PULSED = "pulsed"
 
 @dataclass
-class GraphState:
+class GraphState:   #spectrum for frequency scan panel 
     scan_type: ScanType
-    cavityFREQ: list
-    cavityINT: list
-    cavitypos: list
+    frequency: float
     fft_x: list
     fft_y: list
-
 @dataclass
-class CavityGraphState:
-    x_peaks: list
-    y_peaks: list
+class CavityTrackState: #for cavity track on frequency scan panel 
+    scan_type: ScanType
+    cavityFreq: list
+    cavityInt: list
+    cavitypos: list
+@dataclass
+class CavityGraphState: #for cavity map
+    scan_type: ScanType
+    frequency: float
+    x_pos: list
+    y_int: list
 
 class ZaberSpeed(Enum):
     SCANNING = 0

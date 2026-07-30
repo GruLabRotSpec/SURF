@@ -28,7 +28,7 @@ class CavitySearchPanel(QWidget):
 
         self.spec_controller = spectrometer
         self.spec_controller.signal.scanning.connect(self.on_scanning)
-        self.spec_controller.signal.update_cavitytrack.connect(self.update_graph)
+        self.spec_controller.search_signals.update_cavitymap.connect(self.update_graph)
 
         layout = QHBoxLayout()
         self.setLayout(layout)
@@ -145,7 +145,7 @@ class CavitySearchPanel(QWidget):
 
     @Slot(CavityGraphState)
     def update_graph(self, graph_state: CavityGraphState):
-        self.x_data.extend(graph_state.x_peaks)
-        self.y_data.extend(graph_state.y_peaks)
+        self.x_data.extend(graph_state.x_pos)
+        self.y_data.extend(graph_state.y_int)
 
         self.spectrum_plot.setData(self.x_data, self.y_data)
