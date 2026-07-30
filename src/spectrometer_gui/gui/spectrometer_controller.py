@@ -15,7 +15,7 @@ class ScanSignals(QObject):
     progress = Signal(float, str)
     scanning = Signal(bool, ScanType)
     update_graph = Signal(GraphState)
-    update_cavitytrack = Signal(CavityTrack)
+    update_cavitytrack = Signal(CavityGraphState)
     zaber_position = Signal(float)  # position in mm, or -1 on error
     settings_updated = Signal(object)  # Settings
 
