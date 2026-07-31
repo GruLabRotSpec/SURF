@@ -13,8 +13,12 @@ class DelayGeneratorController:
             "dg_2": {"address": "GPIB3::8::INSTR", "device": None},
         }
         self._rm = visa.ResourceManager()
+
+        #defaults 
         self._frequency = 0
         self._trigger_state = 'EXT'
+        self._gas_MW_delay = '1300'
+        self._SPDT_switch = '10'
         self._delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
 
         self._open_all_devices()
@@ -80,14 +84,15 @@ class DelayGeneratorController:
         write_string = "TM 0; TR 0, " + str(self._trigger_rate)
         self._write_cmd("dg_1", write_string)
 
-    def SPDT_switch(self, width):
-        width = float(width) + 0.2
+    def SPDT_switch(self):
+        width = float(self._SPDT_switch) + 0.2
         write_string = f"DT 5,6,{width}E-6"  # Goes to second SRS
         self._write_cmd("dg_2", write_string)
 
-    def gas_MW_delay(self, delay):
-        delay = float(delay)
-        write_string = f"DT 6,1{delay}E-3"  # In ms ; same command should go to both
+
+    def gas_MW_delay(self):
+        delay = float(self._gas_MW_delay)
+        write_string = f"DT 6,1,{delay}E-6"  # In us ; same command should go to both
         self._write_cmd("dg_1", write_string)
         self._write_cmd("dg_2", write_string)
 

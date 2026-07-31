@@ -339,7 +339,6 @@ class FrequencyScanPanel(QWidget):
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),
                 acq_window=int(self.acq_window_field.value()),
-                acq_delay=int(self.acq_delay_field.value()),
                 apodization=self.apodization_field.currentText(),
             ),
             timing_settings=TimingSettings(
