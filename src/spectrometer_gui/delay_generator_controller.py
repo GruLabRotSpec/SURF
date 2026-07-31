@@ -25,9 +25,6 @@ class DelayGeneratorController:
 
         self.stop_pulse()
 
-        # Turn on external trigger
-        # self._write_cmd("dg_1", "TM 1; TL 1")
-
         self.update_config(config)
 
         self.initialized = True
@@ -41,8 +38,6 @@ class DelayGeneratorController:
         self.start_trig(ddg_config.trigger_rate)
         self.set_trigger_state(ddg_config.trigger_state)
 
-        # self.trigger_rate = config.delay_generator_controller.trigger_rate
-        # self.trigger_state = config.delay_generator_controller.trigger_state
 
     # Writes a command to the delay generator and returns the output
     def _write_cmd(self, name, command):

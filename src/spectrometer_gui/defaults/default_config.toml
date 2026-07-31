@@ -31,11 +31,13 @@ visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"
 window = "Hanning"
 resolution = 720.0
 gate_position = 1.0
+scale = 100
 
 [oscilloscope_controller.math4]
 window = "Hanning"
 resolution = 100.0
 gate_position = 22.5
+scale = 0.1
 
 [oscilloscope_controller.math3_cont]
 window = "Rectangular"
