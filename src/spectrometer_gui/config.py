@@ -34,12 +34,6 @@ class MathConfig(BaseModel):
     window: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
     resolution: float
     gate_position: float
-
-
-class MathContConfig(BaseModel):
-    window: Literal["Rectangular", "Hamming", "Hanning", "Blackman"]
-    resolution: float
-    gate_position: float
     scale: float
 
 

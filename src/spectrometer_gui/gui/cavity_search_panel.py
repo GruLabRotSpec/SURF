@@ -40,7 +40,7 @@ class CavitySearchPanel(QWidget):
 
         left_column.addStretch(1)
 
-        left_label = QLabel("Cavity Search")
+        left_label = QLabel("Cavity Map")
         left_label.setFont(QFont("Arial", pointSize=24, weight=QFont.Weight.Bold))
         left_column.addWidget(left_label)
 
@@ -56,16 +56,16 @@ class CavitySearchPanel(QWidget):
         self.cavity_type_field.addItems(["Continuous", "Pulsed"])
         form.addRow(cavity_type_label, self.cavity_type_field)
 
-        start_freq_label = QLabel("Starting Frequency")
-        start_freq_field = QDoubleSpinBox()
-        start_freq_field.setMinimum(8000)
-        start_freq_field.setMaximum(18000)
-        start_freq_field.setSingleStep(1000)
-        start_freq_field.setDecimals(3)
-        start_freq_field.setSuffix(" MHz")
-        form.addRow(start_freq_label, start_freq_field)
+        # start_freq_label = QLabel("Starting Frequency")
+        # start_freq_field = QDoubleSpinBox()
+        # start_freq_field.setMinimum(8000)
+        # start_freq_field.setMaximum(18000)
+        # start_freq_field.setSingleStep(1000)
+        # start_freq_field.setDecimals(3)
+        # start_freq_field.setSuffix(" MHz")
+        # form.addRow(start_freq_label, start_freq_field)
 
-        end_freq_label = QLabel("Ending Frequency")
+        end_freq_label = QLabel("Frequency")
         self.end_freq_field = QDoubleSpinBox()
         self.end_freq_field.setMinimum(8000)
         self.end_freq_field.setMaximum(18000)
@@ -85,7 +85,7 @@ class CavitySearchPanel(QWidget):
         left_column.addWidget(start_button)
         self.start_button = start_button
 
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QPushButton("Stop")
         cancel_button.clicked.connect(self.cancel_search)
         cancel_button.setEnabled(False)
         left_column.addWidget(cancel_button)

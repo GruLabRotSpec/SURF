@@ -25,7 +25,6 @@ class ScanParameters:
 class DigitizerSettings:
     resolution: int
     acq_window: int
-    acq_delay: int
     apodization: str
 
 
@@ -34,7 +33,7 @@ class TimingSettings:
     rep_rate: int
     valve_mw_delay: int
     spdt_width: float
-
+    acq_delay: int
 
 @dataclass
 class OutputSettings:
