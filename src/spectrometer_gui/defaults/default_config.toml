@@ -22,7 +22,7 @@ awg_ch_2_output = true
 
 [oscilloscope_controller]
 channel = "CH4"
-acq_rate = 10
+acq_rate = 100
 sample_rate = 500
 math_averages = 1000000
 visa_address = "TCPIP0::169.254.23.223::inst0::INSTR"

@@ -39,7 +39,7 @@ class OscilloscopeController:
         self.math3_num_averages = '2'
         self.math3_sample_rate = '500'
         
-
+        self.acq_num = '100'
         r = self._oscilloscope.query("*opc?")  # sync
         print(f"Scope Query: {r}")
         self._oscilloscope.write("*cls")
@@ -54,7 +54,7 @@ class OscilloscopeController:
         oscill_config = config.oscilloscope_controller
 
         self.channel = oscill_config.channel
-        self.acq_rate = oscill_config.acq_rate
+        self.acq_num = oscill_config.acq_rate
         self.math4_acq_delay = oscill_config.math4.gate_position
         self.math4_resolution = oscill_config.math4.resolution
         self.math4_apodization = oscill_config.math4.window

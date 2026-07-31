@@ -119,6 +119,12 @@ class FrequencyScanPanel(QWidget):
         zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
         scan_form.addRow(zaber_pos_label, zaber_pos_layout)
 
+        acquisition_label = QLabel('# of Acquisitions')
+        self.acq_field = QSpinBox(minimum=1,maximum=100000)
+        scan_form.addRow(acquisition_label,self.acq_field)
+
+
+
         return self.scan_settings_group
 
     def _create_experiment_params_panel(self) -> QWidget:
@@ -335,6 +341,7 @@ class FrequencyScanPanel(QWidget):
                 step_size=float(self.step_size_field.value()),
                 scanning_speed=float(self.scanning_speed_field.value()),
                 zaber_pos=zaber_pos,
+                acq_num=int(self.acq_field.value())
             ),
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),

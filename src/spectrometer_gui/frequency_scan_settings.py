@@ -19,6 +19,7 @@ class ScanParameters:
     step_size: float
     scanning_speed: float
     zaber_pos: float | None
+    acq_num: int
 
 
 @dataclass
