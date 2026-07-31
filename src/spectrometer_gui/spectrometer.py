@@ -81,7 +81,7 @@ class Spectrometer:
         canceled: Event,
         settings: FrequencyScanSettings,
     ):
-
+      
         # Override default output
         self._folder_name = settings.output_settings.location
         self._filename = settings.output_settings.filename
@@ -148,10 +148,11 @@ class Spectrometer:
 
         # Custom timing
         self.delay_generator_controller._trigger_rate = settings.timing_settings.rep_rate
-        self.delay_generator_controller.SPDT_switch(settings.timing_settings.spdt_width)
-        self.delay_generator_controller.gas_MW_delay(
-            settings.timing_settings.valve_mw_delay
-        )
+        self.delay_generator_controller._SPDT_switch = settings.timing_settings.spdt_width
+        self.delay_generator_controller._gas_MW_delay = settings.timing_settings.valve_mw_delay
+
+        self.delay_generator_controller.SPDT_switch()
+        self.delay_generator_controller.gas_MW_delay()
 
         self.delay_generator_controller.set_trig()
         self._time_delay = (
