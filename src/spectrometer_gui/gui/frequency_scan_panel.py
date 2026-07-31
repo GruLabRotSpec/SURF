@@ -95,7 +95,7 @@ class FrequencyScanPanel(QWidget):
         )
         scan_form.addRow(step_size_label, self.step_size_field)
 
-        scanning_speed_label = QLabel("Scanning Speed")
+        scanning_speed_label = QLabel("Zaber Speed")
         self.scanning_speed_field = QDoubleSpinBox(
             decimals=3,
             minimum=0,
@@ -191,12 +191,6 @@ class FrequencyScanPanel(QWidget):
         )
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
 
-        acq_delay_label = QLabel("Acq Delay")
-        self.acq_delay_field = QSpinBox(
-            minimum=0, maximum=10000, value=50, suffix=" μs"
-        )
-        digitizer_form.addRow(acq_delay_label, self.acq_delay_field)
-
         apodization_label = QLabel("Apodization")
         self.apodization_field = QComboBox()
         self.apodization_field.addItems(["Hanning", "Hamming", "Blackman"])
@@ -234,6 +228,12 @@ class FrequencyScanPanel(QWidget):
             minimum=1, maximum=10000, value=10, suffix=" μs"
         )
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
+
+        acq_delay_label = QLabel("Acq Delay")
+        self.acq_delay_field = QSpinBox(
+            minimum=0, maximum=10000, value=50, suffix=" μs"
+        )
+        timing_form.addRow(acq_delay_label, self.acq_delay_field)
 
         return timing_group
 
@@ -307,7 +307,7 @@ class FrequencyScanPanel(QWidget):
         self.start_button.clicked.connect(self.start_scan)
         buttons_hbox.addWidget(self.start_button)
 
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton("Stop")
         self.cancel_button.clicked.connect(self.cancel_scan)
         self.cancel_button.setEnabled(False)
         buttons_hbox.addWidget(self.cancel_button)
@@ -346,6 +346,7 @@ class FrequencyScanPanel(QWidget):
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
                 spdt_width=self.spdt_width_field.value(),
+                acq_delay=int(self.acq_delay_field.value()),
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
