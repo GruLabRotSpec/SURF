@@ -122,10 +122,10 @@ class FrequencyScanPanel(QWidget):
         return self.scan_settings_group
 
     def _create_experiment_params_panel(self) -> QWidget:
-        experiment_group = QGroupBox("Experiment")
+        self.experiment_group = QGroupBox("Experiment")
 
         experiment_form = QFormLayout()
-        experiment_group.setLayout(experiment_form)
+        self.experiment_group.setLayout(experiment_form)
 
         sample_name_label = QLabel("Sample name")
         self.sample_name_field = QLineEdit()
@@ -160,13 +160,13 @@ class FrequencyScanPanel(QWidget):
         mw_width_label = QLabel("MW width")
         self.mw_width_field = QDoubleSpinBox(suffix=" μs")
         experiment_form.addRow(mw_width_label, self.mw_width_field)
-        return experiment_group
+        return self.experiment_group
 
     def _create_digitizer_panel(self) -> QWidget:
-        digitizer_group = QGroupBox("Digitizer")
+        self.digitizer_group = QGroupBox("Digitizer")
 
         digitizer_form = QFormLayout()
-        digitizer_group.setLayout(digitizer_form)
+        self.digitizer_group.setLayout(digitizer_form)
 
         preset_layout = QHBoxLayout()
         preset_layout.setContentsMargins(0, 0, 0, 0)
@@ -202,13 +202,13 @@ class FrequencyScanPanel(QWidget):
         self.apodization_field.addItems(["Hanning", "Hamming", "Blackman"])
         digitizer_form.addRow(apodization_label, self.apodization_field)
 
-        return digitizer_group
+        return self.digitizer_group
 
     def _create_timing_panel(self) -> QWidget:
-        timing_group = QGroupBox("Timing Sequence")
+        self.timing_group = QGroupBox("Timing Sequence")
 
         timing_form = QFormLayout()
-        timing_group.setLayout(timing_form)
+        self.timing_group.setLayout(timing_form)
 
         preset_label = QLabel("Timing Preset")
         timing_preset_layout = QHBoxLayout()
@@ -235,7 +235,7 @@ class FrequencyScanPanel(QWidget):
         )
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
 
-        return timing_group
+        return self.timing_group
 
     def _create_spectrum_graph(self) -> QWidget:
         self.spectrum_graph = pg.PlotWidget(title="Spectrum")
@@ -365,16 +365,24 @@ class FrequencyScanPanel(QWidget):
     @Slot(bool, ScanType)
     def on_scanning(self, scanning: bool, scan_type: ScanType):
         if scanning:
+            # Disable controls
             self.start_button.setEnabled(False)
+            self.experiment_group.setEnabled(False)
             self.scan_settings_group.setEnabled(False)
+            self.digitizer_group.setEnabled(False)
+            self.timing_group.setEnabled(False)
 
             if scan_type == ScanType.FREQUENCY:
                 self.cancel_button.setEnabled(True)
             else:
                 self.cancel_button.setEnabled(False)
         else:
+            # Reenable controls
             self.start_button.setEnabled(True)
+            self.experiment_group.setEnabled(True)
             self.scan_settings_group.setEnabled(True)
+            self.digitizer_group.setEnabled(True)
+            self.timing_group.setEnabled(True)
             self.cancel_button.setEnabled(False)
 
     @Slot(GraphState)
