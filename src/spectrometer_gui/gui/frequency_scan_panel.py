@@ -197,11 +197,7 @@ class FrequencyScanPanel(QWidget):
         )
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
 
-        acq_delay_label = QLabel("Acq Delay")
-        self.acq_delay_field = QSpinBox(
-            minimum=0, maximum=10000, value=50, suffix=" μs"
-        )
-        digitizer_form.addRow(acq_delay_label, self.acq_delay_field)
+
 
         apodization_label = QLabel("Apodization")
         self.apodization_field = QComboBox()
@@ -240,6 +236,12 @@ class FrequencyScanPanel(QWidget):
             minimum=1, maximum=10000, value=10, suffix=" μs"
         )
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
+
+        acq_delay_label = QLabel("Acq Delay")
+        self.acq_delay_field = QSpinBox(
+            minimum=0, maximum=10000, value=50, suffix=" μs"
+        )
+        timing_form.addRow(acq_delay_label, self.acq_delay_field)
 
         return self.timing_group
 
@@ -346,13 +348,13 @@ class FrequencyScanPanel(QWidget):
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),
                 acq_window=int(self.acq_window_field.value()),
-                acq_delay=int(self.acq_delay_field.value()),
                 apodization=self.apodization_field.currentText(),
             ),
             timing_settings=TimingSettings(
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
                 spdt_width=self.spdt_width_field.value(),
+                acq_delay=int(self.acq_delay_field.value())
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
