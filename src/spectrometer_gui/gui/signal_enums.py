@@ -23,6 +23,13 @@ class CavityTrackState: #for cavity track on frequency scan panel
     cavityFreq: list
     cavityInt: list
     cavitypos: list
+
+@dataclass
+class FrequencyScanProgress:
+    current_freq: float
+    elapsed_time: str
+    time_remaining: str
+
 @dataclass
 class CavityGraphState: #for cavity map
     scan_type: ScanType

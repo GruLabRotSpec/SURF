@@ -1,6 +1,7 @@
 from __future__ import annotations
 import math
 import time
+from datetime import datetime, timedelta
 import tomli_w
 import numpy as np
 import pandas as pd
@@ -16,7 +17,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import GraphState, ScanType, CavityGraphState, CavityTrackState
+from gui.signal_enums import FrequencyScanProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
 
 from delay_generator_controller import DelayGeneratorController
 from zaber_controller import ZaberController, ZaberSpeed
@@ -225,6 +226,14 @@ class Spectrometer:
                 )
             )
 
+        signals.detailed_progress.emit(
+            FrequencyScanProgress(
+                current_freq = settings.scan_parameters.start_freq,
+                elapsed_time = "00:00:00",
+                time_remaining = str(total_time)
+            )
+        )
+
         self.logger.logger.info(
                 f"run #1 has been added to: {self._directory}/{self._filename}.csv",
             )
@@ -232,6 +241,8 @@ class Spectrometer:
         ### All Other Runs ###
         run_number = 1
         while True:
+            start_time = time.perf_counter()
+
             self.oscilloscope_controller.set_math3()
             time.sleep(2)  # TODO: Figure out how to remove this
             self.oscilloscope_controller.stop_acq()
@@ -302,6 +313,8 @@ class Spectrometer:
             frequency_values, intensity_values = self.fft_from_scope(new_freq)
             self.delay_generator_controller.stop_pulse()
 
+            end_time = time.perf_counter()
+
             _, filtered_spectrum = self.process_frequency_data(
                 total_frequency,
                 step_size,
@@ -327,6 +340,17 @@ class Spectrometer:
                     [max_pos]
                 )
             )
+
+            elapsed_time = end_time - start_time # For this run
+
+            signals.detailed_progress.emit(
+                FrequencyScanProgress(
+                    new_freq,
+                    str(elapsed_time),
+                    str(total_time - elapsed_time)
+                )
+            )
+
             self.logger.logger.info(
                 f"run #{run_number} has been added to: {self._directory}/{self._filename}.csv",
             )

@@ -4,7 +4,7 @@ import threading
 
 from config import Config
 from frequency_scan_settings import FrequencyScanSettings
-from gui.signal_enums import DeviceStatus
+from gui.signal_enums import DeviceStatus, FrequencyScanProgress
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
 from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer, CavityTrackState
@@ -13,6 +13,7 @@ from spectrometer import GraphState, CavityGraphState, ScanType, Spectrometer, C
 class ScanSignals(QObject):
     device_status_changed = Signal(str, DeviceStatus)  # device_id, DeviceStatus
     progress = Signal(float, str)
+    detailed_progress = Signal(FrequencyScanProgress)
     scanning = Signal(bool, ScanType)
     update_graph = Signal(GraphState)
     update_cavityTrack = Signal(CavityTrackState)

@@ -25,7 +25,7 @@ from frequency_scan_settings import (
     OutputSettings,
 )
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType, GraphState, CavityTrackState
+from spectrometer import ScanType, GraphState, CavityTrackState, FrequencyScanProgress
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -45,6 +45,7 @@ class FrequencyScanPanel(QWidget):
         self.spec_controller.signal.scanning.connect(self.on_scanning)
         self.spec_controller.signal.update_graph.connect(self.on_update_graph)
         self.spec_controller.signal.update_cavityTrack.connect(self.on_update_cavityTrack)
+        self.spec_controller.signal.detailed_progress.connect(self.on_update_detailed_progress)
         self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
         self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
 
@@ -423,7 +424,11 @@ class FrequencyScanPanel(QWidget):
 
         self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
            
-
+    @Slot(FrequencyScanProgress)
+    def on_update_detailed_progress(self, detailed_progress: FrequencyScanProgress):
+        self.current_freq_field.setText(str(detailed_progress.current_freq))
+        self.elapsed_time_field.setText(detailed_progress.elapsed_time)
+        self.time_remaining_field.setText(detailed_progress.time_remaining)
 
     @Slot(float)
     def on_zaber_position(self, position):
