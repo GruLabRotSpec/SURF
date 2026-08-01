@@ -213,7 +213,7 @@ class ControlPanel(QWidget):
         return zaber_group
 
     def _create_awg_group(self) -> QGroupBox:
-        awg_group = QGroupBox("Arbitrary Waveform Generator")
+        awg_group = QGroupBox("Arbitrary Waveform Generator (IF)")
 
         awg_form = QFormLayout()
         awg_group.setLayout(awg_form)
@@ -296,7 +296,7 @@ class ControlPanel(QWidget):
         return awg_group
 
     def _create_valon_group(self) -> QGroupBox:
-        valon_group = QGroupBox("Valon")
+        valon_group = QGroupBox("Valon (LO)")
 
         valon_form = QFormLayout()
         valon_group.setLayout(valon_form)
@@ -447,7 +447,7 @@ class ControlPanel(QWidget):
         math3_form = QFormLayout()
         math3_group.setLayout(math3_form)
 
-        math3_window_label = QLabel("Window")
+        math3_window_label = QLabel("Apodization")
         self.math3_window_field = QComboBox()
         self.math3_window_field.addItems(
             ["Rectangular", "Hamming", "Hanning", "Blackman"]
@@ -482,7 +482,7 @@ class ControlPanel(QWidget):
         math4_form = QFormLayout()
         math4_group.setLayout(math4_form)
 
-        math4_window_label = QLabel("Window")
+        math4_window_label = QLabel("Apodization")
         self.math4_window_field = QComboBox()
         self.math4_window_field.addItems(
             ["Rectangular", "Hamming", "Hanning", "Blackman"]
