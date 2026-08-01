@@ -4,6 +4,7 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
+    QVBoxLayout,
     QLabel,
     QPushButton,
     QVBoxLayout,
@@ -30,7 +31,7 @@ class CavitySearchPanel(QWidget):
         self.spec_controller.signal.scanning.connect(self.on_scanning)
         self.spec_controller.search_signals.update_cavitymap.connect(self.update_graph)
 
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         self.setLayout(layout)
 
         # Left Column
@@ -38,7 +39,7 @@ class CavitySearchPanel(QWidget):
         left_column_panel = QWidget()
         left_column_panel.setLayout(left_column)
 
-        left_column.addStretch(1)
+        # left_column.addStretch(1)
 
         left_label = QLabel("Cavity Map")
         left_label.setFont(QFont("Arial", pointSize=24, weight=QFont.Weight.Bold))

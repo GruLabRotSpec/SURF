@@ -74,7 +74,7 @@ class MainWindow(QMainWindow):
         self.tab_widget.addTab(status_panel, "Status")
         self.tab_widget.addTab(broadband_panel, "Broadband")
         self.tab_widget.addTab(frequency_scan, "Frequency Scan")
-        self.tab_widget.addTab(cavity_search, "Cavity Search")
+        self.tab_widget.addTab(cavity_search, "Cavity Map")
         self.tab_widget.addTab(control_panel, "Control")
         self.tab_widget.addTab(self.analysis_panel, "Analysis")
 
