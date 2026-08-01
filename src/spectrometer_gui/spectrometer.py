@@ -229,6 +229,12 @@ class Spectrometer:
                 f"run #1 has been added to: {self._directory}/{self._filename}.csv",
             )
 
+        match step_direction:
+            case StepDirection.Up:
+                self.valon_controller.step_up()
+            case StepDirection.Down:
+                self.valon_controller.step_down()        
+
         ### All Other Runs ###
         run_number = 1
         while True:
