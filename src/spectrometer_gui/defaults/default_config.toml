@@ -40,9 +40,9 @@ gate_position = 22.5
 scale = 0.1
 
 [oscilloscope_controller.math3_cont]
-window = "Rectangular"
-resolution = 334
-gate_position = 2.5
+window = "Hanning"
+resolution = 720
+gate_position = 1
 scale = 300 
 
 [delay_generator_controller]
