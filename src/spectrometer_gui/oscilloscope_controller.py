@@ -31,11 +31,11 @@ class OscilloscopeController:
         self.math4_num_averages = '1000000'
         self.math4_sample_rate = '500'
 
-        self.math3_resolution = 334
-        self.math3_apodization = 'Rectangular'
-        self.math3_acq_delay = '2.5'
+        self.math3_resolution = 720
+        self.math3_apodization = 'Hanning'
+        self.math3_acq_delay = '1'
         self.math3_hor_scale = '500E-9'
-        self.math3__vert_scale = '100E-6'
+        self.math3__vert_scale = '10E-3'
         self.math3_num_averages = '2'
         self.math3_sample_rate = '500'
         
@@ -198,7 +198,7 @@ class OscilloscopeController:
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
         self.write_cmd(f"MATH3:SPECTral:WINdow {self.math3_apodization}")
-        self.write_cmd(f'HORizontal:MODE:SCAle {self.math3_hor_scale}E-9')
+        self.write_cmd(f'HORizontal:MODE:SCAle {self.math3_hor_scale}')
         self.write_cmd(f"MATH3:SPECTral:RESBw {self.math3_resolution}e3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
         self.write_cmd("MATH4:SPECTral:SPAN 40E6")
@@ -212,7 +212,7 @@ class OscilloscopeController:
 
         self.write_cmd(f"MATH3:SPECTral:GATEPOS {self.math3_acq_delay}e-6")
         self.write_cmd(f"MATH3:NUMAvg {self.math3_num_averages}")
-        self.write_cmd(f"MATH3:VERTICAL:SCALE {self.math3__vert_scale}E-3")
+        self.write_cmd(f"MATH3:VERTICAL:SCALE {self.math3__vert_scale}")
 
         self.start_acq()
 
@@ -243,7 +243,7 @@ class OscilloscopeController:
         self.write_cmd("MATH4:SPECTral:SPAN 20E6")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {self.math4_acq_delay}e-6")
         self.write_cmd(f"MATH4:NUMAvg {self.math4_num_averages}")
-        self.write_cmd(f"MATH4:VERTICAL:SCALE {self.math4__vert_scale}E-6")
+        self.write_cmd(f"MATH4:VERTICAL:SCALE {self.math4__vert_scale}")
         self.write_cmd(f"{self.channel}:SCAle 1")
 
         self.start_acq()
