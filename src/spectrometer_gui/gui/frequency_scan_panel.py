@@ -348,7 +348,8 @@ class FrequencyScanPanel(QWidget):
                 step_size=float(self.step_size_field.value()),
                 scanning_speed=float(self.scanning_speed_field.value()),
                 zaber_pos=zaber_pos,
-                acq_num=int(self.acq_field.value())
+                acq_num=int(self.acq_field.value()),
+                cavity_type= self.cavity_type_field.currentText()
             ),
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),

@@ -55,6 +55,7 @@ class OscilloscopeController:
 
         self.channel = oscill_config.channel
         self.acq_num = oscill_config.acq_rate
+
         self.math4_acq_delay = oscill_config.math4.gate_position
         self.math4_resolution = oscill_config.math4.resolution
         self.math4_apodization = oscill_config.math4.window
@@ -71,9 +72,9 @@ class OscilloscopeController:
         self.math3_vert_scale = oscill_config.math3_cont.scale
 
         self.config = config
-        self.set_math4()
-        self.set_math3()
-        self.set_math3_cont()
+        #self.set_math4()
+        #self.set_math3()
+        #self.set_math3_cont()
         # Math 3
         # self._update_math3()
         # self._update_math3_cont()
@@ -120,13 +121,14 @@ class OscilloscopeController:
         self.write_cmd("acquire:state 0")
         self.write_cmd("header 0")
         self.write_cmd("data:encdg SRIBINARY")
-        self.write_cmd("data:source CH1")  # channel
+        self.write_cmd("data:source CH4")  # channel
         self.write_cmd("wfmoutpre:byt_n 1")  # 1 byte per sample
 
         # acq config
         self.write_cmd("acquire:state 0")  # stop
         self.write_cmd("acquire:STOPAfter RUNSTop")  # cont
         self.write_cmd("acquire:state 1")
+        time.sleep(2)
 
     def stop_acq(self):
         self.write_cmd("acquire:state 0")
@@ -197,11 +199,14 @@ class OscilloscopeController:
         self.write_cmd("SELECT:MATH4 0")
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
+        self.write_cmd("Trigger:A:Edge:Slope:CH2 Rise")
         self.write_cmd(f"MATH3:SPECTral:WINdow {self.math3_apodization}")
         self.write_cmd(f'HORizontal:MODE:SCAle {self.math3_hor_scale}')
         self.write_cmd(f"MATH3:SPECTral:RESBw {self.math3_resolution}e3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
         self.write_cmd("MATH4:SPECTral:SPAN 40E6")
+        self.write_cmd('cursor:state 0')
+        self.write_cmd('cursor:state 1')
         self.write_cmd("cursor:source MATH3")
         self.write_cmd("cursor:VBARs:Position1 29.95E6")
         self.write_cmd("cursor:VBARs:Position2 30.05E6")
@@ -221,8 +226,9 @@ class OscilloscopeController:
         self.write_cmd("SELECT:MATH4 0")
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
-
+        self.write_cmd("Trigger:A:Edge:Slope:CH2 Fall")
         self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.math3_cont.window}")
+        self.write_cmd('HORizontal:MODE:SCAle 500E-9')
         self.write_cmd(f"MATH3:SPECTral:RESBw {oscill_config.math3_cont.resolution}e3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
         self.write_cmd(
@@ -230,12 +236,24 @@ class OscilloscopeController:
         )
         self.write_cmd(f"MATH3:NUMAvg {oscill_config.math_averages}")
         self.write_cmd("MATH3:VERTICAL:SCALE 5E-3")
+        self.write_cmd('cursor:state 0')
+        self.write_cmd('cursor:state 1')
+        self.write_cmd("cursor:source MATH3")
+        self.write_cmd("cursor:VBARs:Position1 29.95E6")
+        self.write_cmd("cursor:VBARs:Position2 30.05E6")
+        self.write_cmd("MEASUREment:MEAS1:SOURCE MATH3")
+        self.write_cmd("measurement:meas1:type max")
+        self.write_cmd("measurement:gating cursor")
+        self.write_cmd("measurement:meas1:state 1")
+        time.sleep(1)
 
     def set_math4(self):
         self.write_cmd("SELECT:MATH3 0")
         self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({self.channel}))"')
         self.write_cmd("SELECT:MATH4 1")
-
+        self.write_cmd('cursor:state 0')
+        self.write_cmd('cursor:state 1')
+        self.write_cmd("Trigger:A:Edge:Slope:CH2 Rise")
         self.write_cmd(f"MATH4:SPECTral:WINdow {self.math4_apodization}")
         self.write_cmd(f'HORizontal:MODE:SCAle {self.math4_hor_scale}')
         self.write_cmd(f"MATH4:SPECTral:RESBw {self.math4_resolution}e3")
@@ -260,7 +278,7 @@ class OscilloscopeController:
         self.write_cmd("SELECT:MATH4 0")
         self.write_cmd(f'MATH3:DEFINE "SpectralMag({self.channel})"')
         self.write_cmd("SELECT:MATH3 1")
-
+        self.write_cmd("Trigger:A:Edge:Slope:CH2 Fall")
         self.write_cmd(f"MATH3:SPECTral:WINdow {oscill_config.math3_cont.window}")
         self.write_cmd(f"MATH3:SPECTral:RESBw {oscill_config.math3_cont.resolution}e3")
         self.write_cmd("MATH3:SPECTral:CENTER 30E6")
@@ -277,6 +295,7 @@ class OscilloscopeController:
         self.write_cmd("SELECT:MATH3 0")
         self.write_cmd(f'MATH4:DEFINE "SpectralMag(AVG({self.channel}))"')
         self.write_cmd("SELECT:MATH4 1")
+        self.write_cmd("Trigger:A:Edge:Slope:CH2 Rise")
         self.write_cmd(f"MATH4:SPECTral:WINdow {oscill_config.math4.window}")
         self.write_cmd(f"MATH4:SPECTral:RESBw {oscill_config.math4.resolution}e3")
         self.write_cmd(f"MATH4:SPECTral:GATEPOS {oscill_config.math4.gate_position}e-6")
