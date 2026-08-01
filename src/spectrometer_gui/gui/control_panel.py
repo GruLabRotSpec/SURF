@@ -87,7 +87,9 @@ class ControlPanel(QWidget):
 
         self.spec_controller.signal.zaber_position.connect(self.on_zaber_position)
         self.spec_controller.signal.settings_updated.connect(self.on_settings_updated)
-        self.spec_controller.misc_signals.config_updated.connect(self._set_values_in_control_panel)
+        self.spec_controller.misc_signals.config_updated.connect(
+            self._set_values_in_control_panel
+        )
 
         layout = QVBoxLayout()
         self.setLayout(layout)
@@ -136,9 +138,11 @@ class ControlPanel(QWidget):
 
         zaber_speed_2_label = QLabel("Moving speed")
         self.zaber_speed_2_field = QDoubleSpinBox(
-            minimum=0, maximum=5, singleStep=0.25, suffix=" mm/s"
+            minimum=0, maximum=2, singleStep=0.1, suffix=" mm/s"
         )
+        self.zaber_apply_btn = QPushButton("Apply")
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
+        zaber_form.addRow(self.zaber_apply_btn)
 
         zaber_control_widget_1 = QHBoxLayout()
 
@@ -272,6 +276,12 @@ class ControlPanel(QWidget):
         ch_2_label = QLabel("Channel 2 output")
         awg_form.addRow(ch_2_label, awg_ch_2_output_group_widget)
 
+        awg_apply_widget = QHBoxLayout()
+        self.awg_apply_btn = QPushButton("Apply")
+        #self.awg_apply_btn.clicked.connect()                  # still need to connect here
+        awg_apply_widget.addWidget(self.awg_apply_btn)
+        awg_form.addRow( awg_apply_widget)
+
         self.registry.register(
             "awg_controller.awg_status",
             self.awg_on_btn,
@@ -316,17 +326,9 @@ class ControlPanel(QWidget):
         rf_output_label = QLabel("RF output")
         valon_form.addRow(rf_output_label, rf_output_group_widget)
 
-        rf_label = QLabel("RF level (power)")
-        self.rf_field = QSpinBox(minimum=0, maximum=20, suffix=" dBm")
-        valon_form.addRow(rf_label, self.rf_field)
-
         self.synth_power_on_btn = QRadioButton("On")
         self.synth_power_off_btn = QRadioButton("Off")
         self.synth_power_on_btn.setChecked(True)
-
-        self.synth_power_group = QButtonGroup()
-        self.synth_power_group.addButton(self.synth_power_on_btn)
-        self.synth_power_group.addButton(self.synth_power_off_btn)
 
         synth_power_group_widget = QHBoxLayout()
         synth_power_group_widget.addWidget(self.synth_power_on_btn)
@@ -334,6 +336,14 @@ class ControlPanel(QWidget):
 
         synth_power_label = QLabel("Synth power")
         valon_form.addRow(synth_power_label, synth_power_group_widget)
+
+        rf_label = QLabel("RF level (power)")
+        self.rf_field = QSpinBox(minimum=-20, maximum=20, suffix=" dBm")
+        valon_form.addRow(rf_label, self.rf_field)
+
+        self.synth_power_on_btn = QRadioButton("On")
+        self.synth_power_off_btn = QRadioButton("Off")
+        self.synth_power_on_btn.setChecked(True)
 
         ref_source_label = QLabel("Reference source")
         self.ref_source_field = QComboBox()
@@ -349,6 +359,12 @@ class ControlPanel(QWidget):
             value=8000, suffix=" MHz", minimum=7970, maximum=18000
         )
         valon_form.addRow(freq_label, self.freq_field)
+
+        valon_apply_layout = QHBoxLayout()
+        self.valon_apply_btn = QPushButton("Apply")
+        # self.valon_apply_btn.clicked.connect()                  # still need to connect here
+        valon_apply_layout.addWidget(self.valon_apply_btn)
+        valon_form.addRow(valon_apply_layout)
 
         self.registry.register(
             "valon_controller.rf_output",
@@ -383,6 +399,10 @@ class ControlPanel(QWidget):
         timing_form = QFormLayout()
         timing_group.setLayout(timing_form)
 
+        trigger_rate_label = QLabel("Trigger Rate")
+        self.trigger_rate_field = QDoubleSpinBox(minimum=0, suffix=" Hz")
+        timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
+
         self.trigger_state_int_btn = QRadioButton("INT")
         self.trigger_state_ext_btn = QRadioButton("EXT")
         self.trigger_state_ext_btn.setChecked(True)
@@ -395,12 +415,8 @@ class ControlPanel(QWidget):
         trigger_state_group_widget.addWidget(self.trigger_state_int_btn)
         trigger_state_group_widget.addWidget(self.trigger_state_ext_btn)
 
-        trigger_state_label = QLabel('Trigger State')
-        timing_form.addRow(trigger_state_label,trigger_state_group_widget)
-
-        trigger_rate_label = QLabel("Trigger Rate")
-        self.trigger_rate_field = QDoubleSpinBox(minimum=0, suffix=" Hz")
-        timing_form.addRow(trigger_rate_label, self.trigger_rate_field)
+        trigger_state_label = QLabel("Trigger State")
+        timing_form.addRow(trigger_state_label, trigger_state_group_widget)
 
         self.registry.register(
             "delay_generator_controller.trigger_rate",
@@ -410,6 +426,27 @@ class ControlPanel(QWidget):
             "delay_generator_controller.trigger_state", self.trigger_state_int_btn
         )
 
+        self.gas_pulse_on_btn = QRadioButton("On")
+        self.gas_pulse_off_btn = QRadioButton("Off")
+        self.gas_pulse_on_btn.setChecked(False)
+
+        self.gas_pulse_group = QButtonGroup()
+        self.gas_pulse_group.addButton(self.gas_pulse_on_btn)
+        self.gas_pulse_group.addButton(self.gas_pulse_off_btn)
+
+        gas_pulse_group_widget = QHBoxLayout()
+        gas_pulse_group_widget.addWidget(self.synth_power_on_btn)
+        gas_pulse_group_widget.addWidget(self.synth_power_off_btn)
+
+        gas_pulse_label = QLabel("Gas Pulse ")
+
+        timing_form.addRow(gas_pulse_label, gas_pulse_group_widget)
+
+        timing_apply_layout = QHBoxLayout()
+        self.timing_apply_btn = QPushButton("Apply")
+        # self.timing_apply_btn.clicked.connect()                  # still need to connect here
+        timing_apply_layout.addWidget(self.timing_apply_btn)
+        timing_form.addRow(timing_apply_layout)
 
         return timing_group
 
@@ -429,19 +466,17 @@ class ControlPanel(QWidget):
         preset_label = QLabel("Preset")
         general_form.addRow(preset_label, preset_layout)
 
-        acq_rate_label = QLabel("Acquisitions")
-        self.acq_rate_field = QSpinBox(minimum=1, maximum=10000)
-        general_form.addRow(acq_rate_label, self.acq_rate_field)
-
         sample_rate_label = QLabel("Sample rate")
         self.sample_rate_field = QSpinBox(
             minimum=0, maximum=1000, singleStep=100, suffix=" MS/s"
         )
         general_form.addRow(sample_rate_label, self.sample_rate_field)
 
-        math_averages_label = QLabel("Math averages")
-        self.math_averages_field = QSpinBox(minimum=2, maximum=1000000)
-        general_form.addRow(math_averages_label, self.math_averages_field)
+        cavity_type_label = QLabel("Cavity Type")
+        self.cavity_type_field = QComboBox()
+        self.cavity_type_field.addItems(["Continuous", "Pulsed"])
+        general_form.addRow(cavity_type_label, self.cavity_type_field)
+
 
         math3_group = QGroupBox("Math 3")
         math3_form = QFormLayout()
@@ -464,6 +499,16 @@ class ControlPanel(QWidget):
         math3_gatepos_label = QLabel("Gate position")
         self.math3_gatepos_field = QDoubleSpinBox(suffix=" us", value=0.6)
         math3_form.addRow(math3_gatepos_label, self.math3_gatepos_field)
+
+        math3_math_averages_label = QLabel("Math averages")
+        self.math3_math_averages_field = QSpinBox(minimum=2, maximum=1000000)
+        math3_form.addRow(math3_math_averages_label, self.math3_math_averages_field)
+
+        math3_apply_layout = QHBoxLayout()
+        self.math3_apply_btn = QPushButton("Apply")
+        # self.math3_apply_btn.clicked.connect()                  # still need to connect here
+        math3_apply_layout.addWidget(self.math3_apply_btn)
+        math3_form.addRow(math3_apply_layout)
 
         self.registry.register(
             "oscilloscope_controller.math3.window",
@@ -500,6 +545,16 @@ class ControlPanel(QWidget):
         self.math4_gatepos_field = QDoubleSpinBox(suffix=" us", value=18.45)
         math4_form.addRow(math4_gatepos_label, self.math4_gatepos_field)
 
+        math4_math_averages_label = QLabel("Math averages")
+        self.math4_math_averages_field = QSpinBox(minimum=2, maximum=1000000, value=1000000)
+        math4_form.addRow(math4_math_averages_label, self.math4_math_averages_field)
+
+        math4_apply_layout = QHBoxLayout()
+        self.math4_apply_btn = QPushButton("Apply")
+        # self.math4_apply_btn.clicked.connect()                  # still need to connect here
+        math4_apply_layout.addWidget(self.math4_apply_btn)
+        math4_form.addRow(math4_apply_layout)
+
         self.registry.register(
             "oscilloscope_controller.math4.window",
             self.math4_window_field,
@@ -522,17 +577,13 @@ class ControlPanel(QWidget):
         oscilloscope_layout.addWidget(math4_group)
 
         self.registry.register(
-            "oscilloscope_controller.acq_rate",
-            self.acq_rate_field,
-        )
-        self.registry.register(
             "oscilloscope_controller.sample_rate",
             self.sample_rate_field,
         )
-        self.registry.register(
-            "oscilloscope_controller.math_averages",
-            self.math_averages_field,
-        )
+        # self.registry.register(               # Todo: replace with new averages 
+        #     "oscilloscope_controller.math_averages",
+        #     self.math_averages_field,
+        # )
 
         return oscilloscope_group
 

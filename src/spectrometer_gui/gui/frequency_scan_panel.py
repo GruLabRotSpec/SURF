@@ -119,6 +119,11 @@ class FrequencyScanPanel(QWidget):
         zaber_pos_layout.addWidget(self.zaber_set_pos_checkbox)
         scan_form.addRow(zaber_pos_label, zaber_pos_layout)
 
+        cavity_type_label = QLabel("Cavity Type")
+        self.cavity_type_field = QComboBox()
+        self.cavity_type_field.addItems(["Continuous", "Pulsed"])
+        scan_form.addRow(cavity_type_label, self.cavity_type_field)
+
         acquisition_label = QLabel('# of Acquisitions')
         self.acq_field = QSpinBox(minimum=1,maximum=100000)
         scan_form.addRow(acquisition_label,self.acq_field)
