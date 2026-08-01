@@ -95,7 +95,7 @@ class FrequencyScanPanel(QWidget):
         )
         scan_form.addRow(step_size_label, self.step_size_field)
 
-        scanning_speed_label = QLabel("Scanning Speed")
+        scanning_speed_label = QLabel("Zaber Speed")
         self.scanning_speed_field = QDoubleSpinBox(
             decimals=3,
             minimum=0,
@@ -192,7 +192,7 @@ class FrequencyScanPanel(QWidget):
         digitizer_form.addRow(resolution_label, self.resolution_field)
 
         acq_window_label = QLabel("Acq Window")
-        self.acq_window_field = QSpinBox(
+        self.acq_window_field = QDoubleSpinBox(
             minimum=1, maximum=10000, value=100, suffix=" μs"
         )
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
@@ -238,7 +238,7 @@ class FrequencyScanPanel(QWidget):
         timing_form.addRow(spdt_width_label, self.spdt_width_field)
 
         acq_delay_label = QLabel("Acq Delay")
-        self.acq_delay_field = QSpinBox(
+        self.acq_delay_field = QDoubleSpinBox(
             minimum=0, maximum=10000, value=50, suffix=" μs"
         )
         timing_form.addRow(acq_delay_label, self.acq_delay_field)
