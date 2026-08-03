@@ -18,7 +18,7 @@ import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, CavityGraphState
-from src.spectrometer_gui.gui.signal_enums import CavitySearchType
+from gui.signal_enums import CavitySearchType
 
 
 class CavitySearchPanel(QWidget):

@@ -20,7 +20,7 @@ from settings import Settings
 from gui.signal_enums import CavitySearchType, FrequencyScanProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
 
 from delay_generator_controller import DelayGeneratorController
-from src.spectrometer_gui.cavity_search_settings import CavitySearchSettings
+from cavity_search_settings import CavitySearchSettings
 from zaber_controller import ZaberController, ZaberSpeed
 from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
