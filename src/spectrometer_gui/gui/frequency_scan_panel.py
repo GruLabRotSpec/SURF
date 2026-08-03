@@ -201,6 +201,7 @@ class FrequencyScanPanel(QWidget):
         self.acq_window_field = QDoubleSpinBox(
             minimum=1, maximum=10000, value=100, suffix=" μs"
         )
+        self.acq_window_field.setReadOnly(True)
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
 
 
