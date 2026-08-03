@@ -17,9 +17,10 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import FrequencyScanProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
+from gui.signal_enums import CavitySearchType, FrequencyScanProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
 
 from delay_generator_controller import DelayGeneratorController
+from src.spectrometer_gui.cavity_search_settings import CavitySearchSettings
 from zaber_controller import ZaberController, ZaberSpeed
 from oscilloscope_controller import OscilloscopeController
 from valon_controller import ValonController
@@ -386,14 +387,18 @@ class Spectrometer:
         self.finalize_csv()
         self.logger.logger.info("Run is finished")
 
-    def cavity_search(self, signals: SearchSignals, cavity_type, stop_freq, step_size):
+    def cavity_search(self, signals: SearchSignals, settings: CavitySearchSettings):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
+        cavity_type = settings.cavity_type
+        stop_freq = settings.freq
+        step_size = settings.step_size
+
         stop_freqinput = stop_freq
 
         valon_freq = stop_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
 
-        if cavity_type == "Continuous":
+        if cavity_type == CavitySearchType.CONTINUOUS:
             self.set_cavity_continuous()
         else:
             self.set_cavity_pulsed()
@@ -410,6 +415,20 @@ class Spectrometer:
             self.logger.logger.info(
                 f"Successfully named file {self._directory}/{self._filename}.csv"
             )
+            save_config(
+                Path(f"{self._directory}/{self._filename}_config.toml"), self.config
+            )
+            with Path.open(Path(f"{self._directory}/search_settings.toml"), "wb") as f:
+
+                def _asdict_no_none(obj):
+                    return asdict(
+                        obj,
+                        dict_factory=lambda items: {
+                            k: v for k, v in items if v is not None
+                        },
+                    )
+
+                tomli_w.dump(_asdict_no_none(settings), f)
 
         self.zaber_controller.home()
 

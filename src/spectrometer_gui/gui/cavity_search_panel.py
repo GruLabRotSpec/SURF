@@ -1,3 +1,4 @@
+from enum import CONTINUOUS
 from PySide6 import QtCore
 from PySide6.QtCore import Slot
 from PySide6.QtGui import QFont
@@ -17,6 +18,7 @@ import pyqtgraph as pg
 
 from gui.spectrometer_controller import SpectrometerController
 from spectrometer import ScanType, CavityGraphState
+from src.spectrometer_gui.gui.signal_enums import CavitySearchType
 
 
 class CavitySearchPanel(QWidget):
@@ -112,7 +114,7 @@ class CavitySearchPanel(QWidget):
     def start_search(self):
         # Start search via controller (controller handles async internally)
         self.spec_controller.run_search(
-            self.cavity_type_field.currentText(),
+            CavitySearchType.CONTINUOUS if (self.cavity_type_field.currentText() == "Continuous") else CavitySearchType.PULSED,
             int(self.end_freq_field.value()),
             float(1),  # Replace later
         )

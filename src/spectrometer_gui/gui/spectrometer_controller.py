@@ -4,6 +4,7 @@ import threading
 
 from config import Config
 from frequency_scan_settings import FrequencyScanSettings
+from cavity_search_settings import CavitySearchSettings
 from gui.signal_enums import DeviceStatus, FrequencyScanProgress
 from PySide6.QtCore import QObject, QTimer, Signal
 from settings import Settings
@@ -93,13 +94,16 @@ class SpectrometerController(QObject):
         self.signal.progress.emit(0, "Starting search...")
         self.signal.scanning.emit(True, ScanType.CAVITY)
         self.current_task = asyncio.create_task(
-            self._run_search_async(cavity_type, freq, step_size)
+            self._run_search_async(
+                CavitySearchSettings(
+                cavity_type, freq, step_size)
+                )
         )
 
-    async def _run_search_async(self, cavity_type, freq, step_size):
+    async def _run_search_async(self, settings: CavitySearchSettings):
         try:
             await asyncio.to_thread(
-                self.spectrometer.cavity_search, self.search_signals, cavity_type, freq, step_size
+                self.spectrometer.cavity_search, self.search_signals, settings
             )
             if self.cancel_event.is_set():
                 self.signal.progress.emit(1, "Search cancelled")
