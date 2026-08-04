@@ -25,7 +25,8 @@ from frequency_scan_settings import (
     OutputSettings,
 )
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType, GraphState, CavityTrackState, FrequencyScanProgress
+from spectrometer import ScanType, GraphState, CavityTrackState
+from datetime import date
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -67,10 +68,19 @@ class FrequencyScanPanel(QWidget):
 
         layout.addLayout(bottom_hbox, stretch=1)
 
-        self.output_folder_field.setText(self.spec_controller.settings.output.filename)
+        self._update_output_filename()
         self.directory_field.setText(self.spec_controller.settings.output.location)
 
-        self.on_update_graph(GraphState(ScanType.FREQUENCY,[], [], []))
+                # wire inputs to update the output filename dynamically
+        self.sample_name_field.textChanged.connect(self.on_update_filename)
+        self.start_freq_field.valueChanged.connect(self.on_update_filename)
+        self.end_freq_field.valueChanged.connect(self.on_update_filename)
+        self.step_size_field.valueChanged.connect(self.on_update_filename)
+        self.acq_field.valueChanged.connect(self.on_update_filename)
+
+        self._update_output_filename()
+
+        self.on_update_graph(GraphState(ScanType.FREQUENCY, [], [], []))
 
     def _create_scan_settings_panel(self) -> QWidget:
         self.scan_settings_group = QGroupBox("Scan")
@@ -125,11 +135,9 @@ class FrequencyScanPanel(QWidget):
         self.cavity_type_field.addItems(["Continuous", "Pulsed"])
         scan_form.addRow(cavity_type_label, self.cavity_type_field)
 
-        acquisition_label = QLabel('# of Acquisitions')
-        self.acq_field = QSpinBox(minimum=1,maximum=100000)
-        scan_form.addRow(acquisition_label,self.acq_field)
-
-
+        acquisition_label = QLabel("# of Acquisitions")
+        self.acq_field = QSpinBox(minimum=1, maximum=100000)
+        scan_form.addRow(acquisition_label, self.acq_field)
 
         return self.scan_settings_group
 
@@ -203,8 +211,6 @@ class FrequencyScanPanel(QWidget):
         )
         self.acq_window_field.setReadOnly(True)
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
-
-
 
         apodization_label = QLabel("Apodization")
         self.apodization_field = QComboBox()
@@ -303,6 +309,7 @@ class FrequencyScanPanel(QWidget):
 
         output_folder_label = QLabel("Output Folder")
         self.output_folder_field = QLineEdit()
+        self.output_folder_field.setReadOnly(True)
         form.addRow(output_folder_label, self.output_folder_field)
 
         directory_label = QLabel("Directory")
@@ -350,7 +357,8 @@ class FrequencyScanPanel(QWidget):
                 step_size=float(self.step_size_field.value()),
                 scanning_speed=float(self.scanning_speed_field.value()),
                 zaber_pos=zaber_pos,
-                acq_num=int(self.acq_field.value())
+                acq_num=int(self.acq_field.value()),
+                cavity_type=self.cavity_type_field.currentText(),
             ),
             digitizer_settings=DigitizerSettings(
                 resolution=int(self.resolution_field.value()),
@@ -361,7 +369,7 @@ class FrequencyScanPanel(QWidget):
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
                 spdt_width=self.spdt_width_field.value(),
-                acq_delay=int(self.acq_delay_field.value())
+                acq_delay=int(self.acq_delay_field.value()),
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
@@ -410,16 +418,14 @@ class FrequencyScanPanel(QWidget):
             self.spectrum_x.extend(graph_state.fft_x)
             self.spectrum_y.extend(graph_state.fft_y)
 
-
         self.spectrum_plot.setData(self.spectrum_x, self.spectrum_y)
 
     @Slot(CavityTrackState)
     def on_update_cavityTrack(self, graph_state: CavityTrackState):
         if graph_state.scan_type != ScanType.FREQUENCY:
-            return        
+            return
 
         if graph_state.cavityFreq:
-
             self.cavity_track_x.extend(graph_state.cavityFreq)
             self.cavity_track_y.extend(graph_state.cavityInt)
 
@@ -475,3 +481,18 @@ class FrequencyScanPanel(QWidget):
         )
         if folder:
             self.directory_field.setText(folder)
+
+    @Slot()
+    def on_update_filename(self):
+
+        self._update_output_filename()
+
+    def _update_output_filename(self):
+        sample_name = self.sample_name_field.text()
+        start_freq = self.start_freq_field.value()
+        end_freq = self.end_freq_field.value()
+        step_size = self.step_size_field.value()
+        acq_num = self.acq_field.value()
+        today = date.today()
+        filename = f"{sample_name}_{start_freq:.3f}_{end_freq:.3f}MHz_{step_size:.3f}MHz_{acq_num}acqs_{today}"
+        self.output_folder_field.setText(filename)

@@ -20,6 +20,7 @@ class ScanParameters:
     scanning_speed: float
     zaber_pos: float | None
     acq_num: int
+    cavity_type: str 
 
 
 @dataclass
