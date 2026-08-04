@@ -367,7 +367,7 @@ class Spectrometer:
 
             signals.detailed_progress.emit(
                 FrequencyScanProgress(
-                    new_freq,
+                    total_frequency,
                     str(timedelta(seconds=round(elapsed_time))).zfill(8),
                     str(timedelta(seconds=max(round(total_time * 60 - elapsed_time), 0))).zfill(8)
                 )
