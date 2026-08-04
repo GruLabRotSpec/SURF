@@ -25,7 +25,7 @@ from frequency_scan_settings import (
     OutputSettings,
 )
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType, GraphState, CavityTrackState
+from spectrometer import ScanType, GraphState, CavityTrackState, FrequencyScanProgress
 from datetime import date
 
 pg.setConfigOption("background", "w")
