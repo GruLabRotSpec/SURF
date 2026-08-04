@@ -128,14 +128,17 @@ class StatusPanel(QWidget):
                     circle.setStyleSheet(
                         "color: #00AA00; font-size: 16px; font-weight: bold;"
                     )
+                    circle.setToolTip("Online")
                 case DeviceStatus.OFFLINE:
                     circle.setStyleSheet(
                         "color: #CC0000; font-size: 16px; font-weight: bold;"
                     )
+                    circle.setToolTip("Offline")
                 case DeviceStatus.CONNECTING:
                     circle.setStyleSheet(
                         "color: gray; font-size: 16px; font-weight: bold;"
                     )
+                    circle.setToolTip("Connecting")
 
     @Slot(str, DeviceStatus)
     def on_device_status_changed(self, device_id, status):

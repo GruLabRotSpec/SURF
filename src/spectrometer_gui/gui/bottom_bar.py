@@ -53,14 +53,17 @@ class BottomBarPanel(QWidget):
                 self.status_circle.setStyleSheet(
                     "color: #00AA00; font-size: 16px; font-weight: bold;"
                 )
+                self.status_circle.setToolTip("Spectrometer online")
             case DeviceStatus.OFFLINE:
                 self.status_circle.setStyleSheet(
                     "color: #CC0000; font-size: 16px; font-weight: bold;"
                 )
+                self.status_circle.setToolTip("Spectrometer offline")
             case DeviceStatus.CONNECTING:
                 self.status_circle.setStyleSheet(
                     "color: gray; font-size: 16px; font-weight: bold;"
                 )
+                self.status_circle.setToolTip("Connecting")
 
     @Slot(float, str)
     def set_status_elements(self, progress, text=None):
