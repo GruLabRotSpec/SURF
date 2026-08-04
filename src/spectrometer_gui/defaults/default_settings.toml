@@ -12,15 +12,15 @@ location = "./testing/"
 root_path = "C:\\Documents and Settings\\Administrator\\My Documents\\Setups_for_lab"
 
 [scope_preset.presets.cavity]
-name = "Cavity"
+name = "Cont_Cavity"
 path = "1cavity_map_cavity.set"
 
 [scope_preset.presets.scan_peak]
-name = "Scan Peak"
+name = "Acquisition"
 path = "2cavity_scan_peak001.set"
 
 [scope_preset.presets.pulse]
-name = "Pulse"
+name = "Pulsed_Cavity"
 path = "3cavitypulsed.set"
 
 [analysis]

@@ -82,14 +82,19 @@ class Spectrometer:
         signals: ScanSignals,
         canceled: Event,
         settings: FrequencyScanSettings,
+        
     ):
-      
+
+        cavity_type = settings.scan_parameters.cavity_type
+        if cavity_type == "Continuous":
+                self.cont_to_acquisition()
+        else:
+            pass   
+
         # Override default output
         self._folder_name = settings.output_settings.location
         self._filename = settings.output_settings.filename
         acq_num = settings.scan_parameters.acq_num
-        # TODO: Digitizer from the freq scan panel gui
-        # are not actually hooked up to anything right now.
 
         start_freq = settings.scan_parameters.start_freq
         stop_freq = settings.scan_parameters.end_freq
@@ -113,8 +118,6 @@ class Spectrometer:
 
         self.oscilloscope_controller.set_math4()
 
-        # Toggle switch
-        self.switch_controller.set_switch_pulsed()
 
         # Move zaber to start position if specified
         if start_pos is not None:
@@ -252,8 +255,12 @@ class Spectrometer:
         while True:
             start_time = time.perf_counter()
 
-            self.oscilloscope_controller.set_math3()
-            time.sleep(2)  # TODO: Figure out how to remove this
+            if cavity_type == "Continuous":
+                self.set_cavity_continuous()
+            else:
+                self.set_cavity_pulsed()
+
+            #time.sleep(2)  # TODO: Figure out how to remove this
             self.oscilloscope_controller.stop_acq()
 
             start_position = self.zaber_controller.get_pos()
@@ -298,10 +305,10 @@ class Spectrometer:
 
             # Retuning of the cavity position
             self.delay_generator_controller.set_frequency(300)
-
-            self.delay_generator_controller.start_trig(
-                self.delay_generator_controller._trigger_rate
-            )
+            
+            # self.delay_generator_controller.start_trig(
+            #     self.delay_generator_controller._trigger_rate
+            # )
 
             max_list = self.scan_with_acquisition(end_position)
 
@@ -309,9 +316,16 @@ class Spectrometer:
             pos_array = np.linspace(start_position, end_position, len(max_list))
             peak_idx = np.argmax(max_list)
             max_pos = pos_array[peak_idx]
-
+            cavity_int = max(max_list)
+            print("cavity intensity: ", cavity_int)
             self.logger.logger.info(f"Moving to maximum position at: {max_pos} mm")
             self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
+
+            if cavity_type == "Continuous":
+                self.cont_to_acquisition()
+            else:
+                pass   
+
 
             self.delay_generator_controller.set_trig()
 
@@ -343,7 +357,7 @@ class Spectrometer:
                 CavityTrackState(
                     ScanType.FREQUENCY,
                     [total_frequency],
-                    [max(max_list)],
+                    [cavity_int],
                     [max_pos]
                 )
             )
@@ -730,3 +744,7 @@ class Spectrometer:
         self.oscilloscope_controller.set_math3_cont()
         self.awg_controller.set_run_mode(mode="Continuous")
         self.delay_generator_controller.set_frequency(300)
+
+    def cont_to_acquisition(self):
+        self.switch_controller.set_switch_pulsed()
+        self.awg_controller.set_run_mode(mode="Triggered")
