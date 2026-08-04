@@ -17,7 +17,7 @@ class ScanParameters:
     start_freq: float
     end_freq: float
     step_size: float
-    scanning_speed: float
+    zaber_speed: float
     zaber_pos: float | None
     acq_num: int
     cavity_type: str 
