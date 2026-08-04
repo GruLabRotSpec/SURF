@@ -100,7 +100,7 @@ class Spectrometer:
         stop_freq = settings.scan_parameters.end_freq
         step_size = settings.scan_parameters.step_size
         start_pos = settings.scan_parameters.zaber_pos
-
+        self.config.zaber_controller.zaber_scanning_speed = settings.scan_parameters.zaber_speed    #temporary fix, need to change to a more comprehensive reset to make scan parameters and all other parameters set to the congig
         if start_freq < stop_freq:
             step_direction = StepDirection.Up
         elif start_freq > stop_freq:
@@ -197,7 +197,7 @@ class Spectrometer:
 
         curr_pos = self.zaber_controller.get_pos()
         self.logger.logger.info(f"Starting scan with zaber at: {curr_pos}")
-
+        self.logger.logger.info(f"Zaber is moving at speed: {self.zaber_controller.speeds[ZaberSpeed.SCANNING]} ")
         ### First Run ###
         self.oscilloscope_controller.set_math4()
         self.oscilloscope_controller.acquire_fft_data_at_max()
@@ -317,7 +317,7 @@ class Spectrometer:
             cavity_int = max(max_list)
             print("cavity intensity: ", cavity_int)
             self.logger.logger.info(f"Moving to maximum position at: {max_pos} mm")
-            self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING)
+            self.zaber_controller.move_to(max_pos, settings.scan_parameters.zaber_speed)
 
             if cavity_type == "Continuous":
                 self.cont_to_acquisition()
