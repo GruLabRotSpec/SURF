@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QProgressBar
 from PySide6.QtCore import Slot
-from gui.signal_enums import DeviceStatus
+from gui.signal_enums import DeviceStatus, FrequencyScanProgress
 import typing
 
 if typing.TYPE_CHECKING:
@@ -45,6 +45,7 @@ class BottomBarPanel(QWidget):
         self.setLayout(layout)
 
         spectrometer.signal.progress.connect(self.set_status_elements)
+        spectrometer.signal.detailed_progress.connect(self.set_detailed_status_elements)
 
     @Slot(DeviceStatus)
     def set_spectrometer_status(self, status: DeviceStatus):
@@ -75,6 +76,12 @@ class BottomBarPanel(QWidget):
 
         if text is not None:
             self.status_text.setText(text)
+
+    @Slot(FrequencyScanProgress)
+    def set_detailed_status_elements(self, progress: FrequencyScanProgress):
+        self.set_scan_current_freq(progress.current_freq)
+        self.set_scan_elapsed_time(progress.elapsed_time)
+        self.set_scan_time_remaining(progress.time_remaining)
 
     def set_scan_current_freq(self, freq: float):
         self.scan_status_current_freq.setText(f"Current Freq: {freq:.3f} MHz")
