@@ -231,7 +231,7 @@ class Spectrometer:
             FrequencyScanProgress(
                 current_freq = settings.scan_parameters.start_freq,
                 elapsed_time = "00:00:00",
-                time_remaining = str(total_time)
+                time_remaining = str(timedelta(minutes=round(total_time))).zfill(8)
             )
         )
 
@@ -243,7 +243,9 @@ class Spectrometer:
             case StepDirection.Up:
                 self.valon_controller.step_up()
             case StepDirection.Down:
-                self.valon_controller.step_down()        
+                self.valon_controller.step_down()
+
+        elapsed_time = 0    # In minutes          
 
         ### All Other Runs ###
         run_number = 1
@@ -320,8 +322,6 @@ class Spectrometer:
             frequency_values, intensity_values = self.fft_from_scope(new_freq)
             self.delay_generator_controller.stop_pulse()
 
-            end_time = time.perf_counter()
-
             _, filtered_spectrum = self.process_frequency_data(
                 total_frequency,
                 step_size,
@@ -348,13 +348,14 @@ class Spectrometer:
                 )
             )
 
-            elapsed_time = end_time - start_time # For this run
+            end_time = time.perf_counter()
+            elapsed_time += (end_time - start_time) / 60 # For this run
 
             signals.detailed_progress.emit(
                 FrequencyScanProgress(
                     new_freq,
-                    str(elapsed_time),
-                    str(total_time - elapsed_time)
+                    str(timedelta(minutes=round(elapsed_time))).zfill(8),
+                    str(timedelta(minutes=max(round(total_time - elapsed_time), 0))).zfill(8)
                 )
             )
 
