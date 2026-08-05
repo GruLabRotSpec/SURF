@@ -436,11 +436,19 @@ class Spectrometer:
             with Path.open(Path(f"{self._directory}/search_settings.toml"), "wb") as f:
 
                 def _asdict_no_none(obj):
+                    def factory(items):
+                        result = {}
+                        for k, v in items:
+                            if v is None:
+                                continue
+                            if isinstance(v, CavitySearchType):
+                                v = v.value
+                            result[k] = v
+                        return result
+
                     return asdict(
                         obj,
-                        dict_factory=lambda items: {
-                            k: v for k, v in items if v is not None
-                        },
+                        dict_factory=factory
                     )
 
                 tomli_w.dump(_asdict_no_none(settings), f)
