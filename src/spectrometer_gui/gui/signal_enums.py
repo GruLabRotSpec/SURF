@@ -25,7 +25,7 @@ class CavityTrackState: #for cavity track on frequency scan panel
     cavitypos: list
 
 @dataclass
-class FrequencyScanProgress:
+class ExperimentProgress:
     current_freq: float
     elapsed_time: str
     time_remaining: str

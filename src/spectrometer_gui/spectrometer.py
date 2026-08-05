@@ -17,7 +17,7 @@ from enum import Enum
 from config import Config, save_config
 from pathlib import Path
 from settings import Settings
-from gui.signal_enums import CavitySearchType, FrequencyScanProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
+from gui.signal_enums import CavitySearchType, ExperimentProgress, GraphState, ScanType, CavityGraphState, CavityTrackState
 
 from delay_generator_controller import DelayGeneratorController
 from cavity_search_settings import CavitySearchSettings
@@ -231,7 +231,7 @@ class Spectrometer:
             )
 
         signals.detailed_progress.emit(
-            FrequencyScanProgress(
+            ExperimentProgress(
                 current_freq = settings.scan_parameters.start_freq,
                 elapsed_time = "00:00:00",
                 time_remaining = str(timedelta(seconds=round(total_time * 60))).zfill(8)
@@ -366,7 +366,7 @@ class Spectrometer:
             elapsed_time += (end_time - start_time) # For this run
 
             signals.detailed_progress.emit(
-                FrequencyScanProgress(
+                ExperimentProgress(
                     total_frequency,
                     str(timedelta(seconds=round(elapsed_time))).zfill(8),
                     str(timedelta(seconds=max(round(total_time * 60 - elapsed_time), 0))).zfill(8)
@@ -475,11 +475,23 @@ class Spectrometer:
             "All parameters acquired, moving to calibrate and run sequence."
         )
 
+        signals.detailed_progress.emit(
+            ExperimentProgress(
+                current_freq = 0,
+                elapsed_time= "00:00:00",
+                time_remaining= "-"
+            )
+        )
+
+        elapsed_time = 0 # In seconds
+
         max_list = []
         run_bool = True
         i = 0
 
         while run_bool:
+            start_time = time.perf_counter()
+
             new_freq = valon_freq + step_size * i + self.awg_controller.awg_freq
             self.logger.logger.info(f"The new frequency is: {new_freq}")
 
@@ -550,6 +562,17 @@ class Spectrometer:
             )
             pd.concat([pd.concat([df1, df2], axis=1)]).to_csv(
                 f"{self._run_directory}/{new_freq}MHz.csv", mode="w+", index=False
+            )
+
+            end_time = time.perf_counter()
+            elapsed_time += (end_time - start_time) # For this run
+
+            signals.detailed_progress.emit(
+                ExperimentProgress(
+                    new_freq,
+                    str(timedelta(seconds=round(elapsed_time))).zfill(8),
+                    "-"
+                )
             )
 
             self.logger.logger.info(

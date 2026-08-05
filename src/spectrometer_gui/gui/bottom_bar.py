@@ -1,7 +1,7 @@
 from __future__ import annotations
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QProgressBar
 from PySide6.QtCore import Slot
-from gui.signal_enums import DeviceStatus, FrequencyScanProgress
+from gui.signal_enums import DeviceStatus, ExperimentProgress
 import typing
 
 if typing.TYPE_CHECKING:
@@ -77,8 +77,8 @@ class BottomBarPanel(QWidget):
         if text is not None:
             self.status_text.setText(text)
 
-    @Slot(FrequencyScanProgress)
-    def set_detailed_status_elements(self, progress: FrequencyScanProgress):
+    @Slot(ExperimentProgress)
+    def set_detailed_status_elements(self, progress: ExperimentProgress):
         self.set_scan_current_freq(progress.current_freq)
         self.set_scan_elapsed_time(progress.elapsed_time)
         self.set_scan_time_remaining(progress.time_remaining)

@@ -25,7 +25,7 @@ from frequency_scan_settings import (
     OutputSettings,
 )
 from gui.spectrometer_controller import SpectrometerController
-from spectrometer import ScanType, GraphState, CavityTrackState, FrequencyScanProgress
+from spectrometer import ScanType, GraphState, CavityTrackState, ExperimentProgress
 from datetime import date
 
 pg.setConfigOption("background", "w")
@@ -431,8 +431,8 @@ class FrequencyScanPanel(QWidget):
 
         self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
            
-    @Slot(FrequencyScanProgress)
-    def on_update_detailed_progress(self, detailed_progress: FrequencyScanProgress):
+    @Slot(ExperimentProgress)
+    def on_update_detailed_progress(self, detailed_progress: ExperimentProgress):
         self.current_freq_field.setText(str(detailed_progress.current_freq))
         self.elapsed_time_field.setText(detailed_progress.elapsed_time)
         self.time_remaining_field.setText(detailed_progress.time_remaining)
