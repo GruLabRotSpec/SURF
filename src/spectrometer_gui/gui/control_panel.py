@@ -29,10 +29,10 @@ from gui.signal_enums import ZaberSpeed
 class ControlRegistry:
     def __init__(self, spec_controller):
         self._controller = spec_controller
-        self._controls: list[tuple[str, object, str | None]] = []
+        self._controls: list[tuple[str, object]] = []
 
-    def register(self, path: str, widget, group: str | None = None):
-        self._controls.append((path, widget, group))
+    def register(self, path: str, widget):
+        self._controls.append((path, widget))
 
     def _resolve(self, path: str) -> tuple[object, str]:
         keys = path.strip().split(".")
@@ -67,23 +67,15 @@ class ControlRegistry:
         else:
             raise TypeError(f"Unsupported widget type: {type(widget)}")
 
-    def _iter_controls(self, group: str | None = None):
-        for path, widget, control_group in self._controls:
-            if group is None or control_group == group:
-                yield path, widget
-
-    def load_config(self, group: str | None = None):
-        for path, widget in self._iter_controls(group):
+    def load_config(self):
+        for path, widget in self._controls:
             obj, key = self._resolve(path)
             self._set_value(widget, getattr(obj, key))
 
-    def apply_config(self, group: str | None = None):
-        for path, widget in self._iter_controls(group):
+    def apply_config(self):
+        for path, widget in self._controls:
             obj, key = self._resolve(path)
-            new_value = self._get_value(widget)
-            current_value = getattr(obj, key)
-            if current_value != new_value:
-                setattr(obj, key, new_value)
+            setattr(obj, key, self._get_value(widget))
 
 
 class ControlPanel(QWidget):
@@ -149,7 +141,6 @@ class ControlPanel(QWidget):
             minimum=0, maximum=2, singleStep=0.1, suffix=" mm/s"
         )
         self.zaber_apply_btn = QPushButton("Apply")
-        self.zaber_apply_btn.clicked.connect(self._apply_zaber_settings)
         zaber_form.addRow(zaber_speed_2_label, self.zaber_speed_2_field)
         zaber_form.addRow(self.zaber_apply_btn)
 
@@ -220,9 +211,7 @@ class ControlPanel(QWidget):
         zaber_form.addRow("Position (relative)", zaber_control_widget_2)
 
         self.registry.register(
-            "zaber_controller.zaber_moving_speed",
-            self.zaber_speed_2_field,
-            group="zaber",
+            "zaber_controller.zaber_moving_speed", self.zaber_speed_2_field
         )
 
         return zaber_group
@@ -289,34 +278,29 @@ class ControlPanel(QWidget):
 
         awg_apply_widget = QHBoxLayout()
         self.awg_apply_btn = QPushButton("Apply")
-        self.awg_apply_btn.clicked.connect(self._apply_awg_settings)
+        #self.awg_apply_btn.clicked.connect()                  # still need to connect here
         awg_apply_widget.addWidget(self.awg_apply_btn)
         awg_form.addRow( awg_apply_widget)
 
         self.registry.register(
             "awg_controller.awg_status",
             self.awg_on_btn,
-            group="awg",
         )
         self.registry.register(
             "awg_controller.awg_run_mode",
             self.run_mode_field,
-            group="awg",
         )
         self.registry.register(
             "awg_controller.awg_freq",
             self.awg_freq_field,
-            group="awg",
         )
         self.registry.register(
             "awg_controller.awg_ch_1_output",
             self.awg_ch_1_output_on_btn,
-            group="awg",
         )
         self.registry.register(
             "awg_controller.awg_ch_2_output",
             self.awg_ch_2_output_on_btn,
-            group="awg",
         )
 
         return awg_group
@@ -378,39 +362,33 @@ class ControlPanel(QWidget):
 
         valon_apply_layout = QHBoxLayout()
         self.valon_apply_btn = QPushButton("Apply")
-        self.valon_apply_btn.clicked.connect(self._apply_valon_settings)
+        # self.valon_apply_btn.clicked.connect()                  # still need to connect here
         valon_apply_layout.addWidget(self.valon_apply_btn)
         valon_form.addRow(valon_apply_layout)
 
         self.registry.register(
             "valon_controller.rf_output",
             self.rf_output_on_btn,
-            group="valon",
         )
         self.registry.register(
             "valon_controller.rf_level",
             self.rf_field,
-            group="valon",
         )
         self.registry.register(
             "valon_controller.synth_power",
             self.synth_power_on_btn,
-            group="valon",
         )
         self.registry.register(
             "valon_controller.ref_source",
             self.ref_source_field,
-            group="valon",
         )
         self.registry.register(
             "valon_controller.ref_freq",
             self.ref_freq_field,
-            group="valon",
         )
         self.registry.register(
             "valon_controller.freq",
             self.freq_field,
-            group="valon",
         )
 
         return valon_group
@@ -443,32 +421,30 @@ class ControlPanel(QWidget):
         self.registry.register(
             "delay_generator_controller.trigger_rate",
             self.trigger_rate_field,
-            group="timing",
         )
-
-        self.trigger_state_group.buttonClicked.connect(self._on_trigger_state_button_clicked)
+        self.registry.register(
+            "delay_generator_controller.trigger_state", self.trigger_state_int_btn
+        )
 
         self.gas_pulse_on_btn = QRadioButton("On")
         self.gas_pulse_off_btn = QRadioButton("Off")
-        self.gas_pulse_off_btn.setChecked(True)
+        self.gas_pulse_on_btn.setChecked(False)
 
         self.gas_pulse_group = QButtonGroup()
         self.gas_pulse_group.addButton(self.gas_pulse_on_btn)
         self.gas_pulse_group.addButton(self.gas_pulse_off_btn)
 
-        self.gas_pulse_on_btn.toggled.connect(self._on_gas_pulse_toggled)
-
         gas_pulse_group_widget = QHBoxLayout()
-        gas_pulse_group_widget.addWidget(self.gas_pulse_on_btn)
-        gas_pulse_group_widget.addWidget(self.gas_pulse_off_btn)
+        gas_pulse_group_widget.addWidget(self.synth_power_on_btn)
+        gas_pulse_group_widget.addWidget(self.synth_power_off_btn)
 
-        gas_pulse_label = QLabel("Gas Pulse")
+        gas_pulse_label = QLabel("Gas Pulse ")
 
         timing_form.addRow(gas_pulse_label, gas_pulse_group_widget)
 
         timing_apply_layout = QHBoxLayout()
         self.timing_apply_btn = QPushButton("Apply")
-        self.timing_apply_btn.clicked.connect(self._apply_timing_settings)
+        # self.timing_apply_btn.clicked.connect()                  # still need to connect here
         timing_apply_layout.addWidget(self.timing_apply_btn)
         timing_form.addRow(timing_apply_layout)
 
@@ -530,24 +506,21 @@ class ControlPanel(QWidget):
 
         math3_apply_layout = QHBoxLayout()
         self.math3_apply_btn = QPushButton("Apply")
-        self.math3_apply_btn.clicked.connect(self._apply_math3_settings)
+        # self.math3_apply_btn.clicked.connect()                  # still need to connect here
         math3_apply_layout.addWidget(self.math3_apply_btn)
         math3_form.addRow(math3_apply_layout)
 
         self.registry.register(
             "oscilloscope_controller.math3.window",
             self.math3_window_field,
-            group="oscilloscope_math3",
         )
         self.registry.register(
             "oscilloscope_controller.math3.resolution",
             self.math3_res_field,
-            group="oscilloscope_math3",
         )
         self.registry.register(
             "oscilloscope_controller.math3.gate_position",
             self.math3_gatepos_field,
-            group="oscilloscope_math3",
         )
 
         math4_group = QGroupBox("Math 4")
@@ -578,24 +551,21 @@ class ControlPanel(QWidget):
 
         math4_apply_layout = QHBoxLayout()
         self.math4_apply_btn = QPushButton("Apply")
-        self.math4_apply_btn.clicked.connect(self._apply_math4_settings)
+        # self.math4_apply_btn.clicked.connect()                  # still need to connect here
         math4_apply_layout.addWidget(self.math4_apply_btn)
         math4_form.addRow(math4_apply_layout)
 
         self.registry.register(
             "oscilloscope_controller.math4.window",
             self.math4_window_field,
-            group="oscilloscope_math4",
         )
         self.registry.register(
             "oscilloscope_controller.math4.resolution",
             self.math4_res_field,
-            group="oscilloscope_math4",
         )
         self.registry.register(
             "oscilloscope_controller.math4.gate_position",
             self.math4_gatepos_field,
-            group="oscilloscope_math4",
         )
 
         oscilloscope_group = QGroupBox("Oscilloscope")
@@ -683,70 +653,9 @@ class ControlPanel(QWidget):
     def _set_values_in_control_panel(self):
         self.registry.load_config()
 
-    def _apply_group_settings(self, group: str | None = None):
+    def _apply_values_in_control_panel(self):
         if not self.spec_controller.current_task:
-            self.registry.apply_config(group=group)
+            self.registry.apply_config()
             self.spec_controller.set_config(self.spec_controller.config)
         else:
             print("Cannot update control options during a task")
-
-    @Slot()
-    def _apply_zaber_settings(self):
-        self._apply_group_settings("zaber")
-
-    @Slot()
-    def _apply_awg_settings(self):
-        self._apply_group_settings("awg")
-
-    @Slot()
-    def _apply_valon_settings(self):
-        self._apply_group_settings("valon")
-
-    @Slot()
-    def _apply_timing_settings(self):
-        self._apply_trigger_state_to_config()
-        self._apply_group_settings("timing")
-
-    def _apply_trigger_state_to_config(self):
-        state = "INT" if self.trigger_state_int_btn.isChecked() else "EXT"
-        self.spec_controller.config.delay_generator_controller.trigger_state = state
-
-    def _on_trigger_state_button_clicked(self, button):
-        state = "INT" if button is self.trigger_state_int_btn else "EXT"
-        self._set_trigger_state(state)
-
-    def _set_trigger_state(self, state: str):
-        dg = self.spec_controller.spectrometer.delay_generator_controller
-        if not dg.is_initialized():
-            print("Delay generator not initialized yet; cannot change trigger state.")
-            return
-
-        dg.set_trigger_state(state)
-
-    def _on_gas_pulse_toggled(self, checked: bool):
-        if checked:
-            self._set_gas_pulse(True)
-        else:
-            self._set_gas_pulse(False)
-
-    def _set_gas_pulse(self, enable: bool):
-        dg = self.spec_controller.spectrometer.delay_generator_controller
-        if not dg.is_initialized():
-            print("Delay generator not initialized yet; cannot change gas pulse state.")
-            return
-
-        if enable:
-            dg.start_pulse()
-        else:
-            dg.stop_pulse()
-
-    @Slot()
-    def _apply_math3_settings(self):
-        self._apply_group_settings("oscilloscope_math3")
-
-    @Slot()
-    def _apply_math4_settings(self):
-        self._apply_group_settings("oscilloscope_math4")
-
-    def _apply_values_in_control_panel(self):
-        self._apply_group_settings()

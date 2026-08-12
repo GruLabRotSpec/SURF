@@ -6,4 +6,3 @@ class CavitySearchSettings:
     cavity_type: CavitySearchType
     freq: float
     step_size: float
-    zaber_speed: float

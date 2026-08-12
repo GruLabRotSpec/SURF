@@ -26,8 +26,6 @@ class ScopePreset(BaseModel):
 
 class AnalysisSettings(BaseModel):
     show_points: bool = False
-    show_grid: bool = True
-    show_crosshair: bool = True
 
 class Settings(BaseModel):
     output: OutputConfig

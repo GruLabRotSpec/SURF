@@ -25,5 +25,3 @@ path = "3cavitypulsed.set"
 
 [analysis]
 show_points = true
-show_grid = true
-show_crosshair = true

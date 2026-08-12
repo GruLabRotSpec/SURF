@@ -22,18 +22,13 @@ class ValonController:
 
         con.write(b"ID?\r")
         response_bytes = con.read(1024)
-        response = response_bytes.decode("ascii", errors="ignore").strip()
-        print(response)
-
-        if not response:
-            con.close()
-            raise RuntimeError("Valon initialization failed: no response received from device")
+        print(response_bytes)
 
         time.sleep(0.5)
 
         self._connection = con
 
-        #self.update_config(config)
+        self.update_config(config)
 
     def is_initialized(self) -> bool:
         return self._connection.is_open if hasattr(self, "_connection") else False
@@ -138,11 +133,7 @@ class ValonController:
         self.write_cmd(f"REFerence {freq} MHz")
 
     def get_freq(self):
-        response = self.write_cmd("Frequency")
-        try:
-            return float(response.split()[0])
-        except (ValueError, IndexError):
-            return None
+        self.write_cmd("Frequency")
 
     def set_freq(self, freq):
         self.write_cmd(f"Frequency {freq} MHz")

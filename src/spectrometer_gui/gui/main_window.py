@@ -65,9 +65,6 @@ class MainWindow(QMainWindow):
         cavity_search = CavitySearchPanel(self.spec_controller)
         control_panel = ControlPanel(self.spec_controller)
         self.analysis_panel = AnalysisPanel(self.settings)
-        self.spec_controller.signal.settings_updated.connect(
-            self.analysis_panel.on_settings_updated
-        )
 
         status_panel.signal_status_changed.connect(
             bottom_bar_panel.set_spectrometer_status
@@ -200,7 +197,7 @@ class MainWindow(QMainWindow):
             if filename:
                 try:
                     df = pd.read_csv(filename)
-                    self.analysis_panel.set_data(df, filename=filename)
+                    self.analysis_panel.set_data(df)
                     print(df)
                 except Exception as e:
                     QMessageBox.critical(
@@ -214,9 +211,6 @@ class MainWindow(QMainWindow):
         self.settings_window = SettingsWindow(self.settings, self.settings_path)
         self.settings_window.settings_updated.connect(
             self.spec_controller.signal.settings_updated
-        )
-        self.settings_window.settings_updated.connect(
-            self.analysis_panel.on_settings_updated
         )
         self.settings_window.show()
 
