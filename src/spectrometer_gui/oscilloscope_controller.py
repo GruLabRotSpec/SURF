@@ -29,7 +29,7 @@ class OscilloscopeController:
         self.math4_hor_scale = '5E-6'
         self.math4__vert_scale = '100E-6'
         self.math4_num_averages = '1000000'
-        self.math4_sample_rate = '500'
+        self.math4_sample_rate = '500' # MS/s 
 
         self.math3_resolution = 720
         self.math3_apodization = 'Hanning'
@@ -43,8 +43,10 @@ class OscilloscopeController:
         r = self._oscilloscope.query("*opc?")  # sync
         print(f"Scope Query: {r}")
         self._oscilloscope.write("*cls")
-
-        self.update_config(config)
+        self.config = config
+        self.channel = self.config.oscilloscope_controller.channel
+        self.acq_num = self.config.oscilloscope_controller.acq_rate
+       # self.update_config(config)
         self.initialized = True
 
     def is_initialized(self) -> bool:

@@ -10,7 +10,7 @@ class DelayGeneratorController:
     def initialize(self, config: Config):
         self._devices: dict[str, dict] = {
             "dg_1": {"address": "GPIB0::9::INSTR", "device": None},
-            "dg_2": {"address": "GPIB3::8::INSTR", "device": None},
+            #"dg_2": {"address": "GPIB3::8::INSTR", "device": None},
         }
         self._rm = visa.ResourceManager()
 
@@ -25,7 +25,7 @@ class DelayGeneratorController:
 
         self.stop_pulse()
 
-        self.update_config(config)
+        #self.update_config(config)
 
         self.initialized = True
 
@@ -80,16 +80,16 @@ class DelayGeneratorController:
         self._write_cmd("dg_1", write_string)
 
     def SPDT_switch(self):
-        width = float(self._SPDT_switch) + 0.2
+        width = float(self._SPDT_switch) + 0.5
         write_string = f"DT 5,6,{width}E-6"  # Goes to second SRS
-        self._write_cmd("dg_2", write_string)
+        self._write_cmd("dg_1", write_string)
 
 
     def gas_MW_delay(self):
         delay = float(self._gas_MW_delay)
         write_string = f"DT 6,1,{delay}E-6"  # In us ; same command should go to both
         self._write_cmd("dg_1", write_string)
-        self._write_cmd("dg_2", write_string)
+        # self._write_cmd("dg_2", write_string)  # Uncomment if dg_2 is initialized
 
     def _open_device(self, name: str, timeout: int = 5000) -> None:
         current = self._devices[name]
