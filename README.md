@@ -1,10 +1,11 @@
-# SURF (formerly GruGUI)
-**Spectroscopy User and Research Framework (SURF)** is a GUI to operate most features of the Fourier-transform microwave (FTMW) spectrometer at GruLAB.
+SURF
+Spectroscopy User and Research Framework: open-source Python software to operate and automate cavity (Fabry–Pérot) Fourier-transform microwave (FTMW) spectroscopy.
 
-[Design and performance of an L-shaped Fourier transform microwave spectrometer (L-FTMW): Fabry–Perot cavity spectrometer setup](https://doi.org/10.1063/5.0311736)
+SURF is a graphical application developed in the Gurusinghe Research Lab (GruLab) at Tennessee Tech University to control the cavity subsystem of the lab's L-shaped FTMW spectrometer. It coordinates the microwave source, tunable cavity, waveform generation, and gated detection, and displays and stores the resulting spectra. A companion manuscript is in preparation for the Journal of Molecular Spectroscopy.
 
-## Documentation
-See the `docs` folder for more information, including development setup information.
-
-## Licensing
-See LICENSE.md (coming soon)
+Features"
+Automated cavity mode mapping
+Automated frequency scanning with cavity retuning
+Manual control of each instrument
+Live plotting of FIDs and spectra
+Spectral analysis and CSV data export
