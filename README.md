@@ -1,3 +1,5 @@
+![GitHub License](https://img.shields.io/github/license/GruLabRotSpec/SURF)
+
 # SURF
 **Spectroscopy User and Research Framework**: open-source Python software to operate and automate cavity (Fabry-Perot) Fourier-transform microwave (FTMW) spectroscopy.
 
@@ -44,7 +46,7 @@ The instrument these modules were written for is described in Design and perform
 ## Running
 
 ## Documentation
-See the docs folder for development setup and help. More about the lab: https://sites.tntech.edu/grulab/
+See the `docs` folder for development setup and help. More about the lab: https://sites.tntech.edu/grulab/
 
 ## Citing SURF
 
