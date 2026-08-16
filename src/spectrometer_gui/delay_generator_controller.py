@@ -10,7 +10,7 @@ class DelayGeneratorController:
     def initialize(self, config: Config):
         self._devices: dict[str, dict] = {
             "dg_1": {"address": "GPIB0::9::INSTR", "device": None},
-            "dg_2": {"address": "GPIB3::8::INSTR", "device": None},
+            #"dg_2": {"address": "GPIB3::8::INSTR", "device": None},
         }
         self._rm = visa.ResourceManager()
 
