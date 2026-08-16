@@ -40,6 +40,7 @@ class FrequencyScanPanel(QWidget):
         self.spectrum_y = []
         self.cavity_track_x = []
         self.cavity_track_y = []
+        self.cavity_track_pos = []
 
         self.spec_controller = spectrometer
 
@@ -207,7 +208,7 @@ class FrequencyScanPanel(QWidget):
 
         acq_window_label = QLabel("Acq Window")
         self.acq_window_field = QDoubleSpinBox(
-            minimum=1, maximum=10000, value=100, suffix=" μs"
+            minimum=1, maximum=10000, value=14.4, suffix=" μs"
         )
         self.acq_window_field.setReadOnly(True)
         digitizer_form.addRow(acq_window_label, self.acq_window_field)
@@ -276,7 +277,20 @@ class FrequencyScanPanel(QWidget):
         self.cavity_track_graph.plotItem.getViewBox().setMouseEnabled(x=False, y=False)  # type: ignore
         self.cavity_track_graph.getPlotItem().layout.setContentsMargins(5, 0, 15, 10)  # type: ignore
         self.cavity_track_plot = self.cavity_track_graph.plot(
-            pen=pg.mkPen(color="b", width=1)
+            pen=pg.mkPen(color="b", width=1),
+            symbol="o",
+            symbolSize=5,
+            symbolBrush="b",
+            symbolPen="b",
+        )
+        self.cavity_track_hover_text = pg.TextItem(text="", anchor=(0.5, 1.0))
+        self.cavity_track_hover_text.setVisible(False)
+        self.cavity_track_graph.addItem(self.cavity_track_hover_text)
+        self.cavity_track_graph.setMouseTracking(True)
+        self.proxy = pg.SignalProxy(
+            self.cavity_track_graph.scene().sigMouseMoved,
+            rateLimit=60,
+            slot=self._update_cavity_track_hover,
         )
         return self.cavity_track_graph
 
@@ -334,6 +348,10 @@ class FrequencyScanPanel(QWidget):
         self.cancel_button.setEnabled(False)
         buttons_hbox.addWidget(self.cancel_button)
 
+        self.clear_graph_button = QPushButton("Clear Graph")
+        self.clear_graph_button.clicked.connect(self.clear_graph)
+        buttons_hbox.addWidget(self.clear_graph_button)
+
         return group
 
     def get_scan_settings(self) -> FrequencyScanSettings:
@@ -369,7 +387,7 @@ class FrequencyScanPanel(QWidget):
                 rep_rate=int(self.rep_rate_field.value()),
                 valve_mw_delay=int(self.valve_mw_delay_field.value()),
                 spdt_width=self.spdt_width_field.value(),
-                acq_delay=int(self.acq_delay_field.value()),
+                acq_delay=self.acq_delay_field.value(),
             ),
             output_settings=OutputSettings(
                 filename=self.output_folder_field.text(),
@@ -385,6 +403,17 @@ class FrequencyScanPanel(QWidget):
     @Slot()
     def cancel_scan(self):
         self.spec_controller.cancel_operation()
+
+    @Slot()
+    def clear_graph(self):
+        self.spectrum_x = []
+        self.spectrum_y = []
+        self.cavity_track_x = []
+        self.cavity_track_y = []
+        self.cavity_track_pos = []
+        self.spectrum_plot.setData([], [])
+        self.cavity_track_plot.setData([], [])
+        self.cavity_track_hover_text.setVisible(False)
 
     @Slot(bool, ScanType)
     def on_scanning(self, scanning: bool, scan_type: ScanType):
@@ -428,9 +457,43 @@ class FrequencyScanPanel(QWidget):
         if graph_state.cavityFreq:
             self.cavity_track_x.extend(graph_state.cavityFreq)
             self.cavity_track_y.extend(graph_state.cavityInt)
+            self.cavity_track_pos.extend(graph_state.cavitypos)
 
         self.cavity_track_plot.setData(self.cavity_track_x, self.cavity_track_y)
-           
+
+    def _update_cavity_track_hover(self, evt):
+        if not self.cavity_track_y or not self.cavity_track_x or not self.cavity_track_pos:
+            self.cavity_track_hover_text.setVisible(False)
+            return
+
+        pos = evt[0]
+        if not self.cavity_track_graph.sceneBoundingRect().contains(pos):
+            self.cavity_track_hover_text.setVisible(False)
+            return
+
+        mouse_point = self.cavity_track_graph.getPlotItem().vb.mapSceneToView(pos)
+        view_range = self.cavity_track_graph.getPlotItem().viewRange()
+        x_range = view_range[0][1] - view_range[0][0]
+        y_range = view_range[1][1] - view_range[1][0]
+        threshold = max(0.04 * x_range, 0.04 * y_range, 1.0)
+
+        best_index = None
+        best_distance = None
+        for index, (x_value, y_value) in enumerate(zip(self.cavity_track_x, self.cavity_track_y, strict=True)):
+            distance = ((mouse_point.x() - x_value) ** 2 + (mouse_point.y() - y_value) ** 2) ** 0.5
+            if best_distance is None or distance < best_distance:
+                best_distance = distance
+                best_index = index
+
+        if best_index is None or best_distance is None or best_distance > threshold:
+            self.cavity_track_hover_text.setVisible(False)
+            return
+
+        self.cavity_track_hover_text.setText(
+            f"Cavity position: {self.cavity_track_pos[best_index]:.3f} mm"
+        )
+        self.cavity_track_hover_text.setPos(mouse_point.x(), mouse_point.y())
+        self.cavity_track_hover_text.setVisible(True)
     @Slot(ExperimentProgress)
     def on_update_detailed_progress(self, detailed_progress: ExperimentProgress):
         self.current_freq_field.setText(str(detailed_progress.current_freq))

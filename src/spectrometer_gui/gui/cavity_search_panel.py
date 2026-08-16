@@ -78,7 +78,7 @@ class CavitySearchPanel(QWidget):
         form.addRow(end_freq_label, self.end_freq_field)
 
         zaber_speed_label = QLabel("Zaber Scanning Speed")
-        self.zaber_speed_field = QDoubleSpinBox(
+        self.zaber_speed_field = QDoubleSpinBox(value=0.01, minimum=0.001,
             maximum=5.00, decimals=2, suffix=" mm/s"
         )
         form.addRow(zaber_speed_label, self.zaber_speed_field)
@@ -116,7 +116,8 @@ class CavitySearchPanel(QWidget):
         self.spec_controller.run_search(
             CavitySearchType.CONTINUOUS if (self.cavity_type_field.currentText() == "Continuous") else CavitySearchType.PULSED,
             int(self.end_freq_field.value()),
-            float(1),  # Replace later
+            float(1), # step size is hardcoded to 1 for now
+            float(self.zaber_speed_field.value()),
         )
 
     def cancel_search(self):
@@ -152,3 +153,4 @@ class CavitySearchPanel(QWidget):
         self.y_data.extend(graph_state.y_int)
 
         self.spectrum_plot.setData(self.x_data, self.y_data)
+

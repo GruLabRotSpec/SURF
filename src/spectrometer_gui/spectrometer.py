@@ -83,13 +83,11 @@ class Spectrometer:
         canceled: Event,
         settings: FrequencyScanSettings,
         
-    ):
+    ): 
+        start_time = time.perf_counter()
 
         cavity_type = settings.scan_parameters.cavity_type
-        if cavity_type == "Continuous":
-                self.cont_to_acquisition()
-        else:
-            pass   
+        self.cont_to_acquisition()
 
         # Override default output
         self._folder_name = settings.output_settings.location
@@ -189,12 +187,25 @@ class Spectrometer:
         valon_freq = start_freq - self.awg_controller.awg_freq
         self.valon_controller.write_cmd(f"Frequency {valon_freq} MHz")
         self.valon_controller.write_cmd(f"FrequencyStep {step_size} MHz")
+        actual_valon_freq = self.valon_controller.get_freq()
+        if actual_valon_freq is not None:
+            valon_freq = actual_valon_freq
+        else:
+            self.logger.logger.warning("Valon frequency readback returned None; using the last computed frequency")
+        center_frequency = valon_freq + self.awg_controller.awg_freq
 
         stop_freq = stop_freq_input - self.awg_controller.awg_freq
         step_size = float(step_size)
 
         self.logger.logger.info("All parameters set, moving to run sequence.")
 
+        signals.detailed_progress.emit(
+            ExperimentProgress(
+                current_freq = settings.scan_parameters.start_freq,
+                elapsed_time = "00:00:00",
+                time_remaining = str(timedelta(seconds=round(total_time * 60))).zfill(8)
+            )
+        )
         curr_pos = self.zaber_controller.get_pos()
         self.logger.logger.info(f"Starting scan with zaber at: {curr_pos}")
         self.logger.logger.info(f"Zaber is moving at speed: {self.zaber_controller.speeds[ZaberSpeed.SCANNING]} ")
@@ -213,7 +224,7 @@ class Spectrometer:
         self.delay_generator_controller.stop_pulse()
 
         _, filtered_spectrum = self.process_frequency_data(
-                settings.scan_parameters.start_freq,
+                center_frequency,
                 step_size,
                 frequency_values,
                 intensity_values,
@@ -224,19 +235,13 @@ class Spectrometer:
         signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    settings.scan_parameters.start_freq,
+                    center_frequency,
                     filtered_spectrum["Frequency (MHz)"].to_list(),
                     filtered_spectrum["Intensity"].to_list(),
                 )
             )
 
-        signals.detailed_progress.emit(
-            ExperimentProgress(
-                current_freq = settings.scan_parameters.start_freq,
-                elapsed_time = "00:00:00",
-                time_remaining = str(timedelta(seconds=round(total_time * 60))).zfill(8)
-            )
-        )
+
 
         self.logger.logger.info(
                 f"run #1 has been added to: {self._directory}/{self._filename}.csv",
@@ -253,7 +258,7 @@ class Spectrometer:
         ### All Other Runs ###
         run_number = 1
         while True:
-            start_time = time.perf_counter()
+            
 
             if cavity_type == "Continuous":
                 self.set_cavity_continuous()
@@ -269,11 +274,11 @@ class Spectrometer:
             match step_direction:
                 case StepDirection.Up:
                     new_freq = valon_freq + step_size * run_number
-                    start_position = start_position - 0.02
+                    start_position = start_position
                     end_position = start_position + self.zaber_controller.step_size
                 case StepDirection.Down:
                     new_freq = valon_freq - step_size * run_number
-                    start_position = start_position + 0.02
+                    start_position = start_position 
                     end_position = start_position - self.zaber_controller.step_size
 
             # Check for end of zaber
@@ -290,13 +295,19 @@ class Spectrometer:
                 self.logger.logger.info("Scan Canceled")
                 break
 
-            total_frequency = new_freq + self.awg_controller.awg_freq
-            self.logger.logger.info(f"the new center freq is: {total_frequency}")
+            actual_valon_freq = self.valon_controller.get_freq()
+            if actual_valon_freq is not None:
+                new_freq = actual_valon_freq
+            else:
+                self.logger.logger.warning("Valon frequency readback returned None; using the last computed frequency")
+            center_frequency = new_freq + self.awg_controller.awg_freq
+
+            self.logger.logger.info(f"the new center freq is: {center_frequency}")
             self.logger.logger.info(f"The new Valon Frequency is: {new_freq}")
 
             signals.progress.emit(
                 run_number / iterations,
-                f"{run_number} / {iterations} - Freq {new_freq} MHz",
+                f"{run_number} / {iterations} - Freq {center_frequency} MHz",
             )
 
             self.logger.logger.info(
@@ -319,7 +330,7 @@ class Spectrometer:
             cavity_int = max(max_list)
             print("cavity intensity: ", cavity_int)
             self.logger.logger.info(f"Moving to maximum position at: {max_pos} mm")
-            self.zaber_controller.move_to(max_pos, settings.scan_parameters.zaber_speed)
+            self.zaber_controller.move_to(max_pos, ZaberSpeed.MOVING, True)
 
             if cavity_type == "Continuous":
                 self.cont_to_acquisition()
@@ -337,7 +348,7 @@ class Spectrometer:
             self.delay_generator_controller.stop_pulse()
 
             _, filtered_spectrum = self.process_frequency_data(
-                total_frequency,
+                center_frequency,
                 step_size,
                 frequency_values,
                 intensity_values,
@@ -348,7 +359,7 @@ class Spectrometer:
             signals.update_graph.emit(
                 GraphState(
                     ScanType.FREQUENCY,
-                    total_frequency,
+                    center_frequency,
                     filtered_spectrum["Frequency (MHz)"].to_list(),
                     filtered_spectrum["Intensity"].to_list(),
                 )
@@ -356,18 +367,18 @@ class Spectrometer:
             signals.update_cavityTrack.emit(
                 CavityTrackState(
                     ScanType.FREQUENCY,
-                    [total_frequency],
+                    [center_frequency],
                     [cavity_int],
                     [max_pos]
                 )
             )
 
             end_time = time.perf_counter()
-            elapsed_time += (end_time - start_time) # For this run
+            elapsed_time = end_time - start_time
 
             signals.detailed_progress.emit(
                 ExperimentProgress(
-                    total_frequency,
+                    center_frequency,
                     str(timedelta(seconds=round(elapsed_time))).zfill(8),
                     str(timedelta(seconds=max(round(total_time * 60 - elapsed_time), 0))).zfill(8)
                 )
@@ -404,9 +415,14 @@ class Spectrometer:
 
     def cavity_search(self, signals: SearchSignals, settings: CavitySearchSettings):
         # This code is meant to scan the whole region from 0 - 40 mm and find all the cavity positions for a set frequency
+
+        
         cavity_type = settings.cavity_type
         stop_freq = settings.freq
         step_size = settings.step_size
+        self.config.zaber_controller.zaber_scanning_speed = settings.zaber_speed 
+
+        self.update_config(self.config)
 
         stop_freqinput = stop_freq
 
@@ -418,9 +434,23 @@ class Spectrometer:
         else:
             self.set_cavity_pulsed()
 
+        elapsed_time = 0 # In seconds
+        total_time = (50/
+            self.config.zaber_controller.zaber_scanning_speed
+        ) / 60 
+        signals.detailed_progress.emit(
+            ExperimentProgress(
+                stop_freq,
+                str(timedelta(seconds=round(elapsed_time))).zfill(8),
+                str(timedelta(seconds=max(round(total_time * 60 - elapsed_time), 0))).zfill(8)
+            )
+        )
+
+        
+
         self._directory = ""
         self._folder_name = "Cavity Scan"
-
+        self._filename = f"CavityScan_{stop_freq}MHz_{datetime.now().strftime('%Y-%m-%d')}"
         # creating directory for files to be
         self._directory = self.make_dir("CavityRuns")
         self._run_directory = f"{self._directory}/CavityRuns"
@@ -456,7 +486,8 @@ class Spectrometer:
         self.zaber_controller.home()
 
         self.logger.logger.info("Zaber has arrived at home position 0 mm")
-
+        self.logger.logger.info(f"Zaber is moving at speed: {self.zaber_controller.speeds[ZaberSpeed.SCANNING]} mm/s ")
+        start_time = time.perf_counter()
         try:
             step_size = float(step_size)
             step_up_var = True
@@ -475,22 +506,23 @@ class Spectrometer:
             "All parameters acquired, moving to calibrate and run sequence."
         )
 
+        end_time = time.perf_counter()
+        elapsed_time += (end_time - start_time) # For this run
+
         signals.detailed_progress.emit(
             ExperimentProgress(
-                current_freq = 0,
-                elapsed_time= "00:00:00",
-                time_remaining= "-"
+                    stop_freq,
+                    str(timedelta(seconds=round(elapsed_time))).zfill(8),
+                    str(timedelta(seconds=max(round(total_time * 60 - elapsed_time), 0))).zfill(8)
+                )
             )
-        )
-
-        elapsed_time = 0 # In seconds
 
         max_list = []
         run_bool = True
         i = 0
 
         while run_bool:
-            start_time = time.perf_counter()
+            
 
             new_freq = valon_freq + step_size * i + self.awg_controller.awg_freq
             self.logger.logger.info(f"The new frequency is: {new_freq}")
@@ -530,7 +562,6 @@ class Spectrometer:
 
                 signals.update_cavitymap.emit(
                     CavityGraphState(2,new_freq,pos_arr,max_lists
-
                     ))
                 
                 # signals.update_graph.emit(
@@ -542,7 +573,6 @@ class Spectrometer:
                 #     filtered_spectrum["Frequency (MHz)"].to_list(),
                 #     filtered_spectrum["Intensity"].to_list(),
            
-            # threshold = input('Threshold for peak selection (in V): ')
             threshold = 0.008
             peaks, _ = find_peaks(y, height=threshold)
 
@@ -565,7 +595,7 @@ class Spectrometer:
             )
 
             end_time = time.perf_counter()
-            elapsed_time += (end_time - start_time) # For this run
+            elapsed_time = end_time - start_time
 
             signals.detailed_progress.emit(
                 ExperimentProgress(
