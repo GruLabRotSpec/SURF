@@ -1,4 +1,5 @@
 from __future__ import annotations
+import asyncio
 from pathlib import Path
 from PySide6.QtCore import Qt, Slot
 from PySide6.QtGui import QIcon, QShowEvent
@@ -684,11 +685,12 @@ class ControlPanel(QWidget):
         self.registry.load_config()
 
     def _apply_group_settings(self, group: str | None = None):
-        if not self.spec_controller.current_task:
-            self.registry.apply_config(group=group)
-            self.spec_controller.set_config(self.spec_controller.config)
-        else:
+        if self.spec_controller.current_task:
             print("Cannot update control options during a task")
+            return
+
+        self.registry.apply_config(group=group)
+        asyncio.create_task(self.spec_controller.apply_config_async())
 
     @Slot()
     def _apply_zaber_settings(self):

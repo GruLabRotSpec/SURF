@@ -26,3 +26,4 @@ acq_rate = 300
 
 [delay_generator_controller]
 trigger_rate = 5.0
+trigger_state = "INT"

@@ -1,5 +1,4 @@
 import pyvisa as visa
-import logger
 from config import Config
 
 
@@ -10,22 +9,22 @@ class DelayGeneratorController:
     def initialize(self, config: Config):
         self._devices: dict[str, dict] = {
             "dg_1": {"address": "GPIB0::9::INSTR", "device": None},
-            #"dg_2": {"address": "GPIB3::8::INSTR", "device": None},
+            "dg_2": {"address": "GPIB3::8::INSTR", "device": None},
         }
         self._rm = visa.ResourceManager()
 
-        #defaults 
+        # defaults
         self._frequency = 0
-        self._trigger_state = 'EXT'
-        self._gas_MW_delay = '1300'
-        self._SPDT_switch = '10'
+        self._trigger_state = "EXT"
+        self._gas_MW_delay = "1300"
+        self._SPDT_switch = "10"
         self._delays = {"T0": "1", "A": "2", "B": "3", "C": "5", "D": "6"}
 
         self._open_all_devices()
 
         self.stop_pulse()
 
-        #self.update_config(config)
+        # self.update_config(config)
 
         self.initialized = True
 
@@ -37,7 +36,6 @@ class DelayGeneratorController:
         ddg_config = config.delay_generator_controller
         self.start_trig(ddg_config.trigger_rate)
         self.set_trigger_state(ddg_config.trigger_state)
-
 
     # Writes a command to the delay generator and returns the output
     def _write_cmd(self, name, command):
@@ -84,12 +82,11 @@ class DelayGeneratorController:
         write_string = f"DT 5,6,{width}E-6"  # Goes to second SRS
         self._write_cmd("dg_1", write_string)
 
-
     def gas_MW_delay(self):
         delay = float(self._gas_MW_delay)
         write_string = f"DT 6,1,{delay}E-6"  # In us ; same command should go to both
         self._write_cmd("dg_1", write_string)
-        # self._write_cmd("dg_2", write_string)  # Uncomment if dg_2 is initialized
+        self._write_cmd("dg_2", write_string)  # Uncomment if dg_2 is initialized
 
     def _open_device(self, name: str, timeout: int = 5000) -> None:
         current = self._devices[name]

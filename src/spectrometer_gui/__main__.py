@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication
-
+ 
 import asyncio
 import sys
 from qasync import QEventLoop

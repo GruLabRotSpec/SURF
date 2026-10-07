@@ -129,6 +129,12 @@ class SpectrometerController(QObject):
         self.cancel_event.clear()
         self.zaber_position_timer.start()
 
+    async def apply_config_async(self, config: Config | None = None):
+        if config is not None:
+            self.config = config
+        await asyncio.to_thread(self.spectrometer.update_config, self.config)
+        self.misc_signals.config_updated.emit()
+
     async def refresh_device(self, device_id):
         success = await self.init_device_async(device_id)
         return success

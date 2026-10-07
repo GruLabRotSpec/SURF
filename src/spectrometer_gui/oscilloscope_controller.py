@@ -26,10 +26,10 @@ class OscilloscopeController:
         self.math4_resolution = 100
         self.math4_apodization = 'Hanning'
         self.math4_acq_delay = '22'
-        self.math4_hor_scale = '5E-6'
-        self.math4__vert_scale = '100E-6'
+        self.math4_hor_scale = '50E-6'
+        self.math4__vert_scale = '10E-6'
         self.math4_num_averages = '1000000'
-        self.math4_sample_rate = '500' # MS/s 
+        self.math4_sample_rate = '200' # MS/s 
 
         self.math3_resolution = 720
         self.math3_apodization = 'Hanning'
